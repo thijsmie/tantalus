@@ -5,6 +5,3 @@ def flow(contenttype, source, destination, amount):
     except:
         source.give(contenttype, amount, splitoff.value)
         raise
-        
-        
-
