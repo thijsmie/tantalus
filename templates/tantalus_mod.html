@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% from 'tantalus_mod_helpers.html' import render_mod_as_equation %}
+{% from 'tantalus_general_helpers.html' import format_currency %}
+
+{% block container %}
+  <form id="newmodform" class="form-horizontal">
+    <div class="well bs-component">
+      <fieldset>
+        <legend>New Mod</legend>
+        <div class="form-group">
+          <label for="name" class="col-lg-3 control-label">Name</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="name" name="name" placeholder="Name"
+                   {% if mod %}value="{{ mod.name }}"{% endif %}>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="tag" class="col-lg-3 control-label">Tag</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="tag" name="tag" placeholder="Tag"
+                   {% if mod %}value="{{ mod.tag }}"{% endif %}>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="description" class="col-lg-3 control-label">Description</label>
+          <div class="col-lg-9">
+                        <textarea rows='3' id="description" name="description" class="form-control"
+                                  placeholder="Description"> {% if mod %}{{ mod.description }}{% endif %}</textarea>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="formula" class="col-lg-3 control-label">Formula</label>
+          <div id="formula" class="col-lg-9">Value' = (Value + Pre Addition) (*/) Multiplier + Post Addition
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="pre_add" class="col-lg-3 control-label">Pre Addition</label>
+          <div class="col-lg-9">
+            <div class="input-group">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-euro"
+                                                                  aria-hidden="true"></span></span>
+              <input id="pre_add" name="pre_add" type="text" class="form-control"
+                     placeholder="Pre Addition" {% if mod %}value="{{ format_currency(mod.pre_add) }}"{% endif %}>
+            </div>
+          </div>
+          <label for="multiplier" class="col-lg-3 control-label">Multiplier</label>
+          <div class="col-lg-9">
+            <input id="multiplier" name="multiplier" type="text" class="form-control"
+                   placeholder="Multiplier" {% if mod %}value="{{ mod.multiplier }}"{% endif %}>
+          </div>
+          <label for="post_add" class="col-lg-3 control-label">Post Addition</label>
+          <div class="col-lg-9">
+            <div class="input-group">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-euro"
+                                                                  aria-hidden="true"></span></span>
+              <input id="post_add" name="post_add" type="text" class="form-control"
+                     placeholder="Post Addition" {% if mod %}value="{{ format_currency(mod.post_add) }}"{% endif %}>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputOther" class="col-lg-3 control-label">Behaviour</label>
+          <div class="col-lg-9">
+            <div id="inputOther" class="checkbox">
+              <label class="col-lg-4">
+                <input id="modifies" type="checkbox" {% if mod and mod.modifies %}checked{% endif %}> Modifies
+              </label>
+              <label class="col-lg-4">
+                <input id="divides" type="checkbox" {% if mod and mod.divides %}checked{% endif %}> Divides
+              </label>
+              <label class="col-lg-4">
+                <select id="rounding" name="rounding" class="">
+                  <option {% if mod and mod.rounding == "floor" %}selected{% endif %}>floor</option>
+                  <option {% if mod and mod.rounding == "ceil" %}selected{% endif %}>ceil</option>
+                  <option {% if mod and mod.rounding == "round" %}selected{% endif %}>round</option>
+                  <option {% if mod and mod.rounding == "none" %}selected{% endif %}>none</option>
+                </select> Rounding
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-lg-9 col-lg-offset-3">
+            <button type="button" onclick="submit_mod();" class="btn btn-primary">Submit</button>
+          </div>
+        </div>
+
+      </fieldset>
+    </div>
+  </form>
+  <div>
+    <a class="btn btn-default" href="{{ url_for('.index') }}">Back to all</a>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script type="text/javascript">
+
+      function submit_mod() {
+          if (field_validate_money('#pre_add') &&
+              field_validate_money('#post_add') &&
+              field_validate_float('#multiplier') &&
+              $('#name').val().length >= 3 &&
+              $('#tag').val().length >= 1) {
+
+              tosubmit = {};
+              tosubmit.name = $('#name').val();
+              tosubmit.tag = $('#tag').val();
+              tosubmit.description = $('#description').val();
+              tosubmit.pre_add = parseInt(parseFloat($('#pre_add').val().replace(',', '.')) * 100.0);
+              tosubmit.post_add = parseInt(parseFloat($('#post_add').val().replace(',', '.')) * 100.0);
+              tosubmit.multiplier = parseFloat($('#multiplier').val());
+              tosubmit.rounding = $('#rounding').val();
+              tosubmit.modifies = $("#modifies").prop("checked");
+              tosubmit.divides = $("#divides").prop("checked");
+
+              {% if mod %}
+                  post_object(tosubmit, "{{ url_for(".editmod", mod_id=mod.key.id()) }}", "{{ url_for(".index") }}");
+              {% else %}
+                  post_object(tosubmit, "{{ url_for(".addmod") }}", "{{ url_for(".index") }}");
+              {% endif %}
+          }
+
+
+          return true;
+      }
+
+  </script>
+{% endblock %}

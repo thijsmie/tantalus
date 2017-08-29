@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% from 'tantalus_general_helpers.html' import format_currency %}
+
+{% block container %}
+
+  <form id="newrelationform" class="form-horizontal" method="POST">
+    <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
+    <div class="col-lg-6">
+      <div class="well bs-component">
+        <fieldset>
+          <legend>{% if relation is defined %}Edit{% else %}New{% endif %} Relation</legend>
+          <div class="form-group">
+            <label for="name" class="col-lg-3 control-label">Name</label>
+            <div class="col-lg-9">
+              <input type="text" class="form-control" id="name" name="name" placeholder="Name"
+                     value="{% if relation %}{{ relation.name }}{% endif %}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email" class="col-lg-3 control-label">Email</label>
+            <div class="col-lg-9">
+              <input type="text" class="form-control" id="email" name="email" placeholder="Email"
+                     value="{% if relation %}{{ relation.email }}{% endif %}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="budget" class="col-lg-3 control-label">Budget</label>
+            <div class="col-lg-9">
+              <div id="valwrap" class="input-group">
+                <span class="input-group-addon"><span class="glyphicon glyphicon-euro" aria-hidden="true"></span></span>
+                <input id="budget" name="budget" type="text" class="form-control" placeholder="Budget"
+                       value="{% if relation %}{{ format_currency(relation.budget) }}{% endif %}">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="inputOther" class="col-lg-3 control-label">Behaviour</label>
+            <div class="col-lg-9">
+              <div id="inputOther" class="checkbox">
+                <label class="col-lg-4">
+                  <input id="has_budget" type="checkbox" {% if relation and relation.has_budget %}checked{% endif %}>
+                  Has budget
+                </label>
+                <label class="col-lg-4">
+                  <input id="send_mail" type="checkbox" {% if relation and relation.send_mail %}checked{% endif %}> Send
+                  mail
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-lg-9 col-lg-offset-3">
+              <button type="button" class="btn btn-primary" onclick="submit_relation();">Submit</button>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </form>
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script type="text/javascript">
+
+      function submit_relation() {
+          if (field_validate_money('#budget') &&
+              field_validate_strlen('#name', 4)) {
+
+              tosubmit = {};
+              tosubmit.name = $('#name').val();
+              tosubmit.email = $('#email').val();
+              tosubmit.budget = parseInt(parseFloat($('#budget').val()) * 100);
+              tosubmit.has_budget = $("#has_budget").prop("checked");
+              tosubmit.send_mail = $("#send_mail").prop("checked");
+
+              {% if relation -%}
+                  post_object(tosubmit, "{{ url_for(".editrelation", relation_id=relation.key.id()) }}", "{{ url_for(".index") }}");
+              {%- else -%}
+                  post_object(tosubmit, "{{ url_for(".addrelation") }}", "{{ url_for(".index") }}");
+              {%- endif %}
+          }
+
+          return true;
+      }
+
+  </script>
+{% endblock %}

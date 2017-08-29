@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+{% from 'tantalus_mod_helpers.html' import render_mod_as_equation, render_mod_as_tag %}
+
+{% block container %}
+  <div>
+    <h1>
+      All Mods
+    </h1>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Tag</th>
+        <th>Equation</th>
+        <th>Modifies</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for mod in pagination.items %}
+        <tr>
+          <td><a href='{{ url_for(".editmod", mod_id=mod.key.id()) }}'>{{ mod.name }}</a></td>
+          <td>{{ render_mod_as_tag(mod) }}</td>
+          <td>{{ render_mod_as_equation(mod) }}</td>
+          <td>{% if mod.modifies %}<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="5" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {{ paginator_buttons(pagination) }}
+  <a href="{{ url_for(".addmod") }}" class="btn btn-default">New mod</a>
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <style type="text/css">
+    @-moz-document url-prefix() {
+      fieldset {
+        display: table-cell;
+      }
+    }
+  </style>
+{% endblock %}

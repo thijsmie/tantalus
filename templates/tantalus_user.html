@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% from 'tantalus_general_helpers.html' import format_currency %}
+
+{% block container %}
+
+  <form id="newuserform" class="form-horizontal" method="POST">
+    <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
+    <div class="col-lg-12">
+      <div class="well bs-component">
+        <fieldset>
+          <legend>{% if user is defined %}Edit{% else %}New{% endif %} User</legend>
+          <div class="form-group">
+            <label for="name" class="col-lg-3 control-label">Name</label>
+            <div class="col-lg-9">
+              <input type="text" class="form-control" id="username" name="username" placeholder="Username"
+                     value="{% if user %}{{ user.username }}{% endif %}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email" class="col-lg-3 control-label">Change Password</label>
+            <div class="col-lg-9">
+              <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="relation" class="col-lg-3 control-label">Relation</label>
+            <div class="col-lg-9">
+              <select class="form-control" id="relation" name="relation">
+                {% if user is defined and user.relation %}
+                  <option value="{{ user.relation.id() }}">{{ user.relation.get().name }}</option>{% endif %}
+                <option value=""></option>
+                {% for relation in relations %}
+                  <option value="{{ relation.key.id() }}">{{ relation.name }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="inputOther" class="col-lg-3 control-label">Rights</label>
+            <div class="col-lg-9">
+              <div id="inputOther" class="checkbox">
+                <label class="col-lg-3">
+                  <input id="is_admin" type="checkbox" {% if user and user.right_admin %}checked{% endif %}>
+                  Admin
+                </label>
+                <label class="col-lg-3">
+                  <input id="viewstock" type="checkbox" {% if user and user.right_viewstock %}checked{% endif %}>
+                  View Stock
+                </label>
+                <label class="col-lg-3">
+                  <input id="viewtransactions" type="checkbox"
+                         {% if user and user.right_viewalltransactions %}checked{% endif %}>
+                  View <strong>All</strong> transactions
+                </label>
+                <label class="col-lg-3">
+                  <input id="posaction" type="checkbox" {% if user and user.right_posaction %}checked{% endif %}>
+                  Point-of-Sale
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-lg-9 col-lg-offset-3">
+              <button type="button" class="btn btn-primary" onclick="submit_relation();">Submit</button>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </form>
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script type="text/javascript">
+
+      function submit_relation() {
+          if (field_validate_strlen('#username', 4)) {
+
+              tosubmit = {};
+              tosubmit.username = $('#username').val();
+              if ($('#password').val() !== "")
+                  tosubmit.password = $('#password').val();
+
+              if ($('#relation').val() !== "")
+                  tosubmit.relation = $('#relation').val();
+
+              tosubmit.is_admin = $("#is_admin").prop("checked");
+              tosubmit.viewstock = $("#viewstock").prop("checked");
+              tosubmit.viewtransactions = $("#viewtransactions").prop("checked");
+              tosubmit.posaction = $("#posaction").prop("checked");
+
+
+              {% if user -%}
+                  post_object(tosubmit, "{{ url_for(".edituser", user_id=user.key.id()) }}", "{{ url_for(".index") }}");
+              {%- else -%}
+                  post_object(tosubmit, "{{ url_for(".adduser") }}", "{{ url_for(".index") }}");
+              {%- endif %}
+          }
+
+          return true;
+      }
+
+  </script>
+{% endblock %}

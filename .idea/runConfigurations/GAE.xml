@@ -1,0 +1,21 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="GAE" type="PythonConfigurationType" factoryName="Python" singleton="true">
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+    </envs>
+    <option name="SDK_HOME" value="M:\Software\Google\Cloud SDK\google-cloud-sdk\platform\bundledpython\python.exe" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <module name="tantalus" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+    <option name="SCRIPT_NAME" value="M:/Software/Google/Cloud SDK/google-cloud-sdk/bin/dev_appserver.py" />
+    <option name="PARAMETERS" value="app.yaml --automatic_restart=no --max_module_instances=&quot;default:1&quot;" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="EMULATE_TERMINAL" value="false" />
+    <method />
+  </configuration>
+</component>

@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% from 'tantalus_mod_helpers.html' import render_mod_as_tag %}
+{% from 'tantalus_general_helpers.html' import format_currency %}
+
+{% block container %}
+  {% if transaction is defined %}
+    <h2>Edit {{ transaction.relation.get().name }} {{ (transaction.reference | string).zfill(3) }}</h2>
+  {% else %}
+    <h2>New transaction</h2>
+  {% endif %}
+
+  <form class="form col-xs-12">
+    <div class="well bs-component">
+      <fieldset>
+        <legend>General</legend>
+        <div class="form-group row">
+          <div class="col-xs-12">
+            <ul id='relation-preview' class="nav nav-pills">
+            </ul>
+          </div>
+        </div>
+        <div class="form-group row">
+          <div class="col-xs-8">
+            <input id="relation-input" class="form-control" placeholder="Relation"/>
+          </div>
+
+          <div class="col-xs-4">
+            <input id="delivered" type="date" class="form-control" placeholder="Delivery Date"
+                   value="{% if transaction is defined %}{{ transaction.deliverydate }}{% endif %}"/>
+          </div>
+        </div>
+
+        <div class="form-group row">
+          <div class="col-xs-12">
+            <input id="event" class="form-control" placeholder="Event Description"
+                   value="{% if transaction is defined %}{{ transaction.description }}{% endif %}"/>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div class="well bs-component">
+      <fieldset>
+        <legend>Selling</legend>
+
+        <table id="sell-table" class="table table-hover">
+          <tr>
+            <th>Product</th>
+            <th class="td-num">Amount</th>
+            <th>Mods</th>
+            <th></th>
+          </tr>
+        </table>
+        <div class="form-group row">
+          <div class="col-xs-12">
+            <ul id='sell-preview' class="nav nav-pills">
+            </ul>
+          </div>
+        </div>
+        <div class="form-group row">
+
+          <div class="col-xs-7">
+            <input id="sell-product-input" class="form-control" placeholder="Product"/>
+          </div>
+
+          <div class="col-xs-2">
+            <input id="sell-amount-input" type="number" class="form-control" placeholder="Amount"/>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div class="well bs-component">
+      <fieldset>
+
+        <legend>Buying</legend>
+
+
+        <table id="buy-table" class="table table-hover">
+          <tr>
+            <th>Product</th>
+            <th class="td-num">Amount</th>
+            <th class="td-num">Price</th>
+            <th>Mods</th>
+            <th></th>
+          </tr>
+        </table>
+        <div class="form-group row">
+          <div class="col-xs-12">
+            <ul id='buy-preview' class="nav nav-pills">
+            </ul>
+          </div>
+        </div>
+
+        <div class="form-group row">
+          <div class="col-xs-7">
+            <input id="buy-product-input" class="form-control" placeholder="Product"/>
+          </div>
+
+          <div class="col-xs-2">
+            <input id="buy-amount-input" type="number" class="form-control" placeholder="Amount"/>
+          </div>
+
+          <div class="col-xs-3">
+            <input id="buy-price-input" type="number" class="form-control" placeholder="Price"/>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div class="well bs-component">
+      <fieldset>
+        <legend>Services</legend>
+
+        <table id="service-table" class="table table-hover">
+          <tr>
+            <th>Product</th>
+            <th class="td-num">Amount</th>
+            <th class="td-num">Price</th>
+            <th></th>
+          </tr>
+        </table>
+        <div class="form-group row">
+
+          <div class="col-xs-7">
+            <input id="service-product-input" class="form-control" placeholder="Product"/>
+          </div>
+
+          <div class="col-xs-2">
+            <input id="service-amount-input" type="number" class="form-control" placeholder="Amount"/>
+          </div>
+
+          <div class="col-xs-3">
+            <input id="service-price-input" type="number" class="form-control" placeholder="Price"/>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+  </form>
+  <div class="well bs-component">
+    <p>
+      <button type="button" class="btn btn-primary" onclick="transaction.submit()">Submit</button>
+      All autocomplete fields are <a href="https://regex101.com/">regex</a> enabled. To quickly multiply a price with
+      the amount you entered press 'a'.
+    </p>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="mod-modal" tabindex="-1" role="dialog" aria-labelledby="mod-modal-label">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                  aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="mod-modal-label">Add new mods</h4>
+        </div>
+        <div class="modal-body">
+          {% for mod in mods %}
+            {{ render_mod_as_tag(mod) }}
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="/static/js/transaction.js"></script>
+  <script type="text/javascript">
+      window.products = {{ products|todict_filtered|tojson|safe }};
+      window.mods = {{ mods|todict_filtered|tojson|safe }};
+      window.relations = {{ relations|todict_filtered|tojson|safe }};
+
+      {% if transaction is defined %}
+          transaction.init("{{ url_for(".edittransaction", transaction_id=transaction.key.id()) }}");
+      {% else %}
+          transaction.init("{{ url_for(".addtransaction") }}");
+      {% endif %}
+
+      {% if transaction is defined %}
+          to_edit = {{ transaction|tr_todict|tojson|safe }};
+
+          $.each(to_edit.one_to_two, function (i, val) {
+              sell_data.data_to_html(val)
+          });
+          $.each(to_edit.two_to_one, function (i, val) {
+              buy_data.data_to_html(val)
+          });
+          $.each(to_edit.services, function (i, val) {
+              service_data.data_to_html(val)
+          });
+
+          var prd = $("#relation-input").data('predictor');
+          prd.selected = {{ relations.index(transaction.relation.get()) }};
+          prd.finalize();
+      {% endif %}
+  </script>
+
+{% endblock %}

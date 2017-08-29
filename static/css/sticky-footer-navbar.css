@@ -1,0 +1,46 @@
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    /* Margin bottom by footer height */
+    margin-bottom: 61px;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    /* Set the fixed height of the footer here */
+    height: 60px;
+    background-color: #f5f5f5;
+}
+
+.container .text-muted {
+    margin: 18px 0;
+}
+
+.footer > .container {
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.td-num {
+    text-align: right;
+}
+
+.btn-primary {
+    background-color: #E3C449;
+}
+
+.btn-primary:hover {
+    background-color: #D8B947;
+}
+
+.nav-pills {
+    height: 44px;
+    background-color: #e5e2de;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+}

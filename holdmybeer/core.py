@@ -11,6 +11,8 @@ class Bucket(object):
         self.contenttype = contenttype
         self.amount = amount
         self.value = value
+        self.prevalue = value
+        self.mods = []
 
     def take(self, contenttype, amount):
         if contenttype != self.contenttype:
@@ -39,13 +41,13 @@ class Bucket(object):
         self.value += value
 
     def dump(self):
-        ret = [self.__class__(self.contenttype, self.amount, self.value)]
+        ret = [self.__class__(contenttype=self.contenttype, amount=self.amount, value=self.value)]
         self.amount = 0
         self.value = 0
         return ret
 
     def clone(self):
-        return self.__class__(self.contenttype, self.amount, self.value)
+        return self.__class__(contenttype=self.contenttype, amount=self.amount, value=self.value)
 
     def absorb(self, other):
         todo = other.dump()

@@ -1,0 +1,24 @@
+{% macro paginator_buttons(paginator) %}
+  <ul class="pagination pull-right">
+    {% if pagination.has_prev %}
+      <li><a href="{{ url_for(request.url_rule.endpoint, page=pagination.page - 1, **paginator.extra) }}">&laquo;</a>
+      </li>
+    {% else %}
+      <li class="disabled"><span>&laquo;</span></li>
+    {% endif %}
+    {% for i in range(pagination.page) %}
+      <li><a href="{{ url_for(request.url_rule.endpoint, page=i, **paginator.extra) }}">{{ i }}</a></li>
+    {% endfor %}
+    <li class="active"><span>{{ pagination.page }}</span></li>
+    {% for i in range(pagination.page + 1, pagination.page_max) %}
+      <li><a href="{{ url_for(request.url_rule.endpoint, page=i, **paginator.extra) }}">{{ i }}</a></li>
+    {% endfor %}
+    {% if pagination.has_next %}
+      <li><a href="{{ url_for(request.url_rule.endpoint, page=pagination.page + 1, **paginator.extra) }}">&raquo;</a>
+      </li>
+    {% else %}
+      <li class="disabled"><span>&raquo;</span></li>
+    {% endif %}
+  </ul>
+{% endmacro %}
+

@@ -19,6 +19,9 @@ class Bucketlist(object):
             raise IncompatibleContainer()
         if bucket.contenttype in self.mydict:
             self.mydict[bucket.contenttype].absorb(bucket)
+            return self.mydict[bucket.contenttype]
+        self.mydict[bucket.contenttype] = bucket
+        return bucket
 
     def take(self, contenttype, amount):
         if contenttype in self.mydict:
@@ -46,6 +49,7 @@ class Bucketlist(object):
             for b in dump:
                 other.absorb(b)
             raise
+        return dump
 
     def clone(self):
         ls = self.__class__(self.autocreate)
@@ -151,7 +155,7 @@ class Stream:
         self.two_to_one = self.listtype(autocreate=True)
 
     def send_one_to_two(self, bucket):
-        self.one_to_two.absorb(bucket.clone())
+        return self.one_to_two.append(bucket.clone())
 
     def send_two_to_one(self, bucket):
-        self.two_to_one.absorb(bucket.clone())
+        return self.two_to_one.append(bucket.clone())

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+{% from 'tantalus_mod_helpers.html' import render_mod_as_equation with context %}
+
+{% block container %}
+  <div>
+    <h1>{{ name }}</h1>
+  </div>
+
+  Event date: {{ deliverydate }}<br>
+  Processed date: {{ processeddate }}<br>
+  Last edit: {{ lastedit }}<br>
+  Description: {{ description }}<br>
+  Revision: {{ revision }}
+
+  <h2>Sold</h2>
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Product</th>
+        <th>Amount</th>
+        <th>Inventory Value</th>
+        {% for name in sell.modnames %}
+          <th>{{ name }}</th>
+        {% endfor %}
+        <th>Total</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for row in sell.rows %}
+        <tr>
+          <td>{{ row.contenttype }}</td>
+          <td align="right">{{ row.amount }}</td>
+          <td align="right">{{ row.prevalue | format_currency }}</td>
+          {% for modtotal in row.modtotals %}
+            <td align="right">{{ modtotal | format_currency }}</td>
+          {% endfor %}
+          <td align="right">{{ row.total | format_currency }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Bought</h2>
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Product</th>
+        <th>Amount</th>
+        <th>Entered Value</th>
+        {% for name in buy.modnames %}
+          <th>{{ name }}</th>
+        {% endfor %}
+        <th>Total</th>
+        <th>Inventory Value</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for row in buy.rows %}
+        <tr>
+          <td>{{ row.contenttype }}</td>
+          <td>{{ row.amount }}</td>
+          <td>{{ row.prevalue | format_currency }}</td>
+          {% for modtotal in row.modtotals %}
+            <td>{{ modtotal | format_currency }}</td>
+          {% endfor %}
+          <td>{{ row.total | format_currency }}</td>
+          <td>{{ row.value | format_currency }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Services</h2>
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Amount</th>
+        <th>Price</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for row in service.rows %}
+        <tr>
+          <td>{{ row.contenttype }}</td>
+          <td>{% if row.amount and row.amount != 0 %}{{ row.amount }}{% endif %}</td>
+          <td>{{ row.value | format_currency }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <strong>Totaal: </strong> {{ total | format_currency }}<br>
+  <a class="btn btn-primary" href="{{ url_for(".edittransaction", transaction_id=id) }}">Edit</a>
+
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <style type="text/css">
+    @-moz-document url-prefix() {
+      fieldset {
+        display: table-cell;
+      }
+    }
+  </style>
+{% endblock %}
