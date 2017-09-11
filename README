@@ -1,16 +1,1 @@
-Formalize managing inventory as product buckets.
-
-Work in progress.
-
-Example:
-
-from holdmybeer import Bucket, Well, flow
-
-
-tap = Bucket('beer', amount=10, value=5)
-glass = tap.take('beer', 2)
-print(glass) # 1.0
-
-tank = Well('beer', 3)
-flow(tank, tap, 3)
-print(tap.value) # 13
+Tantalus bookkeeping, description coming soon!
