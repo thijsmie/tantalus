@@ -1,5 +1,7 @@
 {% if current_user.is_authenticated %}
-  Hi {{ current_user.username }}! <a style="display:inline-block;" href="{{ url_for('tantalus.logout') }}">Logout</a>
+  <a style="display:inline-block;"
+     href="{{ url_for("tantalus.user.edituser", user_id=current_user.key.id()) }}">Hi {{ current_user.username }}!</a>
+  <a style="display:inline-block;" href="{{ url_for('tantalus.logout') }}">Logout</a>
 {% else %}
   <a href="{{ url_for('tantalus.login') }}"> Click here to login.</a>
 {% endif %}

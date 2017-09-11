@@ -2,6 +2,7 @@ from datetime import datetime, date, time
 from google.appengine.ext import ndb
 from flask.json import jsonify as fjsonify
 from api.actions.rows import without_mod_values
+from ndbextensions.models import TypeGroup
 
 
 def recurse_encode(o):
@@ -56,14 +57,14 @@ def transaction_recode(o):
     t = recurse_encode(o)
 
     for row in t['one_to_two']:
-        row['contenttype'] = ndb.Key("Product", row['product']).get().contenttype
+        row['contenttype'] = ndb.Key("Product", row['product'], parent=TypeGroup.product_ancestor()).get().contenttype
         row['id'] = row['product']
         del row['value']
         del row['product']
         del row['modamounts']
 
     for i, row in enumerate(t['two_to_one']):
-        row['contenttype'] = ndb.Key("Product", row['product']).get().contenttype
+        row['contenttype'] = ndb.Key("Product", row['product'], parent=TypeGroup.product_ancestor()).get().contenttype
         row['id'] = row['product']
         row['price'] = without_mod_values(o.two_to_one[i])
         del row['value']

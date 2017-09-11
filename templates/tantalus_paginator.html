@@ -10,7 +10,7 @@
       <li><a href="{{ url_for(request.url_rule.endpoint, page=i, **paginator.extra) }}">{{ i }}</a></li>
     {% endfor %}
     <li class="active"><span>{{ pagination.page }}</span></li>
-    {% for i in range(pagination.page + 1, pagination.page_max) %}
+    {% for i in range(pagination.page + 1, pagination.page_max + 1) %}
       <li><a href="{{ url_for(request.url_rule.endpoint, page=i, **paginator.extra) }}">{{ i }}</a></li>
     {% endfor %}
     {% if pagination.has_next %}

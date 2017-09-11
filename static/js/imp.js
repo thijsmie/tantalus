@@ -7,7 +7,6 @@ function post_object(object, endpoint, redirect) {
         return;
     posting = true;
 
-    object["_csrf_token"] = $('meta[name=csrf-token]').attr('content');
     console.log(JSON.stringify(object));
     $.ajax({
         type: "POST",

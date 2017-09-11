@@ -7,7 +7,7 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import Mod
+from ndbextensions.models import Mod, TypeGroup
 from ndbextensions.paginator import Paginator
 
 from tantalus import bp_mod as router
@@ -69,7 +69,7 @@ def addmod():
 def editmod(mod_id):
     form = request.json
 
-    mod = Key("Mod", mod_id).get()
+    mod = Key("Mod", mod_id, parent=TypeGroup.product_ancestor()).get()
     if mod is None:
         abort(404)
 

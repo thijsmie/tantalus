@@ -13,7 +13,7 @@
     <module name="tantalus" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="M:/Software/Google/Cloud SDK/google-cloud-sdk/bin/dev_appserver.py" />
-    <option name="PARAMETERS" value="app.yaml --automatic_restart=no --max_module_instances=&quot;default:1&quot;" />
+    <option name="PARAMETERS" value="app.yaml worker.yaml --automatic_restart=no --max_module_instances=&quot;default:1&quot; --smtp_host=&quot;smtp02.hostnet.nl&quot; --smtp_port=587 --smtp_user=&quot;info@tmiedema.com&quot; --smtp_password=&quot;testtesttest&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <method />

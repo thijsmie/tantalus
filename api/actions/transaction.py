@@ -1,5 +1,5 @@
 from google.appengine.ext.ndb import Key, transactional
-from ndbextensions.models import Transaction, TransactionLine, ServiceLine, Reference
+from ndbextensions.models import Transaction, TransactionLine, ServiceLine, TypeGroup
 from ndbextensions.validate import OperationError
 
 from api.actions.rows import transform_collection
@@ -8,73 +8,64 @@ from datetime import datetime
 from pytz import timezone
 
 
-def guess_next_number(relation):
-    # This is a guess because race conditions. Is handled where this result is used
+def new_transaction(data,):
+    relation = Key('Relation', int(data["relation"]), parent=TypeGroup.relation_ancestor())
+    if relation.get() is None:
+        raise OperationError("Relation does not exist!")
+
     tr = Transaction.query(Transaction.relation == relation).order(-Transaction.reference).get()
     if tr is None:
-        return 1
+        reference = 1
     else:
-        return tr.reference + 1
+        reference = tr.reference + 1
 
-
-@transactional(xg=True)
-def new_transaction(data, reference):
     t = Transaction(
         revision=0,
-        relation=Key('Relation', int(data["relation"])),
+        reference=reference,
+        relation=relation,
         deliverydate=datetime.strptime(data["deliverydate"], "%Y-%m-%d").date(),
         processeddate=datetime.now(timezone("Europe/Amsterdam")).date(),
-        lastedit=datetime.now(),
-        description=data["description"]
+        description=data.get("description", "")
     )
 
-    # Some tricky anti race-condition magic to find the next transaction reference.
-    while True:
-        ref_u = Key(Reference, str(t.relation.id()) + "_" + str(reference))
-        if ref_u.get() is not None:
-            reference += 1
-            continue
-        break
+    @transactional(xg=True)
+    def tricky_stuff():
+        for prd in data["sell"]:
+            product = Key('Product', int(prd['id']), parent=TypeGroup.product_ancestor()).get()
+            if product is None:
+                raise OperationError("Product with id {} does not exist.".format(product))
+            line = product.take(int(prd['amount']))
+            product.put()
 
-    ref_u = Reference(key=ref_u)
-    t.reference = reference
-    t.reference_u = ref_u.key
+            for mod in prd["mods"]:
+                mod_obj = Key('Mod', int(mod), parent=TypeGroup.product_ancestor()).get()
+                if mod_obj is None:
+                    raise OperationError("Mod with id {} does not exist.".format(mod))
+                mod_obj.apply(line)
 
-    for prd in data["sell"]:
-        product = Key('Product', int(prd['id'])).get()
-        if product is None:
-            raise OperationError("Product with id {} does not exist.".format(product))
-        line = product.take(int(prd['amount']))
-        product.put()
+            t.one_to_two.append(line)
 
-        for mod in prd["mods"]:
-            mod_obj = Key('Mod', int(mod)).get()
-            if mod_obj is None:
-                raise OperationError("Mod with id {} does not exist.".format(mod))
-            mod_obj.apply(line)
+        for prd in data["buy"]:
+            product = Key('Product', int(prd['id']), parent=TypeGroup.product_ancestor()).get()
+            if product is None:
+                raise OperationError("Product with id {} does not exist.".format(product))
+            line = TransactionLine(
+                product=product.key,
+                amount=int(prd['amount']),
+                value=int(prd['price'])
+            )
 
-        t.one_to_two.append(line)
+            for mod in prd["mods"]:
+                mod_obj = Key('Mod', int(mod), parent=TypeGroup.product_ancestor()).get()
+                if mod_obj is None:
+                    raise OperationError("Mod with id {} does not exist.".format(mod))
+                mod_obj.apply(line)
 
-    for prd in data["buy"]:
-        product = Key('Product', int(prd['id'])).get()
-        if product is None:
-            raise OperationError("Product with id {} does not exist.".format(product))
-        line = TransactionLine(
-            product=product.key,
-            amount=int(prd['amount']),
-            value=int(prd['price'])
-        )
+            product.give(line)
+            product.put()
+            t.two_to_one.append(line)
 
-        for mod in prd["mods"]:
-            mod_obj = Key('Mod', int(mod)).get()
-            if mod_obj is None:
-                raise OperationError("Mod with id {} does not exist.".format(mod))
-            mod_obj.apply(line)
-
-        product.give(line)
-        product.put()
-        t.two_to_one.append(line)
-
+    tricky_stuff()
     for prd in data["service"]:
         line = ServiceLine(
             service=prd['contenttype'],
@@ -83,9 +74,7 @@ def new_transaction(data, reference):
         )
 
         t.services.append(line)
-
     t.total = transaction_total(t)
-    ref_u.put()
     t.put()
     return t
 
@@ -94,8 +83,6 @@ def new_transaction(data, reference):
 def edit_transaction(t, data):
     # Easy stuff first
     # Note, this does not take care of money in budgets, do outside! Something with transactional limitations...
-
-    t.lastedit = datetime.now()
     t.revision += 1
 
     if "deliverydate" in data:
@@ -106,7 +93,7 @@ def edit_transaction(t, data):
 
     newsell = []
     for prd in data["sell"]:
-        product = Key('Product', int(prd['id'])).get()
+        product = Key('Product', int(prd['id']), parent=TypeGroup.product_ancestor()).get()
         if product is None:
             raise OperationError("Product with id {} does not exist.".format(product))
 
@@ -118,7 +105,7 @@ def edit_transaction(t, data):
         product.put()
 
         for mod in prd["mods"]:
-            mod_obj = Key('Mod', int(mod)).get()
+            mod_obj = Key('Mod', int(mod), parent=TypeGroup.product_ancestor()).get()
             if mod_obj is None:
                 raise OperationError("Mod with id {} does not exist.".format(mod))
             line.mods.append(mod_obj.key)
@@ -129,7 +116,7 @@ def edit_transaction(t, data):
 
     newbuy = []
     for prd in data["buy"]:
-        product = Key('Product', int(prd['id'])).get()
+        product = Key('Product', int(prd['id']), parent=TypeGroup.product_ancestor()).get()
         if product is None:
             raise OperationError("Product with id {} does not exist.".format(product))
         line = TransactionLine(
@@ -139,7 +126,7 @@ def edit_transaction(t, data):
         )
 
         for mod in prd["mods"]:
-            mod_obj = Key('Mod', int(mod)).get()
+            mod_obj = Key('Mod', int(mod), parent=TypeGroup.product_ancestor()).get()
             if mod_obj is None:
                 raise OperationError("Mod with id {} does not exist.".format(mod))
             mod_obj.apply(line)
@@ -245,3 +232,27 @@ def transaction_total(transaction):
     buyrows = [make_row_record(row, bmods, btotals[i]) for i, row in enumerate(transaction.two_to_one)]
     return sum([r['total'] for r in sellrows]) - sum([r['total'] for r in buyrows]) + sum(
         [r.value for r in transaction.services])
+
+
+def tool_reapply_transaction_adding(transaction):
+    # This method will reapply a transaction to stock
+    # tool for testing
+
+    for row in transaction.two_to_one:
+        product = row.product.get()
+        product.amount += row.amount
+        product.value += row.value
+        product.put()
+
+
+def tool_reapply_transaction_removing(transaction):
+    for row in transaction.one_to_two:
+        product = row.product.get()
+        prevalue = row.value
+        for i, mod in enumerate(row.mods):
+            if mod.get().modifies:
+                prevalue -= row.modamounts[i]
+        product.amount -= row.amount
+        product.value -= prevalue
+        product.put()
+

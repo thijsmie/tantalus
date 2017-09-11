@@ -101,7 +101,7 @@
   </div>
   <strong>Totaal: </strong> {{ total | format_currency }}<br>
   <a class="btn btn-primary" href="{{ url_for(".edittransaction", transaction_id=id) }}">Edit</a>
-
+  <a class="btn btn-primary" href="{{ url_for(".resend", transaction_id=id) }}">Resend</a>
 {% endblock %}
 
 {% block styles %}

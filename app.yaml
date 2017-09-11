@@ -1,8 +1,6 @@
 runtime: python27
 api_version: 1
 threadsafe: false
-application: pytantalus
-version: controlled-destruction-2
 
 handlers:
 - url: /static

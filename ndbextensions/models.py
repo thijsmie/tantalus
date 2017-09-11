@@ -5,8 +5,22 @@ from google.appengine.ext import ndb
 import validate
 
 
+class TypeGroup(ndb.Model):
+    @classmethod
+    def product_ancestor(cls):
+        return ndb.Key("Typegroup", "product")
+
+    @classmethod
+    def transaction_ancestor(cls):
+        return ndb.Key("Typegroup", "transaction")
+
+    @classmethod
+    def relation_ancestor(cls):
+        return ndb.Key("Typegroup", "relation")
+
+
 class Relation(ndb.Model):
-    name = ndb.StringProperty(required=True, validator=validate.ensurelength(4))
+    name = ndb.StringProperty(required=True, validator=validate.ensurelength(1))
     budget = ndb.IntegerProperty(default=0)
 
     has_budget = ndb.BooleanProperty(required=True)
@@ -14,9 +28,15 @@ class Relation(ndb.Model):
 
     email = ndb.TextProperty(default="")
 
+    def __init__(self, *args, **kwargs):
+        super(Relation, self).__init__(*args, parent=TypeGroup.relation_ancestor(), **kwargs)
+
 
 class Group(ndb.Model):
     name = ndb.StringProperty(required=True, validator=validate.ensurelength(4))
+
+    def __init__(self, *args, **kwargs):
+        super(Group, self).__init__(*args, parent=TypeGroup.product_ancestor(), **kwargs)
 
 
 class Mod(ndb.Model):
@@ -54,6 +74,9 @@ class Mod(ndb.Model):
 
         line.mods.append(self.key)
         line.modamounts.append(int(diff))
+
+    def __init__(self, *args, **kwargs):
+        super(Mod, self).__init__(*args, parent=TypeGroup.product_ancestor(), **kwargs)
 
 
 class Product(ndb.Model):
@@ -98,6 +121,9 @@ class Product(ndb.Model):
         self.amount += container.amount
         self.value += container.value
 
+    def __init__(self, *args, **kwargs):
+        super(Product, self).__init__(*args, parent=TypeGroup.product_ancestor(), **kwargs)
+
 
 class TransactionLine(ndb.Model):
     product = ndb.KeyProperty(kind=Product)
@@ -129,19 +155,12 @@ class ServiceLine(ndb.Model):
     amount = ndb.IntegerProperty()
 
 
-class Reference(ndb.Model):
-    # Keys are the only thing guaranteed to be unique in a database. Set them as a combo Relation_refnumber
-    # Also referred to as anit-race-condition magic
-    pass
-
-
 class Transaction(ndb.Model):
     reference = ndb.IntegerProperty()
     revision = ndb.IntegerProperty(default=0)
-    reference_u = ndb.KeyProperty(kind=Reference)
     deliverydate = ndb.DateProperty()
     processeddate = ndb.DateProperty()
-    lastedit = ndb.DateTimeProperty()
+    lastedit = ndb.DateTimeProperty(auto_now=True)
     description = ndb.TextProperty(default="")
 
     relation = ndb.KeyProperty(kind=Relation, required=True)
@@ -151,6 +170,9 @@ class Transaction(ndb.Model):
     services = ndb.LocalStructuredProperty(ServiceLine, repeated=True)
 
     total = ndb.IntegerProperty(default=0)
+
+    def __init__(self, *args, **kwargs):
+        super(Transaction, self).__init__(*args, parent=TypeGroup.transaction_ancestor(), **kwargs)
 
 
 class User(ndb.Model):
@@ -163,6 +185,9 @@ class User(ndb.Model):
     right_viewstock = ndb.BooleanProperty(default=False)
     right_viewalltransactions = ndb.BooleanProperty(default=False)
     right_posaction = ndb.BooleanProperty(default=False)
+
+    def __init__(self, *args, **kwargs):
+        super(User, self).__init__(*args, parent=TypeGroup.relation_ancestor(), **kwargs)
 
     # Flask-Login required functionality
 
@@ -180,3 +205,25 @@ class User(ndb.Model):
 
     def get_id(self):
         return self.session
+
+
+class PosProduct(ndb.Model):
+    product = ndb.KeyProperty(kind=Product)
+    name = ndb.StringProperty(default="")
+    scan_id = ndb.StringProperty(default="")
+    keycode = ndb.StringProperty(default="")
+    price = ndb.IntegerProperty(default=0)
+
+    def __init__(self, *args, **kwargs):
+        super(PosProduct, self).__init__(*args, parent=TypeGroup.product_ancestor(), **kwargs)
+
+
+class PosSale(ndb.Model):
+    product = ndb.KeyProperty(kind=PosProduct)
+    amount = ndb.IntegerProperty(default=1)
+    user = ndb.KeyProperty(kind=User)
+    time = ndb.DateTimeProperty(auto_now_add=True)
+    processed = ndb.BooleanProperty(default=False)
+
+    def __init__(self, *args, **kwargs):
+        super(PosSale, self).__init__(*args, parent=TypeGroup.product_ancestor(), **kwargs)

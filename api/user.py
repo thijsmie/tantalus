@@ -7,7 +7,7 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin, new_user, update_password
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import User, Relation
+from ndbextensions.models import User, Relation, TypeGroup
 from ndbextensions.paginator import Paginator
 
 from tantalus import bp_user as router
@@ -61,7 +61,7 @@ def adduser():
 def edituser(user_id):
     form = request.json or request.form
 
-    user = Key("User", user_id).get()
+    user = Key("User", user_id, parent=TypeGroup.relation_ancestor()).get()
 
     if request.method == "POST":
         user.username = form.get('username', user.username)
@@ -70,7 +70,7 @@ def edituser(user_id):
             update_password(user, form['password'])
 
         if 'relation' in form:
-            rel = Key("Relation", int(form['relation']))
+            rel = Key("Relation", int(form['relation']), ancestor=TypeGroup.relation_ancestor())
             if rel.get() is None:
                 abort(400)
             user.relation = rel

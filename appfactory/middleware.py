@@ -5,10 +5,11 @@ To be imported by the application.current_app() factory.
 
 from logging import getLogger
 
-from flask import current_app, render_template
+from flask import current_app, render_template, request, session, abort
 from markupsafe import Markup
 
 from ndbextensions import ndbjson
+from appfactory.auth import generate_csrf_token
 
 LOG = getLogger(__name__)
 
@@ -104,6 +105,14 @@ def format_date(value, date_format='%Y-%m-%d'):
 
 
 @current_app.template_filter()
+def format_datetime(value, datetime_format='%Y-%m-%d %H:%M'):
+    try:
+        return value.strftime(datetime_format)
+    except ValueError:
+        return value
+
+
+@current_app.template_filter()
 def format_currency(value):
     return "{:.2f}".format(value / 100.0).replace('.', ',')
 
@@ -121,3 +130,22 @@ def todict_filtered(o):
 @current_app.template_filter()
 def tr_todict(o):
     return ndbjson.transaction_recode(o)
+
+
+@current_app.after_request
+def apply_transport_security(response):
+    response.headers["Strict-Transport-Security"] = "max-age=31536000"
+    return response
+
+
+# Setup CSRF-protection
+# Please note that JSON is exempt from this, only relevant for call via form that redirect
+@current_app.before_request
+def csrf_protect():
+    if request.method == "POST":
+        if request.form and not request.json:
+            token = session.get('_csrf_token', None)
+            if not token or token != request.form.get('_csrf_token'):
+                abort(403)
+
+current_app.jinja_env.globals['csrf_token'] = generate_csrf_token

@@ -1,5 +1,5 @@
 from flask_login import LoginManager, login_user, logout_user, current_user
-from flask import redirect, abort
+from flask import redirect, abort, session
 from functools import wraps
 from passlib.hash import pbkdf2_sha256 as hashf
 
@@ -7,7 +7,7 @@ from google.appengine.ext import ndb
 from google.appengine.api import memcache
 
 from appfactory import flash
-from ndbextensions.models import User
+from ndbextensions.models import User, TypeGroup
 
 # Random session key generation, inspired by django.utils.crypto.get_random_string
 import random
@@ -23,6 +23,12 @@ except NotImplementedError:
 def generate_random_string(length):
     return ''.join(
         [random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.,') for _ in range(length)])
+
+
+def generate_csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = generate_random_string(16)
+    return session['_csrf_token']
 
 
 auth = LoginManager()
@@ -76,7 +82,7 @@ def new_user(username, password, isadmin=False, relation=None, viewstock=False, 
     )
 
     if relation is not None:
-        user.relation = ndb.Key("Relation", relation)
+        user.relation = ndb.Key("Relation", relation, parent=TypeGroup.relation_ancestor())
         if user.relation.get() is None:
             abort(400)
 
@@ -138,7 +144,7 @@ def ensure_user_transaction(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.right_admin or current_user.right_viewalltransactions:
-            transaction = ndb.Key("Transaction", kwargs.get('transaction_id')).get()
+            transaction = ndb.Key("Transaction", kwargs.get('transaction_id'), parent=TypeGroup.transaction_ancestor()).get()
             if transaction is None or not (
                             current_user.relation is not None and current_user.relation == transaction.relation):
                 flash.danger("Your user account is not allowed to perform this action.")

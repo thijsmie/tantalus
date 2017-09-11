@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+
+{% block container %}
+  <div>
+    <h1>Point of Sale Sales</h1>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Item</th>
+        <th>Amount</th>
+        <th>Time</th>
+        <th>Sold by</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for possale in pagination.items %}
+        <tr>
+          <td><a href="{{ url_for('.editposproduct', posproduct_id=possale.product.id()) }}">{{ possale.product.get().name }}</a></td>
+          <td align="right">{{ possale.amount }}</td>
+          <td>{{ possale.time | format_datetime}}</td>
+          <td>{{ possale.user.get().username }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="4" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <a href="{{ url_for('.addposproduct') }}" class="btn btn-default">Make transaction</a>
+  {{ paginator_buttons(pagination) }}
+{% endblock %}
+

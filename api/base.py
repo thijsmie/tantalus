@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, request, jsonify, current_app
+from flask import render_template, redirect, url_for, request
 from flask_login import current_user
 from tantalus import bp_base as router
 
@@ -6,6 +6,7 @@ from google.appengine.ext.db import stats
 
 from appfactory import flash
 from appfactory.auth import do_login, do_logout
+from ndbextensions.ndbjson import jsonify
 
 
 @router.route('/')
@@ -34,6 +35,13 @@ def logout():
     return redirect(url_for('.index'))
 
 
-@router.route('/token.json')
+@router.route('/login.json', methods=["POST"])
 def token():
-    return jsonify(_csrf_token=current_app.jinja_env.globals['csrf_token']())
+    form = request.json
+    try:
+        if do_login(form['username'], form['password'], 'remember-me' in form):
+            return jsonify({})
+        else:
+            return jsonify({"error": "Incorrect login!"}, 401)
+    except KeyError:
+        return jsonify({"error": "Supply username and password!"}, 400)

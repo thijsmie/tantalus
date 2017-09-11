@@ -10,5 +10,5 @@ class Paginator:
 
         self.has_prev = page > 0
         self.page = page
-        self.page_max = int(float(query.count()) / per_page + 0.5)
+        self.page_max = int(query.count() / per_page)
         self.extra = kwargs

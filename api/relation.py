@@ -7,7 +7,7 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import Relation
+from ndbextensions.models import Relation, TypeGroup
 from ndbextensions.paginator import Paginator
 
 from tantalus import bp_relation as router
@@ -64,7 +64,7 @@ def addrelation():
 def editrelation(relation_id):
     form = request.json or request.form
 
-    relation = Key("Relation", relation_id).get()
+    relation = Key("Relation", relation_id, parent=TypeGroup.relation_ancestor()).get()
 
     if request.method == "POST":
         relation.name = form.get('name', relation.name)

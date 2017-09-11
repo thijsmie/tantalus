@@ -68,12 +68,12 @@
 
       function submit_relation() {
           if (field_validate_money('#budget') &&
-              field_validate_strlen('#name', 4)) {
+              field_validate_strlen('#name', 1)) {
 
               tosubmit = {};
               tosubmit.name = $('#name').val();
               tosubmit.email = $('#email').val();
-              tosubmit.budget = parseInt(parseFloat($('#budget').val()) * 100);
+              tosubmit.budget = parseInt(parseFloat($('#budget').val().replace(",", ".")) * 100);
               tosubmit.has_budget = $("#has_budget").prop("checked");
               tosubmit.send_mail = $("#send_mail").prop("checked");
 
