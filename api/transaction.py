@@ -145,8 +145,7 @@ def resend(transaction_id):
     if transaction is None:
         return abort(404)
 
-    for transaction in Transaction.query().fetch():
-        taskqueue.add(url='/invoice',
-                      target='worker',
-                      params={'transaction': transaction.key.id()})
+    taskqueue.add(url='/invoice',
+                  target='worker',
+                  params={'transaction': transaction.key.id()})
     return redirect(url_for(".showtransaction", transaction_id=transaction_id))
