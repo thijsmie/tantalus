@@ -16,7 +16,7 @@ class InvoiceHandler(webapp2.RequestHandler):
         def get_budget():
             after = Transaction.query(
                 Transaction.reference > transaction.reference and Transaction.relation == transaction.relation).fetch()
-            return relation.budget - sum([t.total for t in after])
+            return relation.budget + sum([t.total for t in after])
 
         if relation.has_budget:
             budget = get_budget()
@@ -25,7 +25,7 @@ class InvoiceHandler(webapp2.RequestHandler):
 
         if relation.send_mail:
             pdf = make_invoice(record, budget)
-        send_invoice(relation, transaction, pdf)
+            send_invoice(relation, transaction, pdf)
 
 
 app = webapp2.WSGIApplication([

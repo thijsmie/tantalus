@@ -3,7 +3,7 @@
   <component name="FacetManager">
     <facet type="google-appengine-python" name="Google App Engine (Python)">
       <configuration>
-        <option name="rootFolder" value="M:\Libraries\Dropbox\Projects\tantalus" />
+        <option name="rootFolder" value="M:\Libraries\Projects\tantalus" />
         <option name="sdkFolder" value="M:\Software\Google\Cloud SDK\google-cloud-sdk\platform\google_appengine" />
         <option name="templatesFolder" value="" />
         <option name="oauth2" value="false" />
