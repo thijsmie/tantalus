@@ -25,7 +25,7 @@ class InvoiceHandler(webapp2.RequestHandler):
 
         if relation.send_mail:
             pdf = make_invoice(record, budget)
-        send_invoice(relation, transaction, pdf)
+            send_invoice(relation, transaction, pdf)
 
 
 app = webapp2.WSGIApplication([
