@@ -15,7 +15,7 @@ class InvoiceHandler(webapp2.RequestHandler):
 
         def get_budget():
             after = Transaction.query(
-                Transaction.reference > transaction.reference and Transaction.relation == transaction.relation).fetch()
+                Transaction.reference > transaction.reference, Transaction.relation == transaction.relation).fetch()
             return relation.budget + sum([t.total for t in after])
 
         if relation.has_budget:
