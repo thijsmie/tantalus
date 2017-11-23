@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="GAE_SDK" type="python">
-	<CLASSES>
-	  <root url="M:/Software/Google/Cloud SDK/google-cloud-sdk/lib/third_party" />
-      <root url="M:/Software/Google/Cloud SDK/google-cloud-sdk/lib" />
-	</CLASSES>
-	<SOURCES />
-  </library>
-</component>

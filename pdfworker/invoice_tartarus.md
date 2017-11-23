@@ -15,32 +15,32 @@ Factuurdatum: {{ transaction.processeddate }} | olympus@science.ru.nl
 
 {% if transaction.sell.rows|length > 0 %}
 ## Geleverd
-Product | Aantal | Stukprijs | Totaal
-:------------- | ---:| ---:| --:
+Product | Aantal | Basiswaarde | {% for name in transaction.sell.modnames %}{{ name }} | {% endfor %}Totaal
+:------------- | ---:| ---:| {% for name in transaction.sell.modnames %}--:| {% endfor %}--:
 {% for row in transaction.sell.rows -%}
-{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.value / (row.amount | float)) }} | {{ format_currency(row.prevalue) }} | {{ format_currency(row.total) }}
+{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.prevalue) }} | {% for modtotal in row.modtotals %}{{ format_currency(modtotal) }} | {% endfor %}{{ format_currency(row.total) }}
 {% endfor -%}
-**Totaal** | | | *{{ format_currency(totals.selltotal) }}*
+**Totaal** | | *{{ format_currency(totals.sellprevalue) }}* | {% for total in totals.sellmods %}*{{ format_currency(total) }}* | {% endfor %}*{{ format_currency(totals.selltotal) }}*
 
 {% endif %}
 {% if transaction.buy.rows|length > 0 %}
 ## Retour
-Product | Aantal | Stukprijs | Totaal
-:------------- | ---:| --: | --:
+Product | Aantal | {% for name in transaction.buy.modnames %}{{ name }} | {% endfor %}Totaal
+:------------- | ---:| {% for name in transaction.buy.modnames %}--:| {% endfor %}--:
 {% for row in transaction.buy.rows -%}
-{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.value / (row.amount | float)) }} | {{ format_currency(row.total) }}
+{{ row.contenttype }} | {{ row.amount }} | {% for modtotal in row.modtotals %}{{ format_currency(modtotal) }} | {% endfor %}{{ format_currency(row.total) }}
 {% endfor -%}
-**Totaal** | | | *{{ format_currency(totals.buytotal) }}*
+**Totaal** | | {% for total in totals.buymods %}*{{ format_currency(total) }}* | {% endfor %}*{{ format_currency(totals.buytotal) }}*
 
 {% endif %}
 {% if transaction.service.rows|length > 0 %}
 ## Services
-Product | Aantal | Stukprijs | Totaal
+Product | Aantal | Totaal
 :------------- | ---:| ---:
 {% for row in transaction.service.rows -%}
-{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.value / (row.amount | float)) }} | {{ format_currency(row.value) }}
+{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.value) }}
 {% endfor -%}
-**Totaal** | | | *{{ format_currency(totals.servicetotal) }}*
+**Totaal** | | *{{ format_currency(totals.servicetotal) }}*
 
 {% endif %}
 ### Factuurtotaal: &euro;{{ format_currency(totals.selltotal + totals.servicetotal - totals.buytotal) }}

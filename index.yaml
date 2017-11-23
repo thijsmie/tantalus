@@ -44,11 +44,9 @@ indexes:
   properties:
   - name: relation
   - name: reference
-    direction: desc
 
 - kind: Transaction
   properties:
-  - name: deliverydate
-    direction: desc
-  - name: lastedit
+  - name: relation
+  - name: reference
     direction: desc
