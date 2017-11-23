@@ -8,3 +8,4 @@ Markdown==2.6.9
 PyPDF2==1.26.0
 reportlab==3.4.0
 xhtml2pdf==0.2b1
+requests==2.18.4
