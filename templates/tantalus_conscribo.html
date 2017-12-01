@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+
+{% block container %}
+  <h1>Conscribo Links</h1>
+    
+  <div class="col-md-4 table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Group</th>
+        <th>Linked Account</th>
+        <th>Delete</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for link in grouplinks %}
+        <tr>
+          <td>{{ link.group.get().name }}</td>
+          <td>{{ "{}".format(link.linked) }}</td>
+          <td><a href="{{ url_for(".deletegrouplink", group=link.group.urlsafe()) }}">X</a></td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="3" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-4 table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Mod</th>
+        <th>Linked Account</th>
+        <th>Delete</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for link in modlinks %}
+        <tr>
+          <td>{{ link.mod.get().name }}</td>
+          <td>{{ "{}".format(link.linked) }}</td>
+          <td><a href="{{ url_for(".deletemodlink", mod=link.mod.urlsafe()) }}">X</a></td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="3" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-4 table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Relation</th>
+        <th>Linked Account</th>
+        <th>Delete</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for link in relationlinks %}
+        <tr>
+          <td>{{ link.relation.get().name }}</td>
+          <td>{{ "{}".format(link.linked) }}</td>
+          <td><a href="{{ url_for(".deleterelationlink", relation=link.relation.urlsafe()) }}">X</a></td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="3" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form id="grouplink" class="form-horizontal" action="{{ url_for(".addgrouplink") }}" method="post">
+  <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+    <div class="col-lg-6">
+      <div class="well bs-component">
+        <fieldset>
+          <div class="form-group">
+            <label for="group" class="col-lg-3 control-label">Group</label>
+            <div class="col-lg-9">
+              <select id="group" name="group" class="form-control">
+                {% for group in groups %}
+                <option value="{{ group.key.urlsafe() }}">{{ group.name }}</option>
+                {%- endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="linked" class="col-lg-3 control-label">Account</label>
+            <div class="col-lg-9">
+              <input id="linked" name="linked" type="text" class="form-control" placeholder="Account">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="linked" class="col-lg-3 control-label">Submit</label>
+            <div class="col-lg-9">
+              <input type="submit" class="form-control">
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </form>
+
+  <form id="modlink" class="form-horizontal" action="{{ url_for(".addmodlink") }}" method="post">
+  <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+    <div class="col-lg-6">
+      <div class="well bs-component">
+        <fieldset>
+          <div class="form-group">
+            <label for="group" class="col-lg-3 control-label">Mod</label>
+            <div class="col-lg-9">
+              <select id="mod" name="mod" class="form-control">
+                {% for mod in mods %}
+                <option value="{{ mod.key.urlsafe() }}">{{ mod.name }}</option>
+                {%- endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="linked" class="col-lg-3 control-label">Account</label>
+            <div class="col-lg-9">
+              <input id="linked" name="linked" type="text" class="form-control" placeholder="Account">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="linked" class="col-lg-3 control-label">Submit</label>
+            <div class="col-lg-9">
+              <input type="submit" class="form-control">
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </form>
+
+  <form id="relationlink" class="form-horizontal" action="{{ url_for(".addrelationlink") }}" method="post">
+  <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+    <div class="col-lg-6">
+      <div class="well bs-component">
+        <fieldset>
+          <div class="form-group">
+            <label for="relation" class="col-lg-3 control-label">Relation</label>
+            <div class="col-lg-9">
+              <select id="relation" name="relation" class="form-control">
+                {% for relation in relations %}
+                <option value="{{ relation.key.urlsafe() }}">{{ relation.name }}</option>
+                {%- endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="linked" class="col-lg-3 control-label">Account</label>
+            <div class="col-lg-9">
+              <input id="linked" name="linked" type="text" class="form-control" placeholder="Account">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="linked" class="col-lg-3 control-label">Submit</label>
+            <div class="col-lg-9">
+              <input type="submit" class="form-control">
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </form>
+  
+  <a href="{{ url_for(".transactions") }}" class="btn btn-default">Goto transactions</a>
+{% endblock %}

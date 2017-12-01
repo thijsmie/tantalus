@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+
+{% block container %}
+  
+  <h1>Conscribo Transactions</h1>
+
+    <h2> Unsynced </h2>
+    <form id="relationlink" class="form-horizontal" action="{{ url_for(".sync") }}" method="post">
+  <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+  <div class="col-md-12 table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Sync</th>
+        <th>Transaction</th>
+        <th>Synced/Current</th>
+        <th>Last Feedback</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for link in transactionlinks if not link.pushed_revision == link.transaction.get().revision %}
+        <tr>
+          <td><input class="form-horizontal" type="checkbox" name="{{ link.key.urlsafe() }}"></td>
+          <td>{{ link.transaction.get().relation.get().name }} {{ link.transaction.get().reference }}</td>
+          <td>{{ link.pushed_revision }}/{{ link.transaction.get().revision }}</td>
+          <td>{{ link.feedback }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="4" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+    <input type="submit" class="btn btn-default">
+  </form>
+  <a href="{{ url_for(".generate") }}" class="btn btn-default">Generate</a>
+  
+{% endblock %}

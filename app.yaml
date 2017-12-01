@@ -13,3 +13,6 @@ handlers:
   script: entrypoint.app
   secure: always
 
+libraries:
+- name: lxml
+  version: latest

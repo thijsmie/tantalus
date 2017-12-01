@@ -1,4 +1,4 @@
-from mapper import AuthenticateRequest, AuthenticateResult, TransactionRequest, TransactionResult,\
+from conscribo_mapper import AuthenticateRequest, AuthenticateResult, TransactionRequest, TransactionResult,\
     ListAccountsRequest, ListAccountsResult, TransactionPutRequest, TransactionPutResult
 import requests
 from datetime import date
@@ -59,7 +59,7 @@ class Conscribo:
         return self._accounts
 
     def add_change_transaction(self, transaction):
-        toadd = transaction.transactionid is None
+        toadd = transaction.transactionid is None and self._transactions
         req = TransactionPutRequest(transaction)
         tod = self.request(req)
         tod.raise_for_status()

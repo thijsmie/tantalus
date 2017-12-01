@@ -4,29 +4,29 @@ from google.appengine.ext import ndb
 from conscribo_api import Conscribo
 from conscribo_mapper import TransactionXML, TransactionXMLRow, ResultException
 
-from ndbextensions.models import ConscriboGroupLink, ConscriboModLink, ConscriboTransactionLink
+from ndbextensions.models import TypeGroup
+from ndbextensions.conscribo import ConscriboGroupLink, ConscriboRelationLink, ConscriboModLink, ConscriboTransactionLink
 from ndbextensions.config import Config
 
-from api.actions.transaction import transaction_record
-from pdfworker.invoice import transaction_totaller
 
 
-@ndb.transactional
+@ndb.transactional(xg=True)
 def sync_transactions(transactions):
     config = Config.get_config()
     conscribo = Conscribo(config.conscribo_api_url, config.conscribo_api_key, config.conscribo_api_secret)
     
     for t in transactions:
-        link = ConscriboTransactionLink.query(ConscriboTransactionLink.transaction == t.key).get()
+        link = ConscriboTransactionLink.query(ConscriboTransactionLink.transaction == t.key, ancestor=TypeGroup.conscribo_ancestor()).get()
         if link is None:
             continue
         xml = transaction_to_transactionXML(t, link, config.conscribo_todo_account)
         
         try:
             conscribo.add_change_transaction(xml)
-            link.pushed_revision = transaction.revision
+            link.pushed_revision = t.revision
+            link.feedback = "Succeeded"
         except ResultException as e:
-            link.feedback = e.msg
+            link.feedback = str(e)
         link.put()
             
         
@@ -85,7 +85,7 @@ def transaction_to_transactionXML(transaction, conscribo_link, todo_account):
         txml.description += "\nBuyModifier total {} with value {:.2f}.".format(mod.get().name, -amount/100.0)
         
     for service in transaction.services:
-        txml.rows.append(TransactionXMLRow(account=todo_account, amount=abs(service.value), credit=service.value<0))
+        txml.rows.append(TransactionXMLRow(account=todo_account, amount=abs(service.value), credit=service.value>0))
         txml.description += "\nService {} with value {:.2f}.".format(service.service, service.amount/100.0)
         
     return txml 
@@ -106,11 +106,12 @@ def rows_groups_totals(rowset):
     groups_pretotal = defaultdict(int)
     #groups_postotal = defaultdict(int)
     for row in rowset:
-        group_pretotal[row.group] += row.value
+        group = row.product.get().group
+        groups_pretotal[group] += row.value
         #group_postotal[row.group] += row.value
         for i, mod in enumerate(row.mods):
             if mod.get().modifies:
-                group_pretotal[row.group] -= row.modtotals[i]
+                groups_pretotal[group] -= row.modamounts[i]
             #else
             #    group_postotal[row.group] += row.modtotals[i]
                 
