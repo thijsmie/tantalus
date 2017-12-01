@@ -18,6 +18,10 @@ class TypeGroup(ndb.Model):
     def relation_ancestor(cls):
         return ndb.Key("Typegroup", "relation")
 
+    @classmethod
+    def conscribo_ancestor(cls):
+        return ndb.Key("Typegroup", "conscribo")
+
 
 class Relation(ndb.Model):
     name = ndb.StringProperty(required=True, validator=validate.ensurelength(1))
