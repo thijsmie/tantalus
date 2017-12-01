@@ -29,8 +29,10 @@ bp_relation = blueprint_factory('tantalus.relation', '/relation')
 bp_transaction = blueprint_factory('tantalus.transaction', '/transaction')
 bp_user = blueprint_factory('tantalus.user', '/user')
 bp_pos = blueprint_factory('tantalus.pos', '/pos')
+bp_conscribo = blueprint_factory('tantalus.conscribo', '/conscribo')
 
 # Import modules to make them register, this needs to be after the blueprint definition
 # Otherwise you get an unresolvable circular import
+# This is ungodly ugly, TODO: FIX THIS CRAP
 
-import mod, product, base, transaction, relation, user, pos
+import mod, product, base, transaction, relation, user, pos, conscribo

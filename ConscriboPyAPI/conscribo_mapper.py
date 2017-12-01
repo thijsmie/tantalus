@@ -97,12 +97,12 @@ class TransactionXML:
             self.transactionid = None
         else:
             self.node = node_or_id
-            regexp = r"T\#\[(\d*)\]"
+            regexp = r"Tantalus ID\:\s*T\#\[(\d*)\]"
             self.description = re.sub(regexp, "", self.node.xpath("description")[0].text)
             self.identifier = int(re.search(regexp, self.node.xpath("description")[0].text).group(1))
             self.date = datetime.strptime(self.node.xpath("date")[0].text, "%Y-%m-%d").date()
             self.rows = [TransactionXMLRow(row) for row in self.node.xpath("transactionRows")[0]]
-            self.reference = re.sub(regexp, "", self.rows[0].reference)
+            self.reference = self.rows[0].reference
             self.transactionid = int(self.node.xpath("transactionId")[0].text)
 
     def toxml(self):
@@ -111,12 +111,12 @@ class TransactionXML:
         if self.transactionid is not None:
             etree.SubElement(transaction, "transactionId").text = str(self.transactionid)
 
-        etree.SubElement(transaction, "description").text = "{} T#[{}]".format(self.description, self.identifier)
+        etree.SubElement(transaction, "description").text = "{}\nTantalus ID: T#[{}]".format(self.description, self.identifier)
         etree.SubElement(transaction, "date").text = self.date.strftime("%Y-%m-%d")
 
         xmlrows = etree.SubElement(transaction, "transactionRows")
         for row in self.rows:
-            row.toxml("{} T#[{}]".format(self.reference, self.identifier), xmlrows)
+            row.toxml("{}".format(self.reference), xmlrows)
 
         return transaction
 

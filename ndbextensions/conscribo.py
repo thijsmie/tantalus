@@ -1,5 +1,5 @@
 from google.appengine.ext import ndb
-from models import TypeGroup, Group, Relation, Transaction, Mod
+from ndbextensions.models import TypeGroup, Group, Relation, Transaction, Mod
 
 
 class ConscriboGroupLink(ndb.Model):
@@ -11,7 +11,7 @@ class ConscriboGroupLink(ndb.Model):
 
     @classmethod
     def get_by_group(cls, groupkey):
-        return cls.query(cls.group == groupkey).get()
+        return cls.query(cls.group == groupkey, ancestor=TypeGroup.conscribo_ancestor()).get()
 
 
 class ConscriboModLink(ndb.Model):
@@ -23,7 +23,7 @@ class ConscriboModLink(ndb.Model):
 
     @classmethod
     def get_by_mod(cls, modkey):
-        return cls.query(cls.mod == modkey).get()
+        return cls.query(cls.mod == modkey, ancestor=TypeGroup.conscribo_ancestor()).get()
 
 
 class ConscriboRelationLink(ndb.Model):
@@ -35,7 +35,7 @@ class ConscriboRelationLink(ndb.Model):
 
     @classmethod
     def get_by_relation(cls, relationkey):
-        return cls.query(cls.relation == relationkey).get()
+        return cls.query(cls.relation == relationkey, ancestor=TypeGroup.conscribo_ancestor()).get()
 
 
 class ConscriboTransactionLink(ndb.Model):
@@ -43,11 +43,11 @@ class ConscriboTransactionLink(ndb.Model):
     conscribo_reference = ndb.IntegerProperty()
     pushed_revision = ndb.IntegerProperty()
     bookdate = ndb.DateProperty()
-    totalaccount = ndb.IntegerProperty()
+    feedback = ndb.StringProperty(default="")
 
     def __init__(self, *args, **kwargs):
         super(ConscriboTransactionLink, self).__init__(*args, parent=TypeGroup.conscribo_ancestor(), **kwargs)
 
     @classmethod
     def get_by_transaction(cls, transactionkey):
-        return cls.query(cls.transaction == transactionkey).get()
+        return cls.query(cls.transaction == transactionkey, ancestor=TypeGroup.conscribo_ancestor()).get()

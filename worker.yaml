@@ -7,3 +7,9 @@ handlers:
 - url: /.*
   script: worker.app
   login: admin
+  
+libraries:
+- name: lxml
+  version: latest
+- name: ssl
+  version: latest
