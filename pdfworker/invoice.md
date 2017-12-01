@@ -18,7 +18,7 @@ Factuurdatum: {{ transaction.processeddate }} | olympus@science.ru.nl
 Product | Aantal | Stukprijs | Totaal
 :------------- | ---:| ---:| --:
 {% for row in transaction.sell.rows -%}
-{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.value / (row.amount | float)) }} | {{ format_currency(row.prevalue) }} | {{ format_currency(row.total) }}
+{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.value / (row.amount | float)) }} | {{ format_currency(row.total) }}
 {% endfor -%}
 **Totaal** | | | *{{ format_currency(totals.selltotal) }}*
 
