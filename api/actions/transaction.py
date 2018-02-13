@@ -187,6 +187,19 @@ def make_row_record(row, mods, modtotals):
         "unit": int(round(total / row.amount)),
         "total": total
     }
+    
+    
+def get_row_prepost(row):
+    prevalue = row.value
+    total = row.value
+
+    for i, mod in enumerate(row.mods):
+        if mod.get().modifies:
+            prevalue -= row.modamounts[i]
+        else:
+            total += row.modamounts[i]
+
+    return prevalue, total
 
 
 def transaction_record(transaction):

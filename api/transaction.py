@@ -12,8 +12,10 @@ from ndbextensions.models import Transaction, Product, Mod, Relation, TypeGroup
 from ndbextensions.paginator import Paginator
 
 from tantalus import bp_transaction as router
-from actions.transaction import new_transaction, edit_transaction, transaction_record
+from actions.transaction import new_transaction, edit_transaction, transaction_record, get_row_prepost
 from actions.relation import add_to_budget
+
+from datetime import datetime
 
 
 @router.route('/', defaults=dict(page=0))
@@ -149,3 +151,40 @@ def resend(transaction_id):
                   target='worker',
                   params={'transaction': transaction.key.id()})
     return redirect(url_for(".showtransaction", transaction_id=transaction_id))
+    
+    
+@router.route('/history.json', methods=["POST"])
+@login_required
+@ensure_user_admin
+def history():
+    try:
+        startdate = datetime.strptime(request.json["startdate"], "%Y-%m-%d").date()
+        enddate = datetime.strptime(request.json["enddate"], "%Y-%m-%d").date()
+    except:
+        return abort(400)
+        
+    products = {}    
+    transactions = Transaction.query(Transaction.deliverydate >= startdate).order(Transaction.deliverydate).fetch()
+    for t in transactions:
+        if (t.deliverydate > enddate):
+            break
+        for r in t.one_to_two:
+            key = r.product.urlsafe()
+            if key not in products:
+                products[key] = {
+                    "name": r.product.get().contenttype,
+                    "buy": [],
+                    "sell": []
+                }
+            products[key]["sell"] += [[r.amount, get_row_prepost(r)[1]]]
+        for r in t.two_to_one:
+            key = r.product.urlsafe()
+            if key not in products:
+                products[key] = {
+                    "name": r.product.get().contenttype,
+                    "buy": [],
+                    "sell": []
+                }
+            products[key]["buy"] += [[r.amount, get_row_prepost(r)[1]]]
+    return jsonify(products)
+
