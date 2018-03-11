@@ -24,7 +24,6 @@ def blueprint_factory(partial_module_string, url_prefix):
 # Create blueprints, can be imported by views
 bp_base = blueprint_factory("tantalus", '')
 bp_product = blueprint_factory("tantalus.product", '/product')
-bp_mod = blueprint_factory("tantalus.mod", '/mod')
 bp_relation = blueprint_factory('tantalus.relation', '/relation')
 bp_transaction = blueprint_factory('tantalus.transaction', '/transaction')
 bp_user = blueprint_factory('tantalus.user', '/user')
@@ -35,4 +34,4 @@ bp_conscribo = blueprint_factory('tantalus.conscribo', '/conscribo')
 # Otherwise you get an unresolvable circular import
 # This is ungodly ugly, TODO: FIX THIS CRAP
 
-import mod, product, base, transaction, relation, user, pos, conscribo
+import product, base, transaction, relation, user, pos, conscribo

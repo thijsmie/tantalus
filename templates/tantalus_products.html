@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% from 'tantalus_paginator.html' import paginator_buttons with context %}
-{% from 'tantalus_mod_helpers.html' import render_mod_as_tag %}
 {% from 'tantalus_general_helpers.html' import format_currency %}
 
 {% block container %}
@@ -21,11 +20,9 @@
         <th>Name</th>
         {% if showgroup %}
           <th>Group</th>{% endif %}
-        <th>~Unit Value</th>
+        <th>Unit Value</th>
         <th>Amount</th>
         <th>Total Value</th>
-        <th>Mods on Buy</th>
-        <th>Mods on Sell</th>
       </tr>
       </thead>
 
@@ -40,22 +37,14 @@
           {% if product.amount == 0 -%}
             <td align="right">0.00</td>
           {%- else -%}
-            <td align="right">{{ format_currency(product.value / (product.amount | float)) }}</td>
+            <td align="right">{{ format_currency(product.value) }}</td>
           {%- endif %}
           <td align="right">{{ product.amount }}</td>
-          <td align="right">{{ format_currency(product.value) }}</td>
-          <td>
-            <div class="btn-group" role="group" aria-label="...">
-              {% for mod in product.gainmods %}{{ render_mod_as_tag(mod.get()) }}{% endfor %}</div>
-          </td>
-          <td>
-            <div class="btn-group" role="group" aria-label="...">
-              {% for mod in product.losemods %}{{ render_mod_as_tag(mod.get()) }}{% endfor %}</div>
-          </td>
+          <td align="right">{{ format_currency(product.value * product.amount) }}</td>
         </tr>
       {% else %}
         <tr>
-          <td colspan="6" style="text-align: center"><h2>&empty;</h2></td>
+          <td colspan="5" style="text-align: center"><h2>&empty;</h2></td>
         </tr>
       {% endfor %}
       </tbody>

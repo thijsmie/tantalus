@@ -1,71 +1,63 @@
 from google.appengine.ext.ndb import Key, transactional
-from ndbextensions.models import Transaction, TransactionLine, ServiceLine, TypeGroup
+from ndbextensions.models import Referencing, Transaction, TransactionLine, ServiceLine
 from ndbextensions.validate import OperationError
+from ndbextensions.util import get_or_none
 
 from api.actions.rows import transform_collection
 
+from collections import defaultdict
 from datetime import datetime
 from pytz import timezone
 
 
-def new_transaction(data,):
-    relation = Key('Relation', int(data["relation"]), parent=TypeGroup.relation_ancestor())
-    if relation.get() is None:
+@transactional(xg=True)
+def new_transaction(data):
+    reference = Referencing.get_reference()
+    relation = get_or_none(data['Relation'])
+    if relation is None:
         raise OperationError("Relation does not exist!")
 
-    tr = Transaction.query(Transaction.relation == relation).order(-Transaction.reference).get()
+    tr = Transaction.query(Transaction.relation == relation).order(-Transaction.informal_reference).get()
     if tr is None:
-        reference = 1
+        informal_reference = 1
     else:
-        reference = tr.reference + 1
+        informal_reference = tr.informal_reference + 1
 
     t = Transaction(
         revision=0,
         reference=reference,
-        relation=relation,
+        informal_reference=informal_reference,
+        relation=relation.key,
         deliverydate=datetime.strptime(data["deliverydate"], "%Y-%m-%d").date(),
         processeddate=datetime.now(timezone("Europe/Amsterdam")).date(),
         description=data.get("description", "")
     )
 
-    @transactional(xg=True)
-    def tricky_stuff():
-        for prd in data["sell"]:
-            product = Key('Product', int(prd['id']), parent=TypeGroup.product_ancestor()).get()
-            if product is None:
-                raise OperationError("Product with id {} does not exist.".format(product))
-            line = product.take(int(prd['amount']))
-            product.put()
+    for prd in data["sell"]:
+        product = get_or_none(prd["id"])
+        if product is None:
+            raise OperationError("Product with id {} does not exist.".format(prd["id"]))
+        line = product.take(int(prd['amount']))
+        product.put()
 
-            for mod in prd["mods"]:
-                mod_obj = Key('Mod', int(mod), parent=TypeGroup.product_ancestor()).get()
-                if mod_obj is None:
-                    raise OperationError("Mod with id {} does not exist.".format(mod))
-                mod_obj.apply(line)
+        t.one_to_two.append(line)
 
-            t.one_to_two.append(line)
+    for prd in data["buy"]:
+        product = get_or_none(prd["id"])
+        if product is None:
+            raise OperationError("Product with id {} does not exist.".format(prd["id"]))
+        line = TransactionLine(
+            product=product.key,
+            amount=int(prd['amount']),
+            prevalue=int(prd['price']),
+            value=product.value*int(prd['amount']),
+            btwtype=product.btwtype
+        )
 
-        for prd in data["buy"]:
-            product = Key('Product', int(prd['id']), parent=TypeGroup.product_ancestor()).get()
-            if product is None:
-                raise OperationError("Product with id {} does not exist.".format(product))
-            line = TransactionLine(
-                product=product.key,
-                amount=int(prd['amount']),
-                value=int(prd['price'])
-            )
+        product.give(line)
+        product.put()
+        t.two_to_one.append(line)
 
-            for mod in prd["mods"]:
-                mod_obj = Key('Mod', int(mod), parent=TypeGroup.product_ancestor()).get()
-                if mod_obj is None:
-                    raise OperationError("Mod with id {} does not exist.".format(mod))
-                mod_obj.apply(line)
-
-            product.give(line)
-            product.put()
-            t.two_to_one.append(line)
-
-    tricky_stuff()
     for prd in data["service"]:
         line = ServiceLine(
             service=prd['contenttype'],
@@ -74,6 +66,7 @@ def new_transaction(data,):
         )
 
         t.services.append(line)
+
     t.total = transaction_total(t)
     t.put()
     return t
@@ -93,22 +86,17 @@ def edit_transaction(t, data):
 
     newsell = []
     for prd in data["sell"]:
-        product = Key('Product', int(prd['id']), parent=TypeGroup.product_ancestor()).get()
+        product = get_or_none(prd["id"])
         if product is None:
-            raise OperationError("Product with id {} does not exist.".format(product))
+            raise OperationError("Product with id {} does not exist.".format(prd["id"]))
 
+        # We leave value at zero, will get filled in later
         line = TransactionLine(
             value=0,
+            prevalue=0,
             amount=int(prd['amount']),
             product=product.key
         )
-        product.put()
-
-        for mod in prd["mods"]:
-            mod_obj = Key('Mod', int(mod), parent=TypeGroup.product_ancestor()).get()
-            if mod_obj is None:
-                raise OperationError("Mod with id {} does not exist.".format(mod))
-            line.mods.append(mod_obj.key)
 
         newsell.append(line)
 
@@ -116,20 +104,14 @@ def edit_transaction(t, data):
 
     newbuy = []
     for prd in data["buy"]:
-        product = Key('Product', int(prd['id']), parent=TypeGroup.product_ancestor()).get()
+        product = get_or_none(prd["id"])
         if product is None:
-            raise OperationError("Product with id {} does not exist.".format(product))
+            raise OperationError("Product with id {} does not exist.".format(prd["id"]))
         line = TransactionLine(
             product=product.key,
             amount=int(prd['amount']),
             value=int(prd['price'])
         )
-
-        for mod in prd["mods"]:
-            mod_obj = Key('Mod', int(mod), parent=TypeGroup.product_ancestor()).get()
-            if mod_obj is None:
-                raise OperationError("Mod with id {} does not exist.".format(mod))
-            mod_obj.apply(line)
 
         newbuy.append(line)
     t.two_to_one = transform_collection(t.two_to_one, newbuy, False)
@@ -144,128 +126,90 @@ def edit_transaction(t, data):
 
         t.services.append(line)
 
-    t.total = transaction_total(t)
+    record = transaction_record(t)
+    t.total = record["total"]
     t.put()
     return t
 
 
-def get_mod_collection(collection):
-    mods = set()
-    for row in collection:
-        for mod in row.mods:
-            mods.add(mod)
-    return list(mods)
-
-
-def get_mod_totals(collection):
-    mods = get_mod_collection(collection)
-    totals = []
-    for row in collection:
-        rowtotals = [0] * len(mods)
-        for i, mod in enumerate(row.mods):
-            rowtotals[mods.index(mod)] = row.modamounts[i]
-        totals.append(rowtotals)
-    return mods, totals
-
-
-def make_row_record(row, mods, modtotals):
-    prevalue = row.value
-    total = row.value
-
-    for i, mod in enumerate(mods):
-        if mod.get().modifies:
-            prevalue -= modtotals[i]
-        else:
-            total += modtotals[i]
-
+def make_row_record(row):
     return {
         "contenttype": row.product.get().contenttype,
+        "prevalue": row.prevalue,
         "value": row.value,
-        "prevalue": prevalue,
-        "modtotals": modtotals,
         "amount": row.amount,
-        "unit": int(round(total / row.amount)),
-        "total": total
+        "btw": row.btwtype.get().percentage
     }
-    
-    
-def get_row_prepost(row):
-    prevalue = row.value
-    total = row.value
 
-    for i, mod in enumerate(row.mods):
-        if mod.get().modifies:
-            prevalue -= row.modamounts[i]
+
+def make_service_record(row):
+    return {
+        "contenttype": row.service,
+        "amount": row.amount,
+        "prevalue": row.value
+    }
+
+
+def transaction_process(transaction):
+    sellrows = [make_row_record(row) for row in transaction.one_to_two]
+    buyrows = [make_row_record(row) for row in transaction.two_to_one]
+    servicerows = [make_service_record(row) for row in transaction.services]
+
+    btwtotals = defaultdict(float)
+    if transaction.two_to_one_has_btw:
+        if transaction.two_to_one_btw_per_row:
+            # Current total including btw, btw rounded per row
+            for row in buyrows:
+                btw = round(row["prevalue"] * row["btw"] / 100 / (row["btw"] + 100))
+                btwtotals[row["btw"]] += btw
+                row["btwvalue"] = btw
         else:
-            total += row.modamounts[i]
+            # Current total including btw, btw rounded for full invoice
+            # We should use decimals here, but floats are good enough for now
+            for row in buyrows:
+                btw = row["prevalue"] * row["btw"] / 100 / (row["btw"] + 100)
+                btwtotals[row["btw"]] += btw
+                row["btwvalue"] = btw
+    else:
+        if transaction.two_to_one_btw_per_row:
+            # Current total excluding btw, btw rounded per row
+            for row in buyrows:
+                btw = round(row["prevalue"] * row["btw"] / 100)
+                btwtotals[row["btw"]] += btw
+                row["btwvalue"] = btw
+        else:
+            # Current total excluding btw, btw rounded for full invoice
+            # We should use decimals here, but floats are good enough for now
+            for row in buyrows:
+                btw = row["prevalue"] * row["btw"] / 100
+                btwtotals[row["btw"]] += btw
+                row["btwvalue"] = btw
 
-    return prevalue, total
+    return dict(btwtotals), sellrows, buyrows, servicerows
 
 
 def transaction_record(transaction):
-    smods, stotals = get_mod_totals(transaction.one_to_two)
-    bmods, btotals = get_mod_totals(transaction.two_to_one)
-    sellrows = [make_row_record(row, smods, stotals[i]) for i, row in enumerate(transaction.one_to_two)]
-    buyrows = [make_row_record(row, bmods, btotals[i]) for i, row in enumerate(transaction.two_to_one)]
-    servicerows = [{"contenttype": row.service, "amount": row.amount, "value": row.value} for row in
-                   transaction.services]
+    btwtotals, sellrows, buyrows, servicerows = transaction_process(transaction)
 
-    total = sum([r['total'] for r in sellrows]) - sum([r['total'] for r in buyrows]) + sum(
-        [r['value'] for r in servicerows])
-    sell = {
-        "modnames": [mod.get().name for mod in smods],
-        "rows": sellrows
-    }
-    buy = {
-        "modnames": [mod.get().name for mod in bmods],
-        "rows": buyrows
-    }
-    service = {
-        "rows": servicerows
-    }
+    total = sum([r['prevalue'] for r in sellrows]) - sum([r['prevalue'] for r in buyrows]) + sum(
+        [r['prevalue'] for r in servicerows])
+
+    if not transaction.two_to_one_has_btw:
+        total -= sum(btwtotals.values())
+
     return {
-        "name": transaction.relation.get().name + " " + str(transaction.reference).zfill(3),
-        "sell": sell,
-        "buy": buy,
-        "service": service,
+        "reference": transaction.reference,
+        "name": transaction.relation.get().name + " " + str(transaction.informal_reference).zfill(3),
+        "sell": sellrows,
+        "buy": buyrows,
+        "service": servicerows,
         "description": transaction.description,
         "processeddate": transaction.processeddate,
         "deliverydate": transaction.deliverydate,
         "total": total,
-        "id": transaction.key.id(),
+        "id": transaction.key.urlsafe(),
         "revision": transaction.revision,
         "lastedit": transaction.lastedit
     }
 
-
-def transaction_total(transaction):
-    smods, stotals = get_mod_totals(transaction.one_to_two)
-    bmods, btotals = get_mod_totals(transaction.two_to_one)
-    sellrows = [make_row_record(row, smods, stotals[i]) for i, row in enumerate(transaction.one_to_two)]
-    buyrows = [make_row_record(row, bmods, btotals[i]) for i, row in enumerate(transaction.two_to_one)]
-    return sum([r['total'] for r in sellrows]) - sum([r['total'] for r in buyrows]) + sum(
-        [r.value for r in transaction.services])
-
-
-def tool_reapply_transaction_adding(transaction):
-    # This method will reapply a transaction to stock
-    # tool for testing
-
-    for row in transaction.two_to_one:
-        product = row.product.get()
-        product.amount += row.amount
-        product.value += row.value
-        product.put()
-
-
-def tool_reapply_transaction_removing(transaction):
-    for row in transaction.one_to_two:
-        product = row.product.get()
-        prevalue = row.value
-        for i, mod in enumerate(row.mods):
-            if mod.get().modifies:
-                prevalue -= row.modamounts[i]
-        product.amount -= row.amount
-        product.value -= prevalue
-        product.put()
 

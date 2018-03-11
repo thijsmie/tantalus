@@ -8,8 +8,8 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import Group, Mod, Relation, Transaction
-from ndbextensions.conscribo import ConscriboGroupLink, ConscriboModLink, ConscriboRelationLink, ConscriboTransactionLink
+from ndbextensions.models import Group, Relation, Transaction
+from ndbextensions.conscribo import ConscriboGroupLink, ConscriboRelationLink, ConscriboTransactionLink
 from ndbextensions.utility import unlink, get_or_none
 
 from tantalus import bp_conscribo as router
@@ -20,16 +20,12 @@ from tantalus import bp_conscribo as router
 @ensure_user_admin
 def index():
     groups = Group.query().fetch()
-    grouplinks = ConscriboGroupLink.query().fetch()    
-    mods = Mod.query().fetch()
-    modlinks = ConscriboModLink.query().fetch()
+    grouplinks = ConscriboGroupLink.query().fetch()
     relations = Relation.query().fetch()
     relationlinks = ConscriboRelationLink.query().fetch()
     return render_template("tantalus_conscribo.html",
                             groups=groups,
                             grouplinks=grouplinks,
-                            mods=mods,
-                            modlinks=modlinks,
                             relations=relations,
                             relationlinks=relationlinks)
 
@@ -48,27 +44,6 @@ def addgrouplink():
             link.linked = int(data["linked"])
         else:    
             link = ConscriboGroupLink(group=group.key, linked=int(data["linked"]))
-        link.put()
-    except (ValueError, KeyError, BadValueError):
-        return jsonify({}, 402)
-    
-    return redirect(url_for(".index"))
-
-
-@router.route("/link/mod/add", methods=["POST"])
-@login_required
-@ensure_user_admin
-def addmodlink():
-    data = request.form
-    try:
-        mod = get_or_none(data["mod"], Mod)
-        if mod is None:
-            return jsonify({}, 402)
-        link = ConscriboModLink.query(ConscriboModLink.mod == mod.key).get()
-        if link is not None:
-            link.linked = int(data["linked"])
-        else:    
-            link = ConscriboModLink(mod=mod.key, linked=int(data["linked"]))
         link.put()
     except (ValueError, KeyError, BadValueError):
         return jsonify({}, 402)
@@ -104,13 +79,6 @@ def deletegrouplink(group):
     return unlink(group, ConscriboGroupLink)
 
 
-@router.route("/link/mod/delete/<mod>")
-@login_required
-@ensure_user_admin
-def deletemodlink(mod):
-    return unlink(mod, ConscriboModLink)
-
-
 @router.route("/link/relation/delete/<relation>")
 @login_required
 @ensure_user_admin
@@ -124,6 +92,7 @@ def deleterelationlink(relation):
 def transactions():
     transactionlinks = ConscriboTransactionLink.query().fetch()
     return render_template("tantalus_conscribo_transactions.html", transactionlinks=transactionlinks)
+
 
 @router.route("/sync", methods=["POST"])
 @login_required

@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% from 'tantalus_paginator.html' import paginator_buttons with context %}
-{% from 'tantalus_mod_helpers.html' import render_mod_as_equation with context %}
 
 {% block container %}
   <div>
@@ -9,6 +8,7 @@
 
   Event date: {{ deliverydate }}<br>
   Processed date: {{ processeddate }}<br>
+  Informal reference: {{ informal_reference }}<br>
   Last edit: {{ lastedit }}<br>
   Description: {{ description }}<br>
   Revision: {{ revision }}
@@ -20,11 +20,9 @@
       <tr>
         <th>Product</th>
         <th>Amount</th>
-        <th>Inventory Value</th>
-        {% for name in sell.modnames %}
-          <th>{{ name }}</th>
-        {% endfor %}
+        <th>Unit price</th>
         <th>Total</th>
+        <th>BTW Percentage</th>
       </tr>
       </thead>
 
@@ -34,10 +32,8 @@
           <td>{{ row.contenttype }}</td>
           <td align="right">{{ row.amount }}</td>
           <td align="right">{{ row.prevalue | format_currency }}</td>
-          {% for modtotal in row.modtotals %}
-            <td align="right">{{ modtotal | format_currency }}</td>
-          {% endfor %}
           <td align="right">{{ row.total | format_currency }}</td>
+          <td align="right">{{ row.btw }}%</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -51,11 +47,8 @@
       <tr>
         <th>Product</th>
         <th>Amount</th>
-        <th>Entered Value</th>
-        {% for name in buy.modnames %}
-          <th>{{ name }}</th>
-        {% endfor %}
         <th>Total</th>
+        <th>BTW Percentage</th>
         <th>Inventory Value</th>
       </tr>
       </thead>
@@ -66,10 +59,7 @@
           <td>{{ row.contenttype }}</td>
           <td>{{ row.amount }}</td>
           <td>{{ row.prevalue | format_currency }}</td>
-          {% for modtotal in row.modtotals %}
-            <td>{{ modtotal | format_currency }}</td>
-          {% endfor %}
-          <td>{{ row.total | format_currency }}</td>
+          <td>{{ row.btw }}%</td>
           <td>{{ row.value | format_currency }}</td>
         </tr>
       {% endfor %}

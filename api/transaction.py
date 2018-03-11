@@ -8,7 +8,7 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin, ensure_user_transactions, ensure_user_relation, ensure_user_transaction
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import Transaction, Product, Mod, Relation, TypeGroup
+from ndbextensions.models import Transaction, Product, Relation, TypeGroup
 from ndbextensions.paginator import Paginator
 
 from tantalus import bp_transaction as router
@@ -92,7 +92,6 @@ def addtransaction():
 
     return render_template('tantalus_transaction.html',
                            products=Product.query(Product.hidden == False).fetch(),
-                           mods=Mod.query().fetch(),
                            relations=Relation.query().fetch())
 
 
@@ -122,7 +121,6 @@ def edittransaction(transaction_id):
 
     return render_template('tantalus_transaction.html', transaction=transaction,
                            products=Product.query(Product.hidden == False).fetch(),
-                           mods=Mod.query().fetch(),
                            relations=Relation.query().fetch())
 
 
@@ -187,4 +185,5 @@ def history():
                 }
             products[key]["buy"] += [[r.amount, get_row_prepost(r)[1]]]
     return jsonify(products)
-
+    
+ 

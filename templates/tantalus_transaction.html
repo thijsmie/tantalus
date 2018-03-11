@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% from 'tantalus_mod_helpers.html' import render_mod_as_tag %}
 {% from 'tantalus_general_helpers.html' import format_currency %}
 
 {% block container %}
@@ -46,7 +45,6 @@
           <tr>
             <th>Product</th>
             <th class="td-num">Amount</th>
-            <th>Mods</th>
             <th></th>
           </tr>
         </table>
@@ -79,7 +77,6 @@
             <th>Product</th>
             <th class="td-num">Amount</th>
             <th class="td-num">Price</th>
-            <th>Mods</th>
             <th></th>
           </tr>
         </table>
@@ -141,27 +138,6 @@
       the amount you entered press 'a'.
     </p>
   </div>
-
-  <!-- Modal -->
-  <div class="modal fade" id="mod-modal" tabindex="-1" role="dialog" aria-labelledby="mod-modal-label">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                  aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="mod-modal-label">Add new mods</h4>
-        </div>
-        <div class="modal-body">
-          {% for mod in mods %}
-            {{ render_mod_as_tag(mod) }}
-          {% endfor %}
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -169,7 +145,6 @@
   <script src="/static/js/transaction.js"></script>
   <script type="text/javascript">
       window.products = {{ products|todict_filtered|tojson|safe }};
-      window.mods = {{ mods|todict_filtered|tojson|safe }};
       window.relations = {{ relations|todict_filtered|tojson|safe }};
 
       {% if transaction is defined %}

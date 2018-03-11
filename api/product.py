@@ -7,10 +7,11 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin, ensure_user_stock
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import Product, Mod, Group, TypeGroup
+from ndbextensions.models import Product, Group, TypeGroup
 from ndbextensions.paginator import Paginator
 
 from tantalus import bp_product as router
+from collections import defaultdict
 
 
 @router.route('/', defaults=dict(page=0))
@@ -79,31 +80,19 @@ def addproduct():
             if len(Product.query(Product.contenttype == name).fetch()):
                 raise BadValueError("A product with this name already exists.")
 
-            losemods = [Key("Mod", id, parent=TypeGroup.product_ancestor()) for id in (form.get('losemods') or [])]
-            for mod in losemods:
-                if mod.get() is None:
-                    raise BadValueError("Mod {} does not exists.".format(mod))
-
-            gainmods = [Key("Mod", id, parent=TypeGroup.product_ancestor()) for id in (form.get('gainmods') or [])]
-            for mod in gainmods:
-                if mod.get() is None:
-                    raise BadValueError("Mod {} does not exists.".format(mod))
-
             product = Product(
                 contenttype=name,
                 tag=form.get('tag', ''),
                 group=group.key,
                 amount=form.get('amount', 0),
                 value=form.get('value', 0),
-                hidden=False,
-                losemods=losemods,
-                gainmods=gainmods
+                hidden=False
             ).put()
         except (BadValueError, KeyError) as e:
             return jsonify({"messages": [e.message]}, 400)
         return jsonify(product)
 
-    return render_template('tantalus_product.html', mods=Mod.query().fetch())
+    return render_template('tantalus_product.html')
 
 
 @router.route('/edit/<int:product_id>', methods=["GET", "POST"])
@@ -132,30 +121,28 @@ def editproduct(product_id):
             group = product.group.get()
 
         try:
-            losemods = product.losemods
-            if 'losemods' in form:
-                losemods = [Key("Mod", id, parent=TypeGroup.product_ancestor()) for id in form.get('losemods')]
-            for mod in losemods:
-                if mod.get() is None:
-                    raise BadValueError("Mod {} does not exists.".format(mod))
-
-            gainmods = product.gainmods
-            if 'gainmods' in form:
-                gainmods = [Key("Mod", id, parent=TypeGroup.product_ancestor()) for id in form.get('gainmods')]
-            for mod in gainmods:
-                if mod.get() is None:
-                    raise BadValueError("Mod {} does not exists.".format(mod))
-
             product.contenttype = form.get('name', form.get('contenttype', product.contenttype))
             product.tag = form.get('tag', '')
             product.group = group.key
             product.amount = form.get('amount', product.amount)
             product.value = form.get('value', product.value)
-            product.losemods = losemods
-            product.gainmods = gainmods
+
             product.put()
         except BadValueError as e:
             return jsonify({"messages": [e.message]}, 400)
         return jsonify(product)
 
-    return render_template('tantalus_product.html', product=product, mods=Mod.query().fetch())
+    return render_template('tantalus_product.html', product=product)
+    
+    
+@router.route('/values.json')
+@login_required
+@ensure_user_admin
+def values():
+    vals = defaultdict(int)
+    
+    for product in Product.query():
+        vals[product.group.get().name] += product.value
+    
+    return jsonify(dict(vals))
+
