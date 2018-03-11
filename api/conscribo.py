@@ -72,18 +72,18 @@ def addrelationlink():
     return redirect(url_for(".index"))
 
 
-@router.route("/link/group/delete/<group>")
+@router.route("/link/group/delete/<group_id>")
 @login_required
 @ensure_user_admin
-def deletegrouplink(group):
-    return unlink(group, ConscriboGroupLink)
+def deletegrouplink(group_id):
+    return unlink(group_id, ConscriboGroupLink)
 
 
-@router.route("/link/relation/delete/<relation>")
+@router.route("/link/relation/delete/<relation_id>")
 @login_required
 @ensure_user_admin
-def deleterelationlink(relation):
-    return unlink(relationid, ConscriboRelationLink)
+def deleterelationlink(relation_id):
+    return unlink(relation_id, ConscriboRelationLink)
 
 
 @router.route("/transactions")

@@ -1,7 +1,7 @@
 from google.appengine.ext.ndb import Key, transactional
-from ndbextensions.models import Referencing, Transaction, TransactionLine, ServiceLine
+from ndbextensions.models import Referencing, Transaction, TransactionLine, ServiceLine, Relation
 from ndbextensions.validate import OperationError
-from ndbextensions.util import get_or_none
+from ndbextensions.utility import get_or_none
 
 from api.actions.rows import transform_collection
 
@@ -13,7 +13,7 @@ from pytz import timezone
 @transactional(xg=True)
 def new_transaction(data):
     reference = Referencing.get_reference()
-    relation = get_or_none(data['Relation'])
+    relation = get_or_none(data['Relation'], Relation)
     if relation is None:
         raise OperationError("Relation does not exist!")
 

@@ -15,7 +15,7 @@ def recurse_encode(o):
     elif isinstance(o, list):
         return [recurse_encode(v) for v in o]
     elif isinstance(o, ndb.Key):
-        return o.id()
+        return o.urlsafe()
     elif isinstance(o, (datetime, date, time)):
         return str(o)
     else:
@@ -40,7 +40,7 @@ def recurse_encode_filtered(o):
     elif isinstance(o, list):
         return [recurse_encode_filtered(v) for v in o]
     elif isinstance(o, ndb.Key):
-        return o.id()
+        return o.urlsafe()
     elif isinstance(o, (datetime, date, time)):
         return str(o)
     else:
@@ -61,15 +61,13 @@ def transaction_recode(o):
         row['id'] = row['product']
         del row['value']
         del row['product']
-        del row['modamounts']
 
     for i, row in enumerate(t['two_to_one']):
         row['contenttype'] = ndb.Key("Product", row['product'], parent=TypeGroup.product_ancestor()).get().contenttype
         row['id'] = row['product']
-        row['price'] = without_mod_values(o.two_to_one[i])
+        row['price'] = row['prevalue']
         del row['value']
         del row['product']
-        del row['modamounts']
 
     for row in t['services']:
         row['contenttype'] = row['service']

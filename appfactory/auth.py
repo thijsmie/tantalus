@@ -7,7 +7,9 @@ from google.appengine.ext import ndb
 from google.appengine.api import memcache
 
 from appfactory import flash
-from ndbextensions.models import User, TypeGroup
+from ndbextensions.models import User, Relation, Transaction
+from ndbextensions.utility import get_or_none
+
 
 # Random session key generation, inspired by django.utils.crypto.get_random_string
 import random
@@ -82,7 +84,7 @@ def new_user(username, password, isadmin=False, relation=None, viewstock=False, 
     )
 
     if relation is not None:
-        user.relation = ndb.Key("Relation", relation, parent=TypeGroup.relation_ancestor())
+        user.relation = get_or_none(relation, Relation)
         if user.relation.get() is None:
             abort(400)
 
@@ -144,7 +146,7 @@ def ensure_user_transaction(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.right_admin or current_user.right_viewalltransactions:
-            transaction = ndb.Key("Transaction", kwargs.get('transaction_id'), parent=TypeGroup.transaction_ancestor()).get()
+            transaction = get_or_none(kwargs.get('transaction_id'), Transaction)
             if transaction is None or not (
                             current_user.relation is not None and current_user.relation == transaction.relation):
                 flash.danger("Your user account is not allowed to perform this action.")

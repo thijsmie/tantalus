@@ -1,4 +1,3 @@
-from google.appengine.ext.ndb import Key
 from google.appengine.ext.db import BadValueError
 
 from flask import render_template, request, abort
@@ -7,8 +6,9 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin, ensure_user_stock
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import Product, Group, TypeGroup
+from ndbextensions.models import Product, Group
 from ndbextensions.paginator import Paginator
+from ndbextensions.utility import get_or_none
 
 from tantalus import bp_product as router
 from collections import defaultdict
@@ -33,29 +33,33 @@ def indexjson():
     return jsonify(Product.query(Product.hidden == False).fetch())
 
 
-@router.route('/group/<int:group>', defaults=dict(page=0))
-@router.route('/group/<int:group>/page/<int:page>')
+@router.route('/group/<string:group_id>', defaults=dict(page=0))
+@router.route('/group/<string:group_id>/page/<int:page>')
 @login_required
 @ensure_user_stock
-def showgroup(group, page):
+def showgroup(group_id, page):
     if page < 0:
         page = 0
 
+    group = get_or_none(group_id, Group)
+    if group is None:
+        return abort(404)
+
     pagination = Paginator(
-        Product.query(Product.hidden == False and Product.group == Key('Group', group,
-                                                                       parent=TypeGroup.product_ancestor())).order(
-            Product.contenttype),
-        page, 20, group=group)
-    return render_template('tantalus_products.html', group=Key('Group', group, parent=TypeGroup.product_ancestor()).get().name, showgroup=False,
-                           pagination=pagination)
+        Product.query(Product.hidden == False and Product.group == group.key).order(Product.contenttype),
+        page, 20, group_id=group_id
+    )
+    return render_template('tantalus_products.html', group=group.name, showgroup=False, pagination=pagination)
 
 
-@router.route('/group/<int:group>.json')
+@router.route('/group/<string:group_id>.json')
 @login_required
 @ensure_user_stock
-def showgroupjson(group):
-    return jsonify(Product.query(Product.hidden == False and Product.group == Key('Group', group,
-                                                                                  parent=TypeGroup.relation_ancestor())).fetch())
+def showgroupjson(group_id):
+    group = get_or_none(group_id, Group)
+    if group is None:
+        return abort(404)
+    return jsonify(Product.query(Product.hidden == False and Product.group == group.key).fetch())
 
 
 @router.route('/add', methods=["GET", "POST"])
@@ -95,14 +99,13 @@ def addproduct():
     return render_template('tantalus_product.html')
 
 
-@router.route('/edit/<int:product_id>', methods=["GET", "POST"])
+@router.route('/edit/<string:product_id>', methods=["GET", "POST"])
 @login_required
 @ensure_user_admin
 def editproduct(product_id):
     form = request.json
 
-    product = Key("Product", product_id, parent=TypeGroup.product_ancestor()).get()
-
+    product = get_or_none(product_id, Product)
     if product is None:
         return abort(404)
 
@@ -133,16 +136,15 @@ def editproduct(product_id):
         return jsonify(product)
 
     return render_template('tantalus_product.html', product=product)
-    
-    
+
+
 @router.route('/values.json')
 @login_required
 @ensure_user_admin
 def values():
     vals = defaultdict(int)
-    
+
     for product in Product.query():
         vals[product.group.get().name] += product.value
-    
-    return jsonify(dict(vals))
 
+    return jsonify(dict(vals))
