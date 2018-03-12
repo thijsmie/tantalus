@@ -16,3 +16,5 @@ handlers:
 libraries:
 - name: lxml
   version: latest
+- name: webapp2
+  version: "latest"

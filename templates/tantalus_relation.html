@@ -78,7 +78,7 @@
               tosubmit.send_mail = $("#send_mail").prop("checked");
 
               {% if relation -%}
-                  post_object(tosubmit, "{{ url_for(".editrelation", relation_id=relation.key.id()) }}", "{{ url_for(".index") }}");
+                  post_object(tosubmit, "{{ url_for(".editrelation", relation_id=relation.key.urlsafe()) }}", "{{ url_for(".index") }}");
               {%- else -%}
                   post_object(tosubmit, "{{ url_for(".addrelation") }}", "{{ url_for(".index") }}");
               {%- endif %}

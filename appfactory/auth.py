@@ -84,9 +84,10 @@ def new_user(username, password, isadmin=False, relation=None, viewstock=False, 
     )
 
     if relation is not None:
-        user.relation = get_or_none(relation, Relation)
-        if user.relation.get() is None:
+        rel = get_or_none(relation, Relation)
+        if rel is None:
             abort(400)
+        user.relation = rel.key
 
     return user
 

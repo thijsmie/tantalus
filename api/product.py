@@ -6,7 +6,7 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin, ensure_user_stock
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import Product, Group
+from ndbextensions.models import Product, Group, BtwType
 from ndbextensions.paginator import Paginator
 from ndbextensions.utility import get_or_none
 
@@ -84,13 +84,23 @@ def addproduct():
             if len(Product.query(Product.contenttype == name).fetch()):
                 raise BadValueError("A product with this name already exists.")
 
+            btw = form.get('btw', 0)
+            btwtype = BtwType.query(BtwType.percentage == btw).get()
+            if btwtype is None:
+                btwtype = BtwType(
+                    name=str(btw)+"%",
+                    percentage=btw
+                )
+                btwtype.put()
+
             product = Product(
                 contenttype=name,
                 tag=form.get('tag', ''),
                 group=group.key,
                 amount=form.get('amount', 0),
                 value=form.get('value', 0),
-                hidden=False
+                hidden=False,
+                btwtype=btwtype.key
             ).put()
         except (BadValueError, KeyError) as e:
             return jsonify({"messages": [e.message]}, 400)
@@ -129,6 +139,16 @@ def editproduct(product_id):
             product.group = group.key
             product.amount = form.get('amount', product.amount)
             product.value = form.get('value', product.value)
+
+            btw = form.get('btw', 0)
+            btwtype = BtwType.query(BtwType.percentage == btw).get()
+            if btwtype is None:
+                btwtype = BtwType(
+                    name=str(btw) + "%",
+                    percentage=btw
+                )
+                btwtype.put()
+            product.btwtype = btwtype.key
 
             product.put()
         except BadValueError as e:

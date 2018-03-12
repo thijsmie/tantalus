@@ -32,7 +32,7 @@ def ensurepositive():
 def ensureexists():
     def validator(prop, value):
         if value.get() is None:
-            raise ValueError(prop, "Entry of type {} with id {} does not exist.".format(value.kind(), value.id()))
+            raise ValueError(prop, "Entry of type {} with id {} does not exist.".format(value.kind(), value.urlsafe()))
         return value
 
     return validator

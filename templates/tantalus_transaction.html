@@ -148,7 +148,7 @@
       window.relations = {{ relations|todict_filtered|tojson|safe }};
 
       {% if transaction is defined %}
-          transaction.init("{{ url_for(".edittransaction", transaction_id=transaction.key.id()) }}");
+          transaction.init("{{ url_for(".edittransaction", transaction_id=transaction.key.urlsafe()) }}");
       {% else %}
           transaction.init("{{ url_for(".addtransaction") }}");
       {% endif %}

@@ -1,5 +1,5 @@
-from google.appengine.ext.ndb import Key, transactional
-from ndbextensions.models import Referencing, Transaction, TransactionLine, ServiceLine, Relation
+from google.appengine.ext.ndb import transactional
+from ndbextensions.models import Referencing, Transaction, TransactionLine, ServiceLine, Relation, Product, TypeGroup
 from ndbextensions.validate import OperationError
 from ndbextensions.utility import get_or_none
 
@@ -13,11 +13,12 @@ from pytz import timezone
 @transactional(xg=True)
 def new_transaction(data):
     reference = Referencing.get_reference()
-    relation = get_or_none(data['Relation'], Relation)
+    relation = get_or_none(data['relation'], Relation)
     if relation is None:
         raise OperationError("Relation does not exist!")
 
-    tr = Transaction.query(Transaction.relation == relation).order(-Transaction.informal_reference).get()
+    tr = Transaction.query(Transaction.relation == relation.key, ancestor=TypeGroup.transaction_ancestor()).order(
+        -Transaction.informal_reference).get()
     if tr is None:
         informal_reference = 1
     else:
@@ -34,7 +35,7 @@ def new_transaction(data):
     )
 
     for prd in data["sell"]:
-        product = get_or_none(prd["id"])
+        product = get_or_none(prd["id"], Product)
         if product is None:
             raise OperationError("Product with id {} does not exist.".format(prd["id"]))
         line = product.take(int(prd['amount']))
@@ -43,14 +44,14 @@ def new_transaction(data):
         t.one_to_two.append(line)
 
     for prd in data["buy"]:
-        product = get_or_none(prd["id"])
+        product = get_or_none(prd["id"], Product)
         if product is None:
             raise OperationError("Product with id {} does not exist.".format(prd["id"]))
         line = TransactionLine(
             product=product.key,
             amount=int(prd['amount']),
             prevalue=int(prd['price']),
-            value=product.value*int(prd['amount']),
+            value=product.value * int(prd['amount']),
             btwtype=product.btwtype
         )
 
@@ -67,7 +68,8 @@ def new_transaction(data):
 
         t.services.append(line)
 
-    t.total = transaction_total(t)
+    rec = transaction_record(t)
+    t.total = rec["total"]
     t.put()
     return t
 
@@ -86,16 +88,16 @@ def edit_transaction(t, data):
 
     newsell = []
     for prd in data["sell"]:
-        product = get_or_none(prd["id"])
+        product = get_or_none(prd["id"], Product)
         if product is None:
             raise OperationError("Product with id {} does not exist.".format(prd["id"]))
 
-        # We leave value at zero, will get filled in later
         line = TransactionLine(
-            value=0,
-            prevalue=0,
+            value=int(prd['amount'])*product.value,
+            prevalue=int(prd['amount'])*product.value,
             amount=int(prd['amount']),
-            product=product.key
+            product=product.key,
+            btwtype=product.btwtype
         )
 
         newsell.append(line)
@@ -104,13 +106,15 @@ def edit_transaction(t, data):
 
     newbuy = []
     for prd in data["buy"]:
-        product = get_or_none(prd["id"])
+        product = get_or_none(prd["id"], Product)
         if product is None:
             raise OperationError("Product with id {} does not exist.".format(prd["id"]))
         line = TransactionLine(
             product=product.key,
             amount=int(prd['amount']),
-            value=int(prd['price'])
+            prevalue=int(prd['price']),
+            value=int(prd['amount'])*product.value,
+            btwtype=product.btwtype
         )
 
         newbuy.append(line)
@@ -155,61 +159,76 @@ def transaction_process(transaction):
     buyrows = [make_row_record(row) for row in transaction.two_to_one]
     servicerows = [make_service_record(row) for row in transaction.services]
 
-    btwtotals = defaultdict(float)
+    sellbtwtotals = defaultdict(float)
+    # Current total including btw, btw rounded per invoice
+    for row in sellrows:
+        btw = row["prevalue"] * row["btw"] / 100 / (row["btw"] + 100)
+        sellbtwtotals[row["btw"]] += btw
+        row["btwvalue"] = btw
+
+    buybtwtotals = defaultdict(float)
     if transaction.two_to_one_has_btw:
         if transaction.two_to_one_btw_per_row:
             # Current total including btw, btw rounded per row
             for row in buyrows:
                 btw = round(row["prevalue"] * row["btw"] / 100 / (row["btw"] + 100))
-                btwtotals[row["btw"]] += btw
+                buybtwtotals[row["btw"]] += btw
                 row["btwvalue"] = btw
         else:
             # Current total including btw, btw rounded for full invoice
             # We should use decimals here, but floats are good enough for now
             for row in buyrows:
                 btw = row["prevalue"] * row["btw"] / 100 / (row["btw"] + 100)
-                btwtotals[row["btw"]] += btw
+                buybtwtotals[row["btw"]] += btw
                 row["btwvalue"] = btw
     else:
         if transaction.two_to_one_btw_per_row:
             # Current total excluding btw, btw rounded per row
             for row in buyrows:
                 btw = round(row["prevalue"] * row["btw"] / 100)
-                btwtotals[row["btw"]] += btw
+                buybtwtotals[row["btw"]] += btw
                 row["btwvalue"] = btw
         else:
             # Current total excluding btw, btw rounded for full invoice
             # We should use decimals here, but floats are good enough for now
             for row in buyrows:
                 btw = row["prevalue"] * row["btw"] / 100
-                btwtotals[row["btw"]] += btw
+                buybtwtotals[row["btw"]] += btw
                 row["btwvalue"] = btw
 
-    return dict(btwtotals), sellrows, buyrows, servicerows
+    for k, v in buybtwtotals.items():
+        buybtwtotals[k] = int(round(v))
+
+    for k, v in sellbtwtotals.items():
+        sellbtwtotals[k] = int(round(v))
+
+    return dict(sellbtwtotals), dict(buybtwtotals), sellrows, buyrows, servicerows
 
 
 def transaction_record(transaction):
-    btwtotals, sellrows, buyrows, servicerows = transaction_process(transaction)
+    sellbtwtotals, buybtwtotals, sellrows, buyrows, servicerows = transaction_process(transaction)
 
     total = sum([r['prevalue'] for r in sellrows]) - sum([r['prevalue'] for r in buyrows]) + sum(
         [r['prevalue'] for r in servicerows])
 
     if not transaction.two_to_one_has_btw:
-        total -= sum(btwtotals.values())
+        total -= sum(buybtwtotals.values())
 
     return {
-        "reference": transaction.reference,
+        "reference": str(transaction.reference).zfill(4),
         "name": transaction.relation.get().name + " " + str(transaction.informal_reference).zfill(3),
         "sell": sellrows,
         "buy": buyrows,
         "service": servicerows,
+        "sellbtw": sellbtwtotals,
+        "buybtw": buybtwtotals,
         "description": transaction.description,
         "processeddate": transaction.processeddate,
         "deliverydate": transaction.deliverydate,
-        "total": total,
+        "total": int(total),
         "id": transaction.key.urlsafe(),
         "revision": transaction.revision,
-        "lastedit": transaction.lastedit
+        "lastedit": transaction.lastedit,
+        "two_to_one_has_btw": transaction.two_to_one_has_btw,
+        "two_to_one_btw_per_row": transaction.two_to_one_btw_per_row
     }
-
-

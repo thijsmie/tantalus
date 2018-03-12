@@ -51,9 +51,6 @@
           </div>
         </fieldset>
       </div>
-    </div>
-
-    <div class="col-lg-6">
       <div class="well bs-component">
         <fieldset>
           <div class="form-group">
@@ -94,7 +91,7 @@
               {% if not product %}
                   post_object(tosubmit, "{{ url_for(".addproduct") }}", "{{ url_for(".index") }}");
               {% else %}
-                  post_object(tosubmit, "{{ url_for(".editproduct", product_id=product.key.id()) }}", "{{ url_for(".index") }}");
+                  post_object(tosubmit, "{{ url_for(".editproduct", product_id=product.key.urlsafe()) }}", "{{ url_for(".index") }}");
               {% endif %}
           }
           return true;

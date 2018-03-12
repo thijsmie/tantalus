@@ -75,19 +75,19 @@ def showrelationjson(relation_id):
 def addtransaction():
     form = request.json
     if request.method == "POST":
-        try:
-            relation = get_or_none(form['relation'], Relation)
-            if relation is None:
-                raise BadValueError("Relation does not exist!")
-            transaction = new_transaction(form)
-            add_to_budget(relation.key, -transaction.total)
+        #try:
+        relation = get_or_none(form['relation'], Relation)
+        if relation is None:
+            raise BadValueError("Relation does not exist!")
+        transaction = new_transaction(form)
+        add_to_budget(relation.key, -transaction.total)
 
-            taskqueue.add(url='/invoice',
-                          target='worker',
-                          params={'transaction': transaction.key.urlsafe()})
+        taskqueue.add(url='/invoice',
+                      target='worker',
+                      params={'transaction': transaction.key.urlsafe()})
 
-        except BadValueError as e:
-            return jsonify({"messages": [e.message]}, 400)
+        #except BadValueError as e:
+        #    return jsonify({"messages": [e.message]}, 400)
         return jsonify(transaction)
 
     return render_template('tantalus_transaction.html',
@@ -144,7 +144,7 @@ def resend(transaction_id):
 
     taskqueue.add(url='/invoice',
                   target='worker',
-                  params={'transaction': transaction.key.id()})
+                  params={'transaction': transaction.key.urlsafe()})
     return redirect(url_for(".showtransaction", transaction_id=transaction_id))
     
     

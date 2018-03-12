@@ -9,34 +9,23 @@ mydir = os.path.abspath(os.path.dirname(__file__))
 
 def invoice_totaller(transaction):
     sell = transaction["sell"]
-    sellmods = [0] * len(sell["modnames"])
-    sellprevalue = 0
     selltotal = 0
-    for row in sell["rows"]:
-        for i, t in enumerate(row["modtotals"]):
-            sellmods[i] += t
-        sellprevalue += row["prevalue"]
-        selltotal += row["total"]
+    for row in sell:
+        selltotal += row["value"]
 
     buy = transaction["buy"]
-    buymods = [0] * len(buy["modnames"])
     buytotal = 0
-    for row in buy["rows"]:
-        for i, t in enumerate(row["modtotals"]):
-            buymods[i] += t
-        buytotal += row["total"]
+    for row in buy:
+        buytotal += row["prevalue"]
 
     service = transaction["service"]
     servicetotal = 0
-    for row in service["rows"]:
+    for row in service:
         servicetotal += row["value"]
 
     return {
         "selltotal": selltotal,
-        "sellmods": sellmods,
-        "sellprevalue": sellprevalue,
         "buytotal": buytotal,
-        "buymods": buymods,
         "servicetotal": servicetotal
     }
 

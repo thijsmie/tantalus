@@ -8,7 +8,6 @@ from google.appengine.api import app_identity
 from google.appengine.api import urlfetch
 
 
-# From: https://cloud.google.com/datastore/docs/schedule-export
 class Export(webapp2.RequestHandler):
     def get(self):
         access_token, _ = app_identity.get_access_token(
@@ -57,4 +56,7 @@ class Export(webapp2.RequestHandler):
             self.response.status_int = httplib.INTERNAL_SERVER_ERROR
 
 
-app = webapp2.WSGIApplication([('/backup-datastore', Export)], debug=True)
+app = webapp2.WSGIApplication(
+    [
+        ('/cloud-datastore-export', Export),
+    ], debug=True)

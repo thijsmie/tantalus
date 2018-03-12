@@ -27,12 +27,12 @@
       </thead>
 
       <tbody>
-      {% for row in sell.rows %}
+      {% for row in sell %}
         <tr>
           <td>{{ row.contenttype }}</td>
           <td align="right">{{ row.amount }}</td>
           <td align="right">{{ row.prevalue | format_currency }}</td>
-          <td align="right">{{ row.total | format_currency }}</td>
+          <td align="right">{{ row.value | format_currency }}</td>
           <td align="right">{{ row.btw }}%</td>
         </tr>
       {% endfor %}
@@ -54,7 +54,7 @@
       </thead>
 
       <tbody>
-      {% for row in buy.rows %}
+      {% for row in buy %}
         <tr>
           <td>{{ row.contenttype }}</td>
           <td>{{ row.amount }}</td>
@@ -79,7 +79,7 @@
       </thead>
 
       <tbody>
-      {% for row in service.rows %}
+      {% for row in service %}
         <tr>
           <td>{{ row.contenttype }}</td>
           <td>{% if row.amount and row.amount != 0 %}{{ row.amount }}{% endif %}</td>

@@ -19,7 +19,7 @@ Factuurdatum: {{ transaction.processeddate }} | tartarus@science.ru.nl
 Product | Aantal | Stukprijs | Totaal | BTW\%
 :------------- | ---:| ---:| ---:|---:
 {% for row in transaction.sell -%}
-{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.prevalue / row.amount) }} | {{ format_currency(row.prevalue) }} | {{ row.btw }}\%
+{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.prevalue / row.amount) }} | {{ format_currency(row.prevalue) }} | {{ row.btw }}%
 {% endfor -%}
 **Totaal** | | | *{{ format_currency(totals.selltotal) }}* |
 
@@ -27,12 +27,13 @@ Product | Aantal | Stukprijs | Totaal | BTW\%
 {% endif %}
 {% if transaction.buy|length > 0 %}
 ## Retour
+{% if transaction.two_to_one_has_btw %}(Inclusief BTW){% else %}(Exclusief BTW){% endif %}
 Product | Aantal | Stukprijs | Totaal | BTW\%
 :------------- | ---:| ---:| ---:|---:
 {% for row in transaction.buy -%}
-{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.prevalue / row.amount) }} | {{ format_currency(row.prevalue) }} | {{ row.btw }}\%
+{{ row.contenttype }} | {{ row.amount }} | {{ format_currency(row.prevalue / row.amount) }} | {{ format_currency(row.prevalue) }} | {{ row.btw }}%
 {% endfor -%}
-**Totaal** | | | *{{ format_currency(totals.selltotal) }}* |
+**Totaal** | | | *{{ format_currency(totals.buytotal) }}* |
 
 
 {% endif %}

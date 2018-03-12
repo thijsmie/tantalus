@@ -5,7 +5,7 @@ from conscribo_api import Conscribo
 from conscribo_mapper import TransactionXML, TransactionXMLRow, ResultException
 
 from ndbextensions.models import TypeGroup
-from ndbextensions.conscribo import ConscriboGroupLink, ConscriboRelationLink, ConscriboModLink, \
+from ndbextensions.conscribo import ConscriboGroupLink, ConscriboRelationLink, \
     ConscriboTransactionLink
 from ndbextensions.config import Config
 

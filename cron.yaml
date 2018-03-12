@@ -1,5 +1,4 @@
 cron:
 - description: "Daily Cloud Datastore Export"
   url: /backup-datastore?output_url_prefix=gs://new_backup_pytantalus
-  target: backup-datastore-admin
   schedule: every 24 hours
