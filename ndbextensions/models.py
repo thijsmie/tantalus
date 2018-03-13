@@ -42,6 +42,7 @@ class Relation(ndb.Model):
     send_mail = ndb.BooleanProperty(required=True)
 
     email = ndb.TextProperty(default="")
+    address = ndb.TextProperty(default="")
 
     def __init__(self, *args, **kwargs):
         super(Relation, self).__init__(*args, parent=TypeGroup.relation_ancestor(), **kwargs)
@@ -139,6 +140,8 @@ class ServiceLine(ndb.Model):
     service = ndb.StringProperty()
     value = ndb.IntegerProperty()
     amount = ndb.IntegerProperty()
+    
+    btwtype = ndb.KeyProperty(kind=BtwType)
 
 
 class Transaction(ndb.Model):

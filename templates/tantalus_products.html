@@ -23,6 +23,7 @@
         <th>Unit Value</th>
         <th>Amount</th>
         <th>Total Value</th>
+        <th>BTW%</th>
       </tr>
       </thead>
 
@@ -41,6 +42,7 @@
           {%- endif %}
           <td align="right">{{ product.amount }}</td>
           <td align="right">{{ format_currency(product.value * product.amount) }}</td>
+          <td align="right">{{ product.btwtype.get().percentage }}</td>
         </tr>
       {% else %}
         <tr>

@@ -8,10 +8,13 @@
 
   Event date: {{ deliverydate }}<br>
   Processed date: {{ processeddate }}<br>
-  Informal reference: {{ informal_reference }}<br>
+  Formal Reference: {{ reference }}<br>
   Last edit: {{ lastedit }}<br>
   Description: {{ description }}<br>
-  Revision: {{ revision }}
+  Revision: {{ revision }}<br><br>
+  
+  Buy included btw: {{ two_to_one_has_btw }}<br>
+  Buy btw rounded per row: {{ two_to_one_btw_per_row }}<br>  
 
   <h2>Sold</h2>
   <div class="table-responsive">
@@ -31,7 +34,7 @@
         <tr>
           <td>{{ row.contenttype }}</td>
           <td align="right">{{ row.amount }}</td>
-          <td align="right">{{ row.prevalue | format_currency }}</td>
+          <td align="right">{{ (row.value / row.amount) | format_currency }}</td>
           <td align="right">{{ row.value | format_currency }}</td>
           <td align="right">{{ row.btw }}%</td>
         </tr>
@@ -39,7 +42,7 @@
       </tbody>
     </table>
   </div>
-
+  
   <h2>Bought</h2>
   <div class="table-responsive">
     <table class="table table-condensed table-striped">
@@ -75,6 +78,7 @@
         <th>Name</th>
         <th>Amount</th>
         <th>Price</th>
+        <th>BTW%</th>
       </tr>
       </thead>
 
@@ -83,12 +87,37 @@
         <tr>
           <td>{{ row.contenttype }}</td>
           <td>{% if row.amount and row.amount != 0 %}{{ row.amount }}{% endif %}</td>
-          <td>{{ row.value | format_currency }}</td>
+          <td>{{ row.prevalue | format_currency }}</td>
+          <td>{{ row.btw }}</td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
+  
+  <h2>BTW</h2>
+  <div class="col-4">
+      <div class="table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+          <tr>
+            <th>BTW%</th>
+            <th>BTW&euro;</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          {% for percentage,value in btwtotals.items() %}
+            <tr>
+              <td>{{ percentage }}%</td>
+              <td align="right">{{ value|format_currency }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+  </div>
+  
   <strong>Totaal: </strong> {{ total | format_currency }}<br>
   <a class="btn btn-primary" href="{{ url_for(".edittransaction", transaction_id=id) }}">Edit</a>
   <a class="btn btn-primary" href="{{ url_for(".resend", transaction_id=id) }}">Resend</a>
@@ -104,3 +133,4 @@
     }
   </style>
 {% endblock %}
+

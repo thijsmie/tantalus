@@ -11,6 +11,10 @@
         var row_noprice_template = "<tr><td>__name__</td><td class='td-num'>__amount__</td>" +
             "<td class='td-num'><button class='edit' /><button class='delete' /></td></tr>";
 
+        var row_service_template = "<tr><td>__name__</td><td class='td-num'>__amount__</td><td class='td-num'>" +
+            "__price__</td><td class='td-num'>__btw__</td><td class='td-num'><button class='edit' />" +
+            "<button class='delete' /></td></tr>";
+            
         var deletebutton = "<span class=\"glyphicon glyphicon-remove\" aria-hidden=\"true\"></span>";
         var editbutton = "<span class=\"glyphicon glyphicon-edit\" aria-hidden=\"true\"></span>";
 
@@ -67,6 +71,8 @@
             rec.relation = window.relations[rel_input.data('predictor').selected].id;
             rec.description = $("#event").val();
             rec.deliverydate = $("#delivered").val();
+            rec.two_to_one_has_btw = $("#two_to_one_has_btw").prop("checked");
+            rec.two_to_one_btw_per_row = $("#two_to_one_btw_per_row").prop("checked");
 
             post_object(rec, transaction.endpoint, "/transaction");
         };
@@ -111,7 +117,8 @@
                 datatable: [],
                 input_product: $("#" + type + "-product-input"),
                 input_amount: $("#" + type + "-amount-input"),
-                input_price: $("#" + type + "-price-input")
+                input_price: $("#" + type + "-price-input"),
+                input_btw: $("#" + type + "-btw-input")
             };
 
             tr.data_to_html = function (data) {
@@ -120,7 +127,7 @@
                 var str;
 
                 if (tr.type === 'service') {
-                    str = row_template;
+                    str = row_service_template;
                 }
                 else if (tr.type === 'sell') {
                     str = row_noprice_template;
@@ -134,6 +141,9 @@
 
                 if (tr.type !== 'sell')
                     str = str.replace("__price__", transaction.format_currency(data['price']));
+                    
+                if (tr.type === 'service')
+                    str = str.replace('__btw__', data['btw']);
 
                 var row = $(str);
                 row.find('button.edit').first().replaceWith($(editbutton).click(function () {
@@ -154,6 +164,9 @@
 
                 if (tr.type !== 'sell')
                     row.price = transaction.parse_price(tr.input_price.val());
+                    
+                if (tr.type === 'service')
+                    row.btw = parseInt(tr.input_btw.val());
 
                 if (tr.input_product.data('predictor')) {
                     if (tr.input_product.data('predictor').selected === -1) {
@@ -181,7 +194,6 @@
             tr.edit = function (row, data) {
                 tr.del(row, data);
                 tr.input_product.val(data['contenttype']);
-
                 tr.input_amount.val(data['amount']);
 
                 if (tr.type !== 'service') {
@@ -194,6 +206,9 @@
 
                 if (tr.type !== 'sell')
                     tr.input_price.val(transaction.format_currency(data['price']).replace(',', '.'));
+                    
+                if (tr.type === 'service')
+                    tr.input_btw.val(data['btw'])
             };
 
             tr.del = function (row, data) {
@@ -271,6 +286,46 @@
                 tr.input_price.val(money.substring(0, index) + "." + money.substring(index));
                 transaction.caret_position(tr.input_price, tr.input_price.val().length);
             };
+            
+            tr.price_input_alt_keydown = function (e) {
+                if (e.which === 13 || e.which === 9) {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    if (e.shiftKey) {
+                        tr.input_amount.focus();
+                        return;
+                    }
+                    
+                    tr.input_btw.focus();
+                }
+                else if (e.which === 65) {
+                    tr.input_price.val((parseFloat(tr.input_price.val()) * parseInt(tr.input_amount.val())).toFixed(2));
+                }
+            };
+            
+            tr.btw_input_keydown = function (e) {
+                if (e.which === 13) { // Enter
+
+                    e.stopPropagation();
+                    e.preventDefault();
+                    
+                    if (e.shiftKey) {
+                        tr.input_btw.focus();
+                        return;
+                    }
+
+                    var row = tr.fetch_new_row();
+
+                    if (row) {
+                        tr.data_to_html(row);
+                        tr.input_product.val("").focus();
+                        tr.input_amount.val("");
+                        tr.input_price.val("0.00");
+                        tr.input_btw.val("");
+                    }
+                }
+            };
 
             tr.input_product.keydown(tr.product_input_keydown);
 
@@ -281,9 +336,18 @@
                 tr.input_price.focus(function () {
                     if ($(this).val() === "") $(this).val("0.00");
                 });
-                tr.input_price.keydown(tr.price_input_keydown);
+                 if(tr.type === "service") {
+                    tr.input_price.keydown(tr.price_input_alt_keydown);
+                    tr.input_btw.keydown(tr.btw_input_keydown);
+                    tr.input_btw.keyup(tr.btw_input_keyup);
+                }
+                else
+                    tr.input_price.keydown(tr.price_input_keydown);
                 tr.input_price.keyup(tr.price_input_keyup);
             }
+            
+           
+            
             return tr;
         };
         return transaction;

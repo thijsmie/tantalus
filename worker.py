@@ -40,7 +40,7 @@ class InvoiceHandler(webapp2.RequestHandler):
             budget = None
 
         if relation.send_mail:
-            pdf = make_invoice(record, budget)
+            pdf = make_invoice(record, relation, budget)
             send_invoice(relation, transaction, pdf)
 
 

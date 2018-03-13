@@ -1,5 +1,5 @@
 from google.appengine.ext.ndb import transactional
-from ndbextensions.models import Referencing, Transaction, TransactionLine, ServiceLine, Relation, Product, TypeGroup
+from ndbextensions.models import Referencing, Transaction, TransactionLine, ServiceLine, Relation, Product, TypeGroup, BtwType
 from ndbextensions.validate import OperationError
 from ndbextensions.utility import get_or_none
 
@@ -16,6 +16,7 @@ def new_transaction(data):
     relation = get_or_none(data['relation'], Relation)
     if relation is None:
         raise OperationError("Relation does not exist!")
+        
 
     tr = Transaction.query(Transaction.relation == relation.key, ancestor=TypeGroup.transaction_ancestor()).order(
         -Transaction.informal_reference).get()
@@ -31,7 +32,9 @@ def new_transaction(data):
         relation=relation.key,
         deliverydate=datetime.strptime(data["deliverydate"], "%Y-%m-%d").date(),
         processeddate=datetime.now(timezone("Europe/Amsterdam")).date(),
-        description=data.get("description", "")
+        description=data.get("description", ""),
+        two_to_one_has_btw=data.get("two_to_one_has_btw", False),
+        two_to_one_btw_per_row=data.get("two_to_one_btw_per_row", False)
     )
 
     for prd in data["sell"]:
@@ -60,10 +63,20 @@ def new_transaction(data):
         t.two_to_one.append(line)
 
     for prd in data["service"]:
+        btw = prd.get('btw', 0)
+        btwtype = BtwType.query(BtwType.percentage == btw, ancestor=TypeGroup.product_ancestor()).get()
+        if btwtype is None:
+            btwtype = BtwType(
+                name=str(btw)+"%",
+                percentage=btw
+            )
+            btwtype.put()
+    
         line = ServiceLine(
             service=prd['contenttype'],
             amount=int(prd['amount']),
-            value=int(prd['price'])
+            value=int(prd['price']),
+            btwtype=btwtype.key
         )
 
         t.services.append(line)
@@ -79,6 +92,9 @@ def edit_transaction(t, data):
     # Easy stuff first
     # Note, this does not take care of money in budgets, do outside! Something with transactional limitations...
     t.revision += 1
+    
+    t.two_to_one_has_btw = data.get("two_to_one_has_btw", t.two_to_one_has_btw)
+    t.two_to_one_btw_per_row = data.get("two_to_one_btw_per_row", t.two_to_one_btw_per_row)
 
     if "deliverydate" in data:
         t.deliverydate = datetime.strptime(data["deliverydate"], "%Y-%m-%d").date()
@@ -122,10 +138,20 @@ def edit_transaction(t, data):
 
     t.services = []
     for prd in data["service"]:
+        btw = prd.get('btw', 0)
+        btwtype = BtwType.query(BtwType.percentage == btw, ancestor=TypeGroup.product_ancestor()).get()
+        if btwtype is None:
+            btwtype = BtwType(
+                name=str(btw)+"%",
+                percentage=btw
+            )
+            btwtype.put()
+    
         line = ServiceLine(
             service=prd['contenttype'],
             amount=int(prd['amount']),
-            value=int(prd['price'])
+            value=int(prd['price']),
+            btwtype=btwtype.key
         )
 
         t.services.append(line)
@@ -150,7 +176,8 @@ def make_service_record(row):
     return {
         "contenttype": row.service,
         "amount": row.amount,
-        "prevalue": row.value
+        "prevalue": row.value,
+        "btw": row.btwtype.get().percentage
     }
 
 
@@ -159,11 +186,17 @@ def transaction_process(transaction):
     buyrows = [make_row_record(row) for row in transaction.two_to_one]
     servicerows = [make_service_record(row) for row in transaction.services]
 
-    sellbtwtotals = defaultdict(float)
+    btwtotals = defaultdict(float)
     # Current total including btw, btw rounded per invoice
     for row in sellrows:
-        btw = row["prevalue"] * row["btw"] / 100 / (row["btw"] + 100)
-        sellbtwtotals[row["btw"]] += btw
+        btw = row["prevalue"] * row["btw"] / 100. / (row["btw"]/100. + 1)
+        btwtotals[row["btw"]] -= btw
+        row["btwvalue"] = btw
+
+    # Current total including btw, btw rounded per invoice
+    for row in servicerows:
+        btw = row["prevalue"] * row["btw"] / 100. / (row["btw"]/100. + 1)
+        btwtotals[row["btw"]] -= btw
         row["btwvalue"] = btw
 
     buybtwtotals = defaultdict(float)
@@ -171,47 +204,51 @@ def transaction_process(transaction):
         if transaction.two_to_one_btw_per_row:
             # Current total including btw, btw rounded per row
             for row in buyrows:
-                btw = round(row["prevalue"] * row["btw"] / 100 / (row["btw"] + 100))
+                btw = round(row["prevalue"] * row["btw"] / 100.0 / (row["btw"]/100. + 1))
+                btwtotals[row["btw"]] -= btw
                 buybtwtotals[row["btw"]] += btw
                 row["btwvalue"] = btw
         else:
             # Current total including btw, btw rounded for full invoice
             # We should use decimals here, but floats are good enough for now
             for row in buyrows:
-                btw = row["prevalue"] * row["btw"] / 100 / (row["btw"] + 100)
+                btw = row["prevalue"] * row["btw"] / 100. / (row["btw"]/100. + 1)
+                btwtotals[row["btw"]] -= btw
                 buybtwtotals[row["btw"]] += btw
                 row["btwvalue"] = btw
     else:
         if transaction.two_to_one_btw_per_row:
             # Current total excluding btw, btw rounded per row
             for row in buyrows:
-                btw = round(row["prevalue"] * row["btw"] / 100)
+                btw = round(row["prevalue"] * row["btw"] / 100.0)
+                btwtotals[row["btw"]] -= btw
                 buybtwtotals[row["btw"]] += btw
                 row["btwvalue"] = btw
         else:
             # Current total excluding btw, btw rounded for full invoice
             # We should use decimals here, but floats are good enough for now
             for row in buyrows:
-                btw = row["prevalue"] * row["btw"] / 100
+                btw = row["prevalue"] * row["btw"] / 100.0
+                btwtotals[row["btw"]] -= btw
                 buybtwtotals[row["btw"]] += btw
                 row["btwvalue"] = btw
 
-    for k, v in buybtwtotals.items():
-        buybtwtotals[k] = int(round(v))
-
-    for k, v in sellbtwtotals.items():
-        sellbtwtotals[k] = int(round(v))
-
-    return dict(sellbtwtotals), dict(buybtwtotals), sellrows, buyrows, servicerows
+    for k, v in btwtotals.items():
+        btwtotals[k] = int(round(v))
+        
+    return dict(btwtotals), dict(buybtwtotals), sellrows, buyrows, servicerows
 
 
 def transaction_record(transaction):
-    sellbtwtotals, buybtwtotals, sellrows, buyrows, servicerows = transaction_process(transaction)
+    btwtotals, buybtwtotals, sellrows, buyrows, servicerows = transaction_process(transaction)
 
-    total = sum([r['prevalue'] for r in sellrows]) - sum([r['prevalue'] for r in buyrows]) + sum(
-        [r['prevalue'] for r in servicerows])
-
-    if not transaction.two_to_one_has_btw:
+    selltotal = sum(r['prevalue'] for r in sellrows)
+    buytotal = sum(r['prevalue'] for r in buyrows)
+    servicetotal = sum(r['prevalue'] for r in servicerows)
+    
+    total = selltotal - buytotal + servicetotal
+    
+    if not transaction.two_to_one_has_btw:   
         total -= sum(buybtwtotals.values())
 
     return {
@@ -220,8 +257,11 @@ def transaction_record(transaction):
         "sell": sellrows,
         "buy": buyrows,
         "service": servicerows,
-        "sellbtw": sellbtwtotals,
-        "buybtw": buybtwtotals,
+        "selltotal": selltotal,
+        "buytotal": buytotal,
+        "btwtotals": btwtotals,
+        "btwtotal": sum(btwtotals.values()),
+        "servicetotal": servicetotal,
         "description": transaction.description,
         "processeddate": transaction.processeddate,
         "deliverydate": transaction.deliverydate,
@@ -232,3 +272,4 @@ def transaction_record(transaction):
         "two_to_one_has_btw": transaction.two_to_one_has_btw,
         "two_to_one_btw_per_row": transaction.two_to_one_btw_per_row
     }
+

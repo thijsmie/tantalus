@@ -40,6 +40,13 @@
             </div>
           </div>
           <div class="form-group">
+            <label for="amount" class="col-lg-3 control-label">BTW%</label>
+            <div class="col-lg-9">
+              <input id="btw" type="text" class="form-control" placeholder="BTW%" {% if product and product.btwtype%}
+                     value="{{ product.btwtype.get().percentage }}"{% endif %}>
+            </div>
+          </div>
+          <div class="form-group">
             <label for="value" class="col-lg-3 control-label">Value</label>
             <div class="col-lg-9">
               <div id="valwrap" class="input-group">
@@ -81,12 +88,13 @@
               tosubmit.name = $('#name').val();
               tosubmit.tag = $('#tag').val();
               tosubmit.group = $('#group').val();
+              tosubmit.btw = parseInt($('#btw').val());
 
               if ($('#amount').val() != "")
                   tosubmit.amount = parseInt($('#amount').val());
 
               if ($('#value').val() != "")
-                  tosubmit.value = parseInt(parseFloat($('#value').val()) * 100.0);
+                  tosubmit.value = parseInt(parseFloat($('#value').val().replace(',','.')) * 100.0);
 
               {% if not product %}
                   post_object(tosubmit, "{{ url_for(".addproduct") }}", "{{ url_for(".index") }}");
