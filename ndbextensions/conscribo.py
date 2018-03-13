@@ -1,5 +1,5 @@
 from google.appengine.ext import ndb
-from ndbextensions.models import TypeGroup, Group, Relation, Transaction, Mod
+from ndbextensions.models import TypeGroup, Group, Relation, Transaction
 
 
 class ConscriboGroupLink(ndb.Model):
@@ -12,18 +12,6 @@ class ConscriboGroupLink(ndb.Model):
     @classmethod
     def get_by_group(cls, groupkey):
         return cls.query(cls.group == groupkey, ancestor=TypeGroup.conscribo_ancestor()).get()
-
-
-class ConscriboModLink(ndb.Model):
-    mod = ndb.KeyProperty(kind=Mod)
-    linked = ndb.IntegerProperty(default=999)
-
-    def __init__(self, *args, **kwargs):
-        super(ConscriboModLink, self).__init__(*args, parent=TypeGroup.conscribo_ancestor(), **kwargs)
-
-    @classmethod
-    def get_by_mod(cls, modkey):
-        return cls.query(cls.mod == modkey, ancestor=TypeGroup.conscribo_ancestor()).get()
 
 
 class ConscriboRelationLink(ndb.Model):

@@ -1,29 +1,7 @@
 {% extends 'base.html' %}
-{% from 'tantalus_mod_helpers.html' import render_mod_as_tag %}
 {% from 'tantalus_general_helpers.html' import format_currency %}
 
 {% block container %}
-
-  {# render invisible div containers for mods #}
-  {% for mod in mods %}
-    <div id="div_mod_gain_content_{{ mod.key.id() }}" style="display:none;">
-      <div class="btn-group" style="padding:4px">
-        {{ render_mod_as_tag(mod) }}
-        <a onclick="gain_reset($(this));" class="btn btn-xs btn-danger rm-mod-but"><span
-                class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
-      </div>
-    </div>
-    <div id="div_mod_lose_content_{{ mod.key.id() }}" style="display:none;">
-      <div class="btn-group" style="padding:4px">
-        {{ render_mod_as_tag(mod) }}
-        <a onclick="lose_reset($(this));" class="btn btn-xs btn-danger rm-mod-but"><span
-                class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>
-      </div>
-    </div>
-  {% endfor %}
-
-
-
   <form id="newproductform" class="form-horizontal">
     <div class="col-lg-6">
       <div class="well bs-component">
@@ -62,6 +40,13 @@
             </div>
           </div>
           <div class="form-group">
+            <label for="amount" class="col-lg-3 control-label">BTW%</label>
+            <div class="col-lg-9">
+              <input id="btw" type="text" class="form-control" placeholder="BTW%" {% if product and product.btwtype%}
+                     value="{{ product.btwtype.get().percentage }}"{% endif %}>
+            </div>
+          </div>
+          <div class="form-group">
             <label for="value" class="col-lg-3 control-label">Value</label>
             <div class="col-lg-9">
               <div id="valwrap" class="input-group">
@@ -73,65 +58,8 @@
           </div>
         </fieldset>
       </div>
-    </div>
-
-    <div class="col-lg-6">
       <div class="well bs-component">
         <fieldset>
-          <div class="form-group">
-            <label for="gainmodselect" class="col-lg-3 control-label">Buy Mods</label>
-            <div class="col-lg-9">
-              <select id='gainmodselect' class="form-control">
-                <option value=0>Add mod on buy</option>
-                {% for mod in mods %}
-                  {% if not product or mod.key not in product.gainmods %}
-                    <option value={{ mod.key.id() }}>{{ mod.name }}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="showgainmod" class="col-lg-3 control-label"></label>
-            <div id="showgainmod" class="col-lg-9">
-              {% if product %}
-                {% for mod in product.gainmods %}
-                  <div class="btn-group" style="padding:4px">
-                    {{ render_mod_as_tag(mod.get()) }}
-                    <a onclick="$(this).parent().data('svalue', {{ mod.id() }}).data('stext', '{{ mod.get().name }}'); gain_reset($(this));"
-                       class="btn btn-xs btn-danger rm-mod-but"><span class="glyphicon glyphicon-remove"
-                                                                      aria-hidden="true"></span></a>
-                  </div>
-                {% endfor %}{% endif %}
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="losemodselect" class="col-lg-3 control-label">Sell Mods</label>
-            <div class="col-lg-9">
-              <select id='losemodselect' class="form-control">
-                <option value=0>Add mod on sell</option>
-                {% for mod in mods %}
-                  {% if not product or mod.key not in product.losemods %}
-                    <option value={{ mod.key.id() }}>{{ mod.name }}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="showlosemod" class="col-lg-3 control-label"></label>
-            <div id="showlosemod" class="col-lg-9">
-              {% if product %}
-                {% for mod in product.losemods %}
-                  <div class="btn-group" style="padding:4px">
-                    {{ render_mod_as_tag(mod.get()) }}
-                    <a onclick="$(this).parent().data('svalue', {{ mod.id() }}).data('stext', '{{ mod.get().name }}'); lose_reset($(this));"
-                       class="btn btn-xs btn-danger rm-mod-but"><span class="glyphicon glyphicon-remove"
-                                                                      aria-hidden="true"></span></a>
-                  </div>
-                {% endfor %}{% endif %}
-            </div>
-          </div>
           <div class="form-group">
             <div class="col-lg-9 col-lg-offset-3">
               <button type="button" onclick="submit_product();" class="btn btn-primary">Submit</button>
@@ -150,64 +78,6 @@
 {% block scripts %}
   {{ super() }}
   <script type="text/javascript">
-      // Some ugly jquery. On selecting from list, get the hidden div with the correct mod rendering. Append that to the box, apply popover and unselect list.
-      {% set comma1 = joiner(",") %}
-      {% set comma2 = joiner(",") %}
-      var gainmods = [{% if product %}{% for mod in product.gainmods %}{{ comma1() }}{{ mod.id() }}{% endfor %}{% endif %}];
-      var losemods = [{% if product %}{% for mod in product.losemods %}{{ comma2() }}{{ mod.id() }}{% endfor %}{% endif %}];
-
-      $('#gainmodselect').change(function () {
-          if ($(this).val() != "0") {
-              var val = $(this).val();
-              var el = $($("#div_mod_gain_content_".concat(val)).html());
-              $("#showgainmod").append(el);
-              el.data("svalue", val);
-              el.data("stext", $("#gainmodselect option:selected").text());
-
-              $("[data-toggle=tooltip]").tooltip();
-              $("#gainmodselect option[value='0']").prop("selected", true);
-              gainmods.push(+val)
-
-              $("#gainmodselect option[value='".concat(val).concat("']")).remove();
-          }
-      });
-
-      function gain_reset(jq_object) {
-          var par = jq_object.parent();
-          $('#gainmodselect')
-              .append($("<option></option>")
-                  .attr("value", par.data("svalue"))
-                  .text(par.data("stext")));
-          gainmods.splice(gainmods.indexOf(+par.data("svalue")), 1);
-          par.remove();
-      }
-
-      $('#losemodselect').change(function () {
-          if ($(this).val() != "0") {
-              var val = $(this).val();
-              var el = $($("#div_mod_lose_content_".concat(val)).html());
-              $("#showlosemod").append(el);
-              el.data("svalue", val);
-              el.data("stext", $("#losemodselect option:selected").text());
-
-              $("[data-toggle=tooltip]").tooltip();
-              $("#losemodselect option[value='0']").prop("selected", true);
-              losemods.push(+val)
-
-              $("#losemodselect option[value='".concat(val).concat("']")).remove();
-          }
-      });
-
-      function lose_reset(jq_object) {
-          var par = jq_object.parent();
-          $('#losemodselect')
-              .append($("<option></option>")
-                  .attr("value", par.data("svalue"))
-                  .text(par.data("stext")));
-          losemods.splice(losemods.indexOf(+par.data("svalue")), 1);
-          par.remove();
-      }
-
       var tosubmit = {};
 
       function submit_product() {
@@ -218,24 +88,20 @@
               tosubmit.name = $('#name').val();
               tosubmit.tag = $('#tag').val();
               tosubmit.group = $('#group').val();
+              tosubmit.btw = parseInt($('#btw').val());
 
               if ($('#amount').val() != "")
                   tosubmit.amount = parseInt($('#amount').val());
 
               if ($('#value').val() != "")
-                  tosubmit.value = parseInt(parseFloat($('#value').val()) * 100.0);
-
-              tosubmit.gainmods = gainmods;
-              tosubmit.losemods = losemods;
+                  tosubmit.value = parseInt(parseFloat($('#value').val().replace(',','.')) * 100.0);
 
               {% if not product %}
                   post_object(tosubmit, "{{ url_for(".addproduct") }}", "{{ url_for(".index") }}");
               {% else %}
-                  post_object(tosubmit, "{{ url_for(".editproduct", product_id=product.key.id()) }}", "{{ url_for(".index") }}");
+                  post_object(tosubmit, "{{ url_for(".editproduct", product_id=product.key.urlsafe()) }}", "{{ url_for(".index") }}");
               {% endif %}
           }
-
-
           return true;
       }
 

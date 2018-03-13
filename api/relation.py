@@ -1,4 +1,3 @@
-from google.appengine.ext.ndb import Key
 from google.appengine.ext.db import BadValueError
 
 from flask import render_template, request, abort
@@ -7,8 +6,9 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import Relation, TypeGroup
+from ndbextensions.models import Relation
 from ndbextensions.paginator import Paginator
+from ndbextensions.utility import get_or_none
 
 from tantalus import bp_relation as router
 
@@ -50,7 +50,8 @@ def addrelation():
                 budget=form['budget'],
                 email=form['email'],
                 has_budget=form['has_budget'],
-                send_mail=form['send_mail']
+                send_mail=form['send_mail'],
+                address=form['address']
             ).put()
         except (BadValueError, KeyError) as e:
             return jsonify({"messages": [e.message]}, 403)
@@ -58,13 +59,15 @@ def addrelation():
     return render_template('tantalus_relation.html')
 
 
-@router.route('/edit/<int:relation_id>', methods=["GET", "POST"])
+@router.route('/edit/<string:relation_id>', methods=["GET", "POST"])
 @login_required
 @ensure_user_admin
 def editrelation(relation_id):
     form = request.json or request.form
 
-    relation = Key("Relation", relation_id, parent=TypeGroup.relation_ancestor()).get()
+    relation = get_or_none(relation_id, Relation)
+    if relation is None:
+        return abort(404)
 
     if request.method == "POST":
         relation.name = form.get('name', relation.name)
@@ -72,7 +75,9 @@ def editrelation(relation_id):
         relation.budget = form.get('budget', relation.budget)
         relation.has_budget = form.get('has_budget', relation.has_budget)
         relation.send_mail = form.get('send_mail', relation.send_mail)
+        relation.address = form.get('address', relation.address)
         relation.put()
         return jsonify(relation)
 
     return render_template('tantalus_relation.html', relation=relation)
+

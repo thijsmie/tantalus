@@ -7,8 +7,9 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin, new_user, update_password
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import User, Relation, TypeGroup
+from ndbextensions.models import User, Relation
 from ndbextensions.paginator import Paginator
+from ndbextensions.utility import get_or_none
 
 from tantalus import bp_user as router
 
@@ -55,13 +56,15 @@ def adduser():
     return render_template('tantalus_user.html', relations=Relation.query().fetch())
 
 
-@router.route('/edit/<int:user_id>', methods=["GET", "POST"])
+@router.route('/edit/<string:user_id>', methods=["GET", "POST"])
 @login_required
 @ensure_user_admin
 def edituser(user_id):
     form = request.json or request.form
 
-    user = Key("User", user_id, parent=TypeGroup.relation_ancestor()).get()
+    user = get_or_none(user_id)
+    if user is None:
+        return abort(404)
 
     if request.method == "POST":
         user.username = form.get('username', user.username)
@@ -70,10 +73,10 @@ def edituser(user_id):
             update_password(user, form['password'])
 
         if 'relation' in form:
-            rel = Key("Relation", int(form['relation']), ancestor=TypeGroup.relation_ancestor())
-            if rel.get() is None:
+            relation = get_or_none(form['relation'], Relation)
+            if relation is None:
                 abort(400)
-            user.relation = rel
+            user.relation = relation.key
 
         user.right_admin = form.get('is_admin', user.right_admin)
         user.right_viewstock = form.get('viewstock', user.right_viewstock)

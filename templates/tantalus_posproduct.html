@@ -14,7 +14,7 @@
               <select class="form-control" id="product">
                 <option></option>
                 {% for product in products %}
-                  <option value="{{ product.key.id() }}"{% if posproduct and posproduct.product == product.key -%}
+                  <option value="{{ product.key.urlsafe() }}"{% if posproduct and posproduct.product == product.key -%}
                           selected{% endif %}>{{ product.contenttype }}</option>
                 {% endfor %}
               </select>
@@ -81,7 +81,7 @@
               tosubmit.keycode = $('#keycode').val();
 
               {% if posproduct -%}
-                  post_object(tosubmit, "{{ url_for(".editposproduct", posproduct_id=posproduct.key.id()) }}", "{{ url_for(".index") }}");
+                  post_object(tosubmit, "{{ url_for(".editposproduct", posproduct_id=posproduct.key.urlsafe()) }}", "{{ url_for(".index") }}");
               {%- else -%}
                   post_object(tosubmit, "{{ url_for(".addposproduct") }}", "{{ url_for(".index") }}");
               {%- endif %}

@@ -61,7 +61,7 @@ function valid_float(val) {
 
 String.prototype.capitalize = function () {
     return this.charAt(0).toUpperCase() + this.slice(1);
-}
+};
 
 function field_validate_int(field) {
     if (!valid_integer($(field).val())) {

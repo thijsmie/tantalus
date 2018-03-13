@@ -3,25 +3,29 @@ from google.appengine.ext import vendor
 vendor.add('lib')
 
 import requests
+import os
+import sys
+
+on_appengine = os.environ.get('SERVER_SOFTWARE', '').startswith('Development')
+
+if on_appengine and os.name == 'nt':
+    sys.platform = "Not Windows"
+
 from requests_toolbelt.adapters import appengine
 appengine.monkeypatch()
 
-from google.appengine.ext import ndb
 from api.actions.transaction import transaction_record
 from pdfworker.invoice import make_invoice
 from pdfworker.sender import send_invoice
-from ndbextensions.models import Transaction, TypeGroup
+from ndbextensions.models import Transaction
 from ConscriboPyAPI.conscribo_sync import sync_transactions
 from ndbextensions.utility import get_or_none
 import webapp2
 
 
-
-
 class InvoiceHandler(webapp2.RequestHandler):
     def post(self):
-        transaction = ndb.Key("Transaction", int(self.request.get('transaction')),
-                              parent=TypeGroup.transaction_ancestor()).get()
+        transaction = get_or_none(self.request.get('transaction'), Transaction)
         relation = transaction.relation.get()
         record = transaction_record(transaction)
 
@@ -36,8 +40,9 @@ class InvoiceHandler(webapp2.RequestHandler):
             budget = None
 
         if relation.send_mail:
-            pdf = make_invoice(record, budget)
+            pdf = make_invoice(record, relation, budget)
             send_invoice(relation, transaction, pdf)
+
 
 class ConscriboSyncHandler(webapp2.RequestHandler):
     def post(self):

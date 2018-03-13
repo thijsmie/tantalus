@@ -21,7 +21,18 @@ class TypeGroup(ndb.Model):
     @classmethod
     def conscribo_ancestor(cls):
         return ndb.Key("Typegroup", "conscribo")
+        
 
+class Referencing(ndb.Model):
+    counter = ndb.IntegerProperty(default=0)
+    
+    @classmethod
+    def get_reference(cls):
+        me = cls.get_or_insert("REF")
+        me.counter += 1
+        me.put()
+        return me.counter
+        
 
 class Relation(ndb.Model):
     name = ndb.StringProperty(required=True, validator=validate.ensurelength(1))
@@ -31,11 +42,20 @@ class Relation(ndb.Model):
     send_mail = ndb.BooleanProperty(required=True)
 
     email = ndb.TextProperty(default="")
+    address = ndb.TextProperty(default="")
 
     def __init__(self, *args, **kwargs):
         super(Relation, self).__init__(*args, parent=TypeGroup.relation_ancestor(), **kwargs)
 
 
+class BtwType(ndb.Model):
+    name = ndb.StringProperty(required=True, validator=validate.ensurelength(2))
+    percentage = ndb.IntegerProperty(default=0, validator=validate.ensurepositive())
+
+    def __init__(self, *args, **kwargs):
+        super(BtwType, self).__init__(*args, parent=TypeGroup.product_ancestor(), **kwargs)
+        
+        
 class Group(ndb.Model):
     name = ndb.StringProperty(required=True, validator=validate.ensurelength(4))
 
@@ -43,56 +63,16 @@ class Group(ndb.Model):
         super(Group, self).__init__(*args, parent=TypeGroup.product_ancestor(), **kwargs)
 
 
-class Mod(ndb.Model):
-    name = ndb.StringProperty(default="", required=True, validator=validate.ensurelength(4))
-    tag = ndb.StringProperty(default="", required=True, validator=validate.ensurelength(1))
-    description = ndb.TextProperty(default="")
-    pre_add = ndb.IntegerProperty(default=0)
-    multiplier = ndb.FloatProperty(default=0.0)
-    post_add = ndb.IntegerProperty(default=0)
-    modifies = ndb.BooleanProperty(default=False)
-    divides = ndb.BooleanProperty(default=True)
-    rounding = ndb.StringProperty(choices=["floor", "ceil", "round", "none"], required=True)
-
-    def do_round(self, value):
-        if self.rounding == "none":
-            return value
-        if self.rounding == "floor":
-            return floor(value)
-        if self.rounding == "ceil":
-            return ceil(value)
-        return round(value)
-
-    def apply(self, line):
-        if self.divides:
-            price = self.do_round(
-                (line.value + self.pre_add * line.amount) / self.multiplier + self.post_add * line.amount)
-        else:
-            price = self.do_round(
-                (line.value + self.pre_add * line.amount) * self.multiplier + self.post_add * line.amount)
-
-        price = int(price)
-        diff = price - line.value
-        if self.modifies:
-            line.value = price
-
-        line.mods.append(self.key)
-        line.modamounts.append(int(diff))
-
-    def __init__(self, *args, **kwargs):
-        super(Mod, self).__init__(*args, parent=TypeGroup.product_ancestor(), **kwargs)
-
-
 class Product(ndb.Model):
     contenttype = ndb.StringProperty(required=True, validator=validate.ensurelength(4))
     tag = ndb.StringProperty(default="")
     value = ndb.IntegerProperty(default=0, validator=validate.ensurepositive())
     amount = ndb.IntegerProperty(default=0, validator=validate.ensurepositive())
-    losemods = ndb.KeyProperty(Mod, repeated=True)
-    gainmods = ndb.KeyProperty(Mod, repeated=True)
-
+    
     hidden = ndb.BooleanProperty(default=False)
     group = ndb.KeyProperty(Group)
+    
+    btwtype = ndb.KeyProperty(kind=BtwType)
 
     def take(self, amount):
         if amount <= 0:
@@ -102,39 +82,39 @@ class Product(ndb.Model):
             raise validate.OperationError(
                 "Taking {} but only {} of {} in stock".format(amount, self.amount, self.contenttype))
 
-        value = int(round(self.value * amount / self.amount))
         self.amount -= amount
-        self.value -= value
-
+     
         return TransactionLine(
             product=self.key,
             amount=amount,
-            value=value
+            prevalue=amount*self.value,
+            value=amount*self.value,
+            btwtype=self.btwtype
         )
 
-    def give(self, container):
-        if container.product != self.key:
+    def give(self, container_or_amount):
+        if type(container_or_amount) == int:
+            amount = container_or_amount
+        else:
+            amount = container_or_amount.amount
+
+        if amount < 0:
             raise validate.OperationError(
-                "Cannot give {} to {}!".format(container.product.get().contenttype, self.contenttype))
+                "Cannot add a negative amount")
 
-        if container.amount < 0 or container.value < 0 or (
-                            container.amount == 0 and self.amount == 0 and container.value > 0):
-            raise validate.OperationError(
-                "Adding {} to {} would create an invalid state!".format(str(container), str(self)))
-
-        self.amount += container.amount
-        self.value += container.value
-
+        self.amount += amount
+        
     def __init__(self, *args, **kwargs):
         super(Product, self).__init__(*args, parent=TypeGroup.product_ancestor(), **kwargs)
 
 
 class TransactionLine(ndb.Model):
     product = ndb.KeyProperty(kind=Product)
-
-    modamounts = ndb.IntegerProperty(repeated=True)
-    mods = ndb.KeyProperty(kind=Mod, repeated=True)
+    
+    prevalue = ndb.IntegerProperty()
     value = ndb.IntegerProperty()
+    btwtype = ndb.KeyProperty(kind=BtwType)
+    
     amount = ndb.IntegerProperty()
 
     def take(self, amount):
@@ -145,11 +125,14 @@ class TransactionLine(ndb.Model):
             raise validate.OperationError(
                 "Taking {} but only {} in stock".format(amount, self.amount))
 
-        value = int(round(self.value * amount / self.amount))
+        # Note: this rounding is always precise
+        value = self.value * amount // self.amount
+        
         return TransactionLine(
             product=self.product,
             amount=amount,
-            value=value
+            prevalue=value,
+            btwtype=self.btwtype
         )
 
 
@@ -157,10 +140,13 @@ class ServiceLine(ndb.Model):
     service = ndb.StringProperty()
     value = ndb.IntegerProperty()
     amount = ndb.IntegerProperty()
+    
+    btwtype = ndb.KeyProperty(kind=BtwType)
 
 
 class Transaction(ndb.Model):
     reference = ndb.IntegerProperty()
+    informal_reference = ndb.IntegerProperty()
     revision = ndb.IntegerProperty(default=0)
     deliverydate = ndb.DateProperty()
     processeddate = ndb.DateProperty()
@@ -174,6 +160,8 @@ class Transaction(ndb.Model):
     services = ndb.LocalStructuredProperty(ServiceLine, repeated=True)
 
     total = ndb.IntegerProperty(default=0)
+    two_to_one_has_btw = ndb.BooleanProperty(default=False)
+    two_to_one_btw_per_row = ndb.BooleanProperty(default=False)
 
     def __init__(self, *args, **kwargs):
         super(Transaction, self).__init__(*args, parent=TypeGroup.transaction_ancestor(), **kwargs)
