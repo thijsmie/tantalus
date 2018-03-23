@@ -46,6 +46,9 @@
                   <input id="send_mail" type="checkbox" {% if relation and relation.send_mail %}checked{% endif %}> Send
                   mail
                 </label>
+                <label class="col-lg-4">
+                  <input id="reference" type="checkbox" {% if relation and relation.numbered_reference %}checked{% endif %}> Use formal referencing
+                </label>
               </div>
             </div>
           </div>
@@ -80,6 +83,7 @@
               tosubmit.has_budget = $("#has_budget").prop("checked");
               tosubmit.send_mail = $("#send_mail").prop("checked");
               tosubmit.address = $("#address").val();
+              tosubmit.reference = $("#reference").prop("checked");
 
               {% if relation -%}
                   post_object(tosubmit, "{{ url_for(".editrelation", relation_id=relation.key.urlsafe()) }}", "{{ url_for(".index") }}");

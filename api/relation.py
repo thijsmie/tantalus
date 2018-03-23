@@ -51,7 +51,8 @@ def addrelation():
                 email=form['email'],
                 has_budget=form['has_budget'],
                 send_mail=form['send_mail'],
-                address=form['address']
+                address=form['address'],
+                numbered_reference=form['reference']
             ).put()
         except (BadValueError, KeyError) as e:
             return jsonify({"messages": [e.message]}, 403)
@@ -76,6 +77,7 @@ def editrelation(relation_id):
         relation.has_budget = form.get('has_budget', relation.has_budget)
         relation.send_mail = form.get('send_mail', relation.send_mail)
         relation.address = form.get('address', relation.address)
+        relation.numbered_reference = form.get('reference', relation.numbered_reference)
         relation.put()
         return jsonify(relation)
 

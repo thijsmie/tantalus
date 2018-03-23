@@ -165,6 +165,6 @@ def values():
     vals = defaultdict(int)
 
     for product in Product.query():
-        vals[product.group.get().name] += product.value
+        vals[product.group.get().name] += product.value * product.amount
 
     return jsonify(dict(vals))
