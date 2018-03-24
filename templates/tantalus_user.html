@@ -27,10 +27,10 @@
             <div class="col-lg-9">
               <select class="form-control" id="relation" name="relation">
                 {% if user is defined and user.relation %}
-                  <option value="{{ user.relation.id() }}">{{ user.relation.get().name }}</option>{% endif %}
+                  <option value="{{ user.relation.urlsafe() }}">{{ user.relation.get().name }}</option>{% endif %}
                 <option value=""></option>
                 {% for relation in relations %}
-                  <option value="{{ relation.key.id() }}">{{ relation.name }}</option>{% endfor %}
+                  <option value="{{ relation.key.urlsafe() }}">{{ relation.name }}</option>{% endfor %}
               </select>
             </div>
           </div>
@@ -93,7 +93,7 @@
 
 
               {% if user -%}
-                  post_object(tosubmit, "{{ url_for(".edituser", user_id=user.key.id()) }}", "{{ url_for(".index") }}");
+                  post_object(tosubmit, "{{ url_for(".edituser", user_id=user.key.urlsafe()) }}", "{{ url_for(".index") }}");
               {%- else -%}
                   post_object(tosubmit, "{{ url_for(".adduser") }}", "{{ url_for(".index") }}");
               {%- endif %}

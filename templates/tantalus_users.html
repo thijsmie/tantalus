@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% from 'tantalus_paginator.html' import paginator_buttons with context %}
-{% from 'tantalus_mod_helpers.html' import render_mod_as_tag %}
 {% from 'tantalus_general_helpers.html' import format_currency %}
 
 {% block container %}
@@ -24,7 +23,7 @@
       <tbody>
       {% for user in pagination.items %}
         <tr>
-          <td><a href="{{ url_for(".edituser", user_id=user.key.id()) }}">{{ user.username }}</a></td>
+          <td><a href="{{ url_for(".edituser", user_id=user.key.urlsafe()) }}">{{ user.username }}</a></td>
 
           {%- if user.relation %}
             <td>{{ user.relation.get().name }}</td>

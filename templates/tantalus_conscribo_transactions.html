@@ -38,5 +38,32 @@
     <input type="submit" class="btn btn-default">
   </form>
   <a href="{{ url_for(".generate") }}" class="btn btn-default">Generate</a>
-  
+  <h2> Synced </h2>
+  <div class="col-md-12 table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>Transaction</th>
+        <th>Synced</th>
+        <th>Last Feedback</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for link in transactionlinks if link.pushed_revision == link.transaction.get().revision %}
+        <tr>
+          <td>T#[{{ link.conscribo_identifier }}]</td>
+          <td>{{ link.transaction.get().relation.get().name }} {{ link.transaction.get().reference }}</td>
+          <td>{{ link.pushed_revision }}</td>
+          <td>{{ link.feedback }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="4" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endblock %}

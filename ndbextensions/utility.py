@@ -1,5 +1,5 @@
 from google.appengine.ext import ndb
-from ndbextensions.ndbjson import jsonify
+from flask.json import jsonify
 
 
 def unlink(urlkey, mtype):
@@ -13,6 +13,6 @@ def unlink(urlkey, mtype):
 def get_or_none(urlkey, mtype):
     key = ndb.Key(urlsafe=urlkey)
     inst = key.get()
-    if (inst is not None and type(inst) == mtype):
+    if inst is not None and type(inst) == mtype:
         return inst
     return None

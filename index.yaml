@@ -50,3 +50,10 @@ indexes:
   - name: relation
   - name: reference
     direction: desc
+
+- kind: Transaction
+  ancestor: yes
+  properties:
+  - name: relation
+  - name: informal_reference
+    direction: desc

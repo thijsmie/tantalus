@@ -3,35 +3,24 @@
 
     function def_lib() {
         var transaction = {};
-        transaction.addto = {modcell: null, tr: null, data: null};
+        transaction.addto = {tr: null, data: null};
 
-        var row_template = "<tr><td>__name__</td><td class='td-num'>__amount__</td><td class='td-num'>__price__</td>" +
-            "<td class='modholder'></td><td class='td-num'><span id='modalopen' class='glyphicon glyphicon-plus' aria-hidden='true'" +
-            " data-toggle='modal' data-target='#mod-modal'></span><button class='edit' /><button class='delete' /></td></tr>";
-
-        var row_nomods_template = "<tr><td>__name__</td><td class='td-num'>__amount__</td><td class='td-num'>" +
+        var row_template = "<tr><td>__name__</td><td class='td-num'>__amount__</td><td class='td-num'>" +
             "__price__</td><td class='td-num'><button class='edit' /><button class='delete' /></td></tr>";
 
-        var row_noprice_template = "<tr><td>__name__</td><td class='td-num'>__amount__</td><td class='modholder'></td>" +
-            "<td class='td-num'><span id='modalopen' class='glyphicon glyphicon-plus' aria-hidden='true' data-toggle='modal' " +
-            "data-target='#mod-modal'></span><button class='edit' /><button class='delete' /></td></tr>";
+        var row_noprice_template = "<tr><td>__name__</td><td class='td-num'>__amount__</td>" +
+            "<td class='td-num'><button class='edit' /><button class='delete' /></td></tr>";
 
-        var modtemplate = '<button type="button" class="btn btn-__type__ btn-xs" data-toggle="tooltip" data-placement="top"' +
-            ' title="__eq__">tag</button>';
+        var row_service_template = "<tr><td>__name__</td><td class='td-num'>__amount__</td><td class='td-num'>" +
+            "__price__</td><td class='td-num'>__btw__</td><td class='td-num'><button class='edit' />" +
+            "<button class='delete' /></td></tr>";
+            
         var deletebutton = "<span class=\"glyphicon glyphicon-remove\" aria-hidden=\"true\"></span>";
         var editbutton = "<span class=\"glyphicon glyphicon-edit\" aria-hidden=\"true\"></span>";
 
         var preview_normal = "<li role='presentation'><a>_preview_</a></li>";
         var preview_active = "<li role='presentation' class='active'><a>_preview_</a></li>";
 
-        transaction.get_mod_by_id = function (modid) {
-            var mod = 0;
-            $.each(mods, function (i, imod) {
-                if (imod.id === modid)
-                    mod = imod;
-            });
-            return mod;
-        };
 
         transaction.init = function (endp) {
             transaction.endpoint = endp;
@@ -64,14 +53,6 @@
             window.sell_data = transaction.make('sell');
             window.buy_data = transaction.make('buy');
             window.service_data = transaction.make('service');
-
-            $("#mod-modal").find(":button.btn-xs").click(function (e) {
-                if ($.inArray($(this).data("id"), transaction.addto.data.mods) === -1) {
-                    transaction.addto.modcell.append(transaction.addto.tr.make_mod_button(transaction.get_mod_by_id($(this).data("id")), transaction.addto.data));
-                    transaction.addto.data.mods.push($(this).data("id"))
-                }
-                ;
-            });
         };
 
         transaction.submit = function () {
@@ -90,41 +71,10 @@
             rec.relation = window.relations[rel_input.data('predictor').selected].id;
             rec.description = $("#event").val();
             rec.deliverydate = $("#delivered").val();
+            rec.two_to_one_has_btw = $("#two_to_one_has_btw").prop("checked");
+            rec.two_to_one_btw_per_row = $("#two_to_one_btw_per_row").prop("checked");
 
             post_object(rec, transaction.endpoint, "/transaction");
-        };
-
-        transaction.render_mod_as_equation = function (mod) {
-            var left = '', right = '';
-
-            if (mod.rounding !== 'none') {
-                left = mod.rounding + '(';
-                right = ')';
-            }
-
-            if (mod.pre_add !== 0) {
-                left += '(€ + ' + transaction.format_currency(mod.pre_add) + ')';
-            }
-            else {
-                left += '€';
-            }
-
-            if (mod.divides) {
-                left += ' / ';
-            }
-            else {
-                left += ' × ';
-            }
-
-            if (mod.multiplier !== 1.0) {
-                left += mod.multiplier.toFixed(2);
-            }
-
-            if (mod.post_add !== 0) {
-                left += ' + ' + transaction.format_currency(mod.post_add);
-            }
-
-            return left + right;
         };
 
         transaction.pad = function (num, size) {
@@ -160,10 +110,6 @@
             return "" + (int / 100.0).toFixed(2).replace('.', ',');
         };
 
-        transaction.add_mod_me = function (e) {
-            console.log($(this).data("id"));
-        };
-
         transaction.make = function (type) {
             var tr = {
                 type: type,
@@ -171,58 +117,8 @@
                 datatable: [],
                 input_product: $("#" + type + "-product-input"),
                 input_amount: $("#" + type + "-amount-input"),
-                input_price: $("#" + type + "-price-input")
-            };
-
-            tr.get_mod_objects = function (mod_ids) {
-                var toadd = [];
-
-                $.each(mod_ids, function (i, id) {
-                    $.each(mods, function (i, mod) {
-                        if (id === mod.id) {
-                            toadd.push(mod);
-                        }
-                    });
-                });
-
-                return toadd;
-            };
-
-            tr.get_mod_ids = function (product) {
-                var tofind = [];
-                if (type === "sell") {
-                    tofind = product.losemods;
-                }
-                else if (type === "buy") {
-                    tofind = product.gainmods;
-                }
-
-                return tofind;
-            };
-
-            tr.make_mod_button = function (mod, data) {
-                var str = modtemplate;
-                str = str.replace('__eq__', transaction.render_mod_as_equation(mod));
-                if (mod.modifies)
-                    str = str.replace('__type__', "primary");
-                else
-                    str = str.replace('__type__', "default");
-                str = str.replace(/tag/g, mod.tag);
-
-                var button = $(str);
-                button.click(function () {
-                    tr.modremove(button, mod, data);
-                }).tooltip();
-
-                return button;
-            };
-
-            tr.modremove = function (button, mod, data) {
-                button.remove();
-                tr.htmltable.find(".tooltip").remove();
-                data.mods = data.mods.filter(function (omod) {
-                    return omod !== mod.id;
-                });
+                input_price: $("#" + type + "-price-input"),
+                input_btw: $("#" + type + "-btw-input")
             };
 
             tr.data_to_html = function (data) {
@@ -231,7 +127,7 @@
                 var str;
 
                 if (tr.type === 'service') {
-                    str = row_nomods_template;
+                    str = row_service_template;
                 }
                 else if (tr.type === 'sell') {
                     str = row_noprice_template;
@@ -245,6 +141,9 @@
 
                 if (tr.type !== 'sell')
                     str = str.replace("__price__", transaction.format_currency(data['price']));
+                    
+                if (tr.type === 'service')
+                    str = str.replace('__btw__', data['btw']);
 
                 var row = $(str);
                 row.find('button.edit').first().replaceWith($(editbutton).click(function () {
@@ -254,15 +153,6 @@
                     tr.del(row, data)
                 }));
 
-                if (tr.type !== 'service') {
-                    var modcell = row.find('td.modholder').first();
-                    $.each(tr.get_mod_objects(data.mods), function (i, mod) {
-                        modcell.append(tr.make_mod_button(mod, data));
-                    });
-                    row.find("#modalopen").first().click(function (e) {
-                        transaction.addto = {tr: tr, modcell: modcell, data: data};
-                    });
-                }
                 tr.htmltable.append(row);
             };
 
@@ -274,6 +164,9 @@
 
                 if (tr.type !== 'sell')
                     row.price = transaction.parse_price(tr.input_price.val());
+                    
+                if (tr.type === 'service')
+                    row.btw = parseInt(tr.input_btw.val());
 
                 if (tr.input_product.data('predictor')) {
                     if (tr.input_product.data('predictor').selected === -1) {
@@ -293,7 +186,6 @@
 
                     var product = products[tr.input_product.data('predictor').selected];
                     row.id = product.id;
-                    row.mods = tr.get_mod_ids(product);
                 }
 
                 return row;
@@ -302,7 +194,6 @@
             tr.edit = function (row, data) {
                 tr.del(row, data);
                 tr.input_product.val(data['contenttype']);
-
                 tr.input_amount.val(data['amount']);
 
                 if (tr.type !== 'service') {
@@ -315,6 +206,9 @@
 
                 if (tr.type !== 'sell')
                     tr.input_price.val(transaction.format_currency(data['price']).replace(',', '.'));
+                    
+                if (tr.type === 'service')
+                    tr.input_btw.val(data['btw'])
             };
 
             tr.del = function (row, data) {
@@ -392,6 +286,46 @@
                 tr.input_price.val(money.substring(0, index) + "." + money.substring(index));
                 transaction.caret_position(tr.input_price, tr.input_price.val().length);
             };
+            
+            tr.price_input_alt_keydown = function (e) {
+                if (e.which === 13 || e.which === 9) {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    if (e.shiftKey) {
+                        tr.input_amount.focus();
+                        return;
+                    }
+                    
+                    tr.input_btw.focus();
+                }
+                else if (e.which === 65) {
+                    tr.input_price.val((parseFloat(tr.input_price.val()) * parseInt(tr.input_amount.val())).toFixed(2));
+                }
+            };
+            
+            tr.btw_input_keydown = function (e) {
+                if (e.which === 13) { // Enter
+
+                    e.stopPropagation();
+                    e.preventDefault();
+                    
+                    if (e.shiftKey) {
+                        tr.input_btw.focus();
+                        return;
+                    }
+
+                    var row = tr.fetch_new_row();
+
+                    if (row) {
+                        tr.data_to_html(row);
+                        tr.input_product.val("").focus();
+                        tr.input_amount.val("");
+                        tr.input_price.val("0.00");
+                        tr.input_btw.val("");
+                    }
+                }
+            };
 
             tr.input_product.keydown(tr.product_input_keydown);
 
@@ -402,9 +336,18 @@
                 tr.input_price.focus(function () {
                     if ($(this).val() === "") $(this).val("0.00");
                 });
-                tr.input_price.keydown(tr.price_input_keydown);
+                 if(tr.type === "service") {
+                    tr.input_price.keydown(tr.price_input_alt_keydown);
+                    tr.input_btw.keydown(tr.btw_input_keydown);
+                    tr.input_btw.keyup(tr.btw_input_keyup);
+                }
+                else
+                    tr.input_price.keydown(tr.price_input_keydown);
                 tr.input_price.keyup(tr.price_input_keyup);
             }
+            
+           
+            
             return tr;
         };
         return transaction;

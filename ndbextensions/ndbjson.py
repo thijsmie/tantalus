@@ -1,21 +1,22 @@
 from datetime import datetime, date, time
 from google.appengine.ext import ndb
 from flask.json import jsonify as fjsonify
-from api.actions.rows import without_mod_values
-from ndbextensions.models import TypeGroup
+
+from ndbextensions.models import Product
+from ndbextensions.utility import get_or_none
 
 
 def recurse_encode(o):
     if isinstance(o, ndb.Model):
         a = recurse_encode(o.to_dict())
-        a['id'] = o.key.id()
+        a['id'] = o.key.urlsafe()
         return a
     elif isinstance(o, dict):
         return {k: recurse_encode(v) for k, v in o.iteritems()}
     elif isinstance(o, list):
         return [recurse_encode(v) for v in o]
     elif isinstance(o, ndb.Key):
-        return o.id()
+        return o.urlsafe()
     elif isinstance(o, (datetime, date, time)):
         return str(o)
     else:
@@ -28,7 +29,7 @@ tofilter = ["group", "hidden", "value", "description", "amount", "budget", "emai
 def recurse_encode_filtered(o):
     if isinstance(o, ndb.Model):
         a = recurse_encode_filtered(o.to_dict())
-        a['id'] = o.key.id()
+        a['id'] = o.key.urlsafe()
         return a
     elif isinstance(o, dict):
         ret = {}
@@ -40,7 +41,7 @@ def recurse_encode_filtered(o):
     elif isinstance(o, list):
         return [recurse_encode_filtered(v) for v in o]
     elif isinstance(o, ndb.Key):
-        return o.id()
+        return o.urlsafe()
     elif isinstance(o, (datetime, date, time)):
         return str(o)
     else:
@@ -57,19 +58,17 @@ def transaction_recode(o):
     t = recurse_encode(o)
 
     for row in t['one_to_two']:
-        row['contenttype'] = ndb.Key("Product", row['product'], parent=TypeGroup.product_ancestor()).get().contenttype
+        row['contenttype'] = get_or_none(row["product"], Product).contenttype
         row['id'] = row['product']
         del row['value']
         del row['product']
-        del row['modamounts']
 
     for i, row in enumerate(t['two_to_one']):
-        row['contenttype'] = ndb.Key("Product", row['product'], parent=TypeGroup.product_ancestor()).get().contenttype
+        row['contenttype'] = get_or_none(row["product"], Product).contenttype
         row['id'] = row['product']
-        row['price'] = without_mod_values(o.two_to_one[i])
+        row['price'] = row['prevalue']
         del row['value']
         del row['product']
-        del row['modamounts']
 
     for row in t['services']:
         row['contenttype'] = row['service']

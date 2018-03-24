@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% from 'tantalus_paginator.html' import paginator_buttons with context %}
-{% from 'tantalus_mod_helpers.html' import render_mod_as_tag %}
 {% from 'tantalus_general_helpers.html' import format_currency %}
 
 {% block container %}
@@ -21,7 +20,7 @@
       <tbody>
       {% for relation in pagination.items %}
         <tr>
-          <td><a href="{{ url_for(".editrelation", relation_id=relation.key.id()) }}">{{ relation.name }}</a></td>
+          <td><a href="{{ url_for(".editrelation", relation_id=relation.key.urlsafe()) }}">{{ relation.name }}</a></td>
           <td>{{ relation.email }}</td>
           {%- if relation.has_budget %}
             <td align="right">{{ format_currency(relation.budget) }}</td>

@@ -1,4 +1,3 @@
-from google.appengine.ext.ndb import Key
 from google.appengine.ext.db import BadValueError
 
 from flask import render_template, request, abort
@@ -7,10 +6,12 @@ from flask_login import login_required
 from appfactory.auth import ensure_user_admin, ensure_user_stock
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import Product, Mod, Group, TypeGroup
+from ndbextensions.models import Product, Group, BtwType
 from ndbextensions.paginator import Paginator
+from ndbextensions.utility import get_or_none
 
 from tantalus import bp_product as router
+from collections import defaultdict
 
 
 @router.route('/', defaults=dict(page=0))
@@ -32,29 +33,33 @@ def indexjson():
     return jsonify(Product.query(Product.hidden == False).fetch())
 
 
-@router.route('/group/<int:group>', defaults=dict(page=0))
-@router.route('/group/<int:group>/page/<int:page>')
+@router.route('/group/<string:group_id>', defaults=dict(page=0))
+@router.route('/group/<string:group_id>/page/<int:page>')
 @login_required
 @ensure_user_stock
-def showgroup(group, page):
+def showgroup(group_id, page):
     if page < 0:
         page = 0
 
+    group = get_or_none(group_id, Group)
+    if group is None:
+        return abort(404)
+
     pagination = Paginator(
-        Product.query(Product.hidden == False and Product.group == Key('Group', group,
-                                                                       parent=TypeGroup.product_ancestor())).order(
-            Product.contenttype),
-        page, 20, group=group)
-    return render_template('tantalus_products.html', group=Key('Group', group, parent=TypeGroup.product_ancestor()).get().name, showgroup=False,
-                           pagination=pagination)
+        Product.query(Product.hidden == False and Product.group == group.key).order(Product.contenttype),
+        page, 20, group_id=group_id
+    )
+    return render_template('tantalus_products.html', group=group.name, showgroup=False, pagination=pagination)
 
 
-@router.route('/group/<int:group>.json')
+@router.route('/group/<string:group_id>.json')
 @login_required
 @ensure_user_stock
-def showgroupjson(group):
-    return jsonify(Product.query(Product.hidden == False and Product.group == Key('Group', group,
-                                                                                  parent=TypeGroup.relation_ancestor())).fetch())
+def showgroupjson(group_id):
+    group = get_or_none(group_id, Group)
+    if group is None:
+        return abort(404)
+    return jsonify(Product.query(Product.hidden == False and Product.group == group.key).fetch())
 
 
 @router.route('/add', methods=["GET", "POST"])
@@ -79,15 +84,14 @@ def addproduct():
             if len(Product.query(Product.contenttype == name).fetch()):
                 raise BadValueError("A product with this name already exists.")
 
-            losemods = [Key("Mod", id, parent=TypeGroup.product_ancestor()) for id in (form.get('losemods') or [])]
-            for mod in losemods:
-                if mod.get() is None:
-                    raise BadValueError("Mod {} does not exists.".format(mod))
-
-            gainmods = [Key("Mod", id, parent=TypeGroup.product_ancestor()) for id in (form.get('gainmods') or [])]
-            for mod in gainmods:
-                if mod.get() is None:
-                    raise BadValueError("Mod {} does not exists.".format(mod))
+            btw = form.get('btw', 0)
+            btwtype = BtwType.query(BtwType.percentage == btw).get()
+            if btwtype is None:
+                btwtype = BtwType(
+                    name=str(btw)+"%",
+                    percentage=btw
+                )
+                btwtype.put()
 
             product = Product(
                 contenttype=name,
@@ -96,24 +100,22 @@ def addproduct():
                 amount=form.get('amount', 0),
                 value=form.get('value', 0),
                 hidden=False,
-                losemods=losemods,
-                gainmods=gainmods
+                btwtype=btwtype.key
             ).put()
         except (BadValueError, KeyError) as e:
             return jsonify({"messages": [e.message]}, 400)
         return jsonify(product)
 
-    return render_template('tantalus_product.html', mods=Mod.query().fetch())
+    return render_template('tantalus_product.html')
 
 
-@router.route('/edit/<int:product_id>', methods=["GET", "POST"])
+@router.route('/edit/<string:product_id>', methods=["GET", "POST"])
 @login_required
 @ensure_user_admin
 def editproduct(product_id):
     form = request.json
 
-    product = Key("Product", product_id, parent=TypeGroup.product_ancestor()).get()
-
+    product = get_or_none(product_id, Product)
     if product is None:
         return abort(404)
 
@@ -132,30 +134,37 @@ def editproduct(product_id):
             group = product.group.get()
 
         try:
-            losemods = product.losemods
-            if 'losemods' in form:
-                losemods = [Key("Mod", id, parent=TypeGroup.product_ancestor()) for id in form.get('losemods')]
-            for mod in losemods:
-                if mod.get() is None:
-                    raise BadValueError("Mod {} does not exists.".format(mod))
-
-            gainmods = product.gainmods
-            if 'gainmods' in form:
-                gainmods = [Key("Mod", id, parent=TypeGroup.product_ancestor()) for id in form.get('gainmods')]
-            for mod in gainmods:
-                if mod.get() is None:
-                    raise BadValueError("Mod {} does not exists.".format(mod))
-
             product.contenttype = form.get('name', form.get('contenttype', product.contenttype))
             product.tag = form.get('tag', '')
             product.group = group.key
             product.amount = form.get('amount', product.amount)
             product.value = form.get('value', product.value)
-            product.losemods = losemods
-            product.gainmods = gainmods
+
+            btw = form.get('btw', 0)
+            btwtype = BtwType.query(BtwType.percentage == btw).get()
+            if btwtype is None:
+                btwtype = BtwType(
+                    name=str(btw) + "%",
+                    percentage=btw
+                )
+                btwtype.put()
+            product.btwtype = btwtype.key
+
             product.put()
         except BadValueError as e:
             return jsonify({"messages": [e.message]}, 400)
         return jsonify(product)
 
-    return render_template('tantalus_product.html', product=product, mods=Mod.query().fetch())
+    return render_template('tantalus_product.html', product=product)
+
+
+@router.route('/values.json')
+@login_required
+@ensure_user_admin
+def values():
+    vals = defaultdict(int)
+
+    for product in Product.query():
+        vals[product.group.get().name] += product.value
+
+    return jsonify(dict(vals))
