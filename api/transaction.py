@@ -73,20 +73,17 @@ def addtransaction():
 
     if request.method == "POST":
         try:
-            relation_key = Key("Relation", int(form['relation']), parent=TypeGroup.relation_ancestor())
-            relation = relation_key.get()
+            relation = get_or_none(form['relation'], Relation)
             if relation is None:
                 raise BadValueError("Relation does not exist!")
             transaction = new_transaction(form)
-            add_to_budget(relation_key, -transaction.total)
+            add_to_budget(relation.key, -transaction.total)
 
             taskqueue.add(url='/invoice',
                           target='worker',
-                          params={'transaction': transaction.key.id()})
+                          params={'transaction': transaction.key.urlsafe()})
 
         except BadValueError as e:
-            if ref is not None:  # free number of transaction
-                ref.key.delete()
             return jsonify({"messages": [e.message]}, 400)
         return jsonify(transaction)
 

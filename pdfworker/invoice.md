@@ -43,7 +43,21 @@ Product | Aantal | Stukprijs | Totaal
 **Totaal** | | | *{{ format_currency(totals.servicetotal) }}*
 
 {% endif %}
-### Factuurtotaal: &euro;{{ format_currency(totals.selltotal + totals.servicetotal - totals.buytotal) }}
+
+## BTW
+BTW% | BTW totaal 
+---: | ---:
+{% for percentage, value in transaction.btwtotals.items() -%}
+{{ percentage }}| {{ format_currency(-value) }}
+{% endfor %}
+
+## Factuurtotaal
+Omschrijving | Bedrag
+:---- | ----:
+Exclusief BTW | &euro;{{ format_currency(transaction.total + transaction.btwtotal) }}
+Totaal BTW | &euro;{{ format_currency(-transaction.btwtotal) }}
+Eindtotaal | &euro;{{ format_currency(transaction.total) }}
+
 {% if budget %}
 Het factuurtotaal is afgeschreven van uw borrelsaldo, wat na deze factuur nog &euro;{{ format_currency(budget)}} bedraagd. Extra borrelsaldo kan overgemaakt worden naar rekeningnummer NL19 ABNA 0448 1916 28 t.n.v. Olympus te Nijmegen.
 {% else %}
