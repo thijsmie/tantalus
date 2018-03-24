@@ -12,11 +12,15 @@ from pytz import timezone
 
 @transactional(xg=True)
 def new_transaction(data):
-    reference = Referencing.get_reference()
     relation = get_or_none(data['relation'], Relation)
+    
     if relation is None:
         raise OperationError("Relation does not exist!")
-        
+    
+    if relation.numbered_reference:
+        reference = Referencing.get_reference()
+    else:
+        reference = 0        
 
     tr = Transaction.query(Transaction.relation == relation.key, ancestor=TypeGroup.transaction_ancestor()).order(
         -Transaction.informal_reference).get()

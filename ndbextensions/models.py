@@ -40,6 +40,7 @@ class Relation(ndb.Model):
 
     has_budget = ndb.BooleanProperty(required=True)
     send_mail = ndb.BooleanProperty(required=True)
+    numbered_reference = ndb.BooleanProperty(default=True)
 
     email = ndb.TextProperty(default="")
     address = ndb.TextProperty(default="")
