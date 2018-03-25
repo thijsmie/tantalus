@@ -191,60 +191,54 @@ def transaction_process(transaction):
     servicerows = [make_service_record(row) for row in transaction.services]
 
     btwtotals = defaultdict(float)
+    btwvalues = defaultdict(int)
     # Current total including btw, btw rounded per invoice
     for row in sellrows:
         btw = row["prevalue"] * row["btw"] / 100. / (row["btw"]/100. + 1)
         btwtotals[row["btw"]] -= btw
+        btwvalues[row["btw"]] -= row["prevalue"]
         row["btwvalue"] = btw
 
     # Current total including btw, btw rounded per invoice
     for row in servicerows:
         btw = row["prevalue"] * row["btw"] / 100. / (row["btw"]/100. + 1)
         btwtotals[row["btw"]] -= btw
+        btwvalues[row["btw"]] -= row["prevalue"]
         row["btwvalue"] = btw
 
     buybtwtotals = defaultdict(float)
-    if transaction.two_to_one_has_btw:
-        if transaction.two_to_one_btw_per_row:
-            # Current total including btw, btw rounded per row
-            for row in buyrows:
+    for row in buyrows:
+        if transaction.two_to_one_has_btw:
+            if transaction.two_to_one_btw_per_row:
+                # Current total including btw, btw rounded per row
                 btw = round(row["prevalue"] * row["btw"] / 100.0 / (row["btw"]/100. + 1))
-                btwtotals[row["btw"]] -= btw
-                buybtwtotals[row["btw"]] += btw
-                row["btwvalue"] = btw
-        else:
-            # Current total including btw, btw rounded for full invoice
-            # We should use decimals here, but floats are good enough for now
-            for row in buyrows:
+            else:
+                # Current total including btw, btw rounded for full invoice
+                # We should use decimals here, but floats are good enough for now
                 btw = row["prevalue"] * row["btw"] / 100. / (row["btw"]/100. + 1)
-                btwtotals[row["btw"]] -= btw
-                buybtwtotals[row["btw"]] += btw
-                row["btwvalue"] = btw
-    else:
-        if transaction.two_to_one_btw_per_row:
-            # Current total excluding btw, btw rounded per row
-            for row in buyrows:
-                btw = round(row["prevalue"] * row["btw"] / 100.0)
-                btwtotals[row["btw"]] -= btw
-                buybtwtotals[row["btw"]] += btw
-                row["btwvalue"] = btw
         else:
-            # Current total excluding btw, btw rounded for full invoice
-            # We should use decimals here, but floats are good enough for now
-            for row in buyrows:
+            if transaction.two_to_one_btw_per_row:
+                # Current total excluding btw, btw rounded per row
+                btw = round(row["prevalue"] * row["btw"] / 100.0)
+                btwvalues[row["btw"]] += btw
+            else:
+                # Current total excluding btw, btw rounded for full invoice
+                # We should use decimals here, but floats are good enough for now
                 btw = row["prevalue"] * row["btw"] / 100.0
-                btwtotals[row["btw"]] -= btw
-                buybtwtotals[row["btw"]] += btw
-                row["btwvalue"] = btw
+                btwvalues[row["btw"]] += btw
+        btwvalues[row["btw"]] += row["prevalue"]
+        btwtotals[row["btw"]] += btw
+        buybtwtotals[row["btw"]] += btw
+        row["btwvalue"] = btw
 
     for k, v in btwtotals.items():
         btwtotals[k] = int(round(v))
         
-    return dict(btwtotals), dict(buybtwtotals), sellrows, buyrows, servicerows
+    return dict(btwtotals), dict(btwvalues), dict(buybtwtotals), sellrows, buyrows, servicerows
 
 
 def transaction_record(transaction):
-    btwtotals, buybtwtotals, sellrows, buyrows, servicerows = transaction_process(transaction)
+    btwtotals, btwvalues, buybtwtotals, sellrows, buyrows, servicerows = transaction_process(transaction)
 
     selltotal = sum(r['prevalue'] for r in sellrows)
     buytotal = sum(r['prevalue'] for r in buyrows)
@@ -264,6 +258,7 @@ def transaction_record(transaction):
         "selltotal": selltotal,
         "buytotal": buytotal,
         "btwtotals": btwtotals,
+        "btwvalues": btwvalues,
         "btwtotal": sum(btwtotals.values()),
         "servicetotal": servicetotal,
         "description": transaction.description,

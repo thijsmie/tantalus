@@ -4,7 +4,7 @@ from google.appengine.api import mail
 def send_invoice(relation, transaction, pdf_stringio):
     mail.send_mail(sender="invoice@new-tantalus.appspotmail.com",
                    to=relation.email,
-                   subject="Tantalusfactuur {} {}".format(relation.name, transaction.reference),
+                   subject="Tantalusfactuur 1718-{}".format(str(transaction.reference).zfill(4)),
                    attachments=[
                        ("factuur_{}_{}.pdf".format(relation.name, transaction.reference), pdf_stringio.getvalue())],
                    body="""This is an automatically generated email from a no reply address. If you have any questions or notes about this invoice, please mail to demeter.olympus@science.ru.nl or penningmeester.voorraad@science.ru.nl
