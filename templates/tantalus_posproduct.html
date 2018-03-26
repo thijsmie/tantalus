@@ -48,7 +48,7 @@
                   <span class="input-group-addon"><span class="glyphicon glyphicon-euro"
                                                         aria-hidden="true"></span></span>
                 <input id="price" name="price" type="text" class="form-control" placeholder="Price"
-                       value="{% if posproduct %}{{ format_currency(posproduct.price) }}{% endif %}">
+                       value="{% if posproduct %}{{ posproduct.price | format_currency }}{% endif %}">
               </div>
             </div>
           </div>
@@ -70,22 +70,25 @@
   <script type="text/javascript">
 
       function submit_posproduct() {
-          if (field_validate_money('#price')) {
-              tosubmit = {};
-              tosubmit.name = $('#name').val();
-              var prd = $('#product').val();
-              if (prd !== "")
-                  tosubmit.product = parseInt(prd);
-              tosubmit.price = parseInt(parseFloat($('#price').val().replace(",", ".")) * 100);
-              tosubmit.scan_id = $('#scan_id').val();
-              tosubmit.keycode = $('#keycode').val();
+          tosubmit = {};
+          tosubmit.name = $('#name').val();
 
-              {% if posproduct -%}
-                  post_object(tosubmit, "{{ url_for(".editposproduct", posproduct_id=posproduct.key.urlsafe()) }}", "{{ url_for(".index") }}");
-              {%- else -%}
-                  post_object(tosubmit, "{{ url_for(".addposproduct") }}", "{{ url_for(".index") }}");
-              {%- endif %}
-          }
+          var prd = $('#product').val();
+          if (prd !== "")
+              tosubmit.product = prd;
+
+          var prc = $('#price').val();
+          if (prc !== "")
+            tosubmit.price = parseInt(parseFloat(prc.replace(",", ".")) * 100);
+
+          tosubmit.scan_id = $('#scan_id').val();
+          tosubmit.keycode = $('#keycode').val();
+
+          {% if posproduct -%}
+              post_object(tosubmit, "{{ url_for(".editposproduct", posproduct_id=posproduct.key.urlsafe()) }}", "{{ url_for(".index") }}");
+          {%- else -%}
+              post_object(tosubmit, "{{ url_for(".addposproduct") }}", "{{ url_for(".index") }}");
+          {%- endif %}
 
           return true;
       }

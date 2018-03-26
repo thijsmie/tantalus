@@ -109,7 +109,7 @@ def ensure_user_pos(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.right_admin:
-            if not current_user.right_pos:
+            if not current_user.right_posaction:
                 flash.danger("Your user account is not allowed to perform this action.")
                 return redirect('/')
         return f(*args, **kwargs)

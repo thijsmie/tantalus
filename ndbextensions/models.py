@@ -202,9 +202,10 @@ class User(ndb.Model):
 
 class PosProduct(ndb.Model):
     product = ndb.KeyProperty(kind=Product)
-    name = ndb.StringProperty(default="")
     scan_id = ndb.StringProperty(default="")
     keycode = ndb.StringProperty(default="")
+
+    name = ndb.StringProperty(default="")
     price = ndb.IntegerProperty(default=0)
 
     def __init__(self, *args, **kwargs):

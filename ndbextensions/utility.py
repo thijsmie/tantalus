@@ -11,6 +11,8 @@ def unlink(urlkey, mtype):
     
 
 def get_or_none(urlkey, mtype):
+    if not (isinstance(urlkey, str) or isinstance(urlkey, unicode)):
+        return None
     key = ndb.Key(urlsafe=urlkey)
     inst = key.get()
     if inst is not None and type(inst) == mtype:

@@ -1,4 +1,3 @@
-from google.appengine.ext.ndb import Key
 from google.appengine.ext.db import BadValueError
 
 from flask import render_template, request, abort
@@ -7,8 +6,9 @@ from flask_login import login_required, current_user
 from appfactory.auth import ensure_user_admin, ensure_user_pos
 
 from ndbextensions.ndbjson import jsonify
-from ndbextensions.models import PosProduct, PosSale, Product, TypeGroup
+from ndbextensions.models import PosProduct, PosSale, Product
 from ndbextensions.paginator import Paginator
+from ndbextensions.utility import get_or_none
 
 from tantalus import bp_pos as router
 
@@ -41,20 +41,21 @@ def addposproduct():
     if request.method == "POST":
         try:
             pos = PosProduct(
-                price=form["price"],
                 scan_id=form.get("scan_id", ""),
                 keycode=form.get("keycode", "")
             )
 
             if 'product' in form:
-                prd = Key("Product", form['product'], parent=TypeGroup.product_ancestor()).get()
+                prd = get_or_none(form['product'], Product)
                 if prd is None:
                     raise BadValueError("Product does not exist.")
                 pos.product = prd.key
                 pos.name = prd.contenttype
+                pos.price = prd.value
             elif 'name' in form:
                 if len(form['name']) < 1:
                     raise BadValueError("Name too short!")
+                pos.price = form['price']
                 pos.name = form['name']
             else:
                 raise BadValueError("Need to specify either product or name!")
@@ -67,13 +68,13 @@ def addposproduct():
                            products=Product.query(Product.hidden == False).order(Product.contenttype).fetch())
 
 
-@router.route('/edit/<int:posproduct_id>', methods=["GET", "POST"])
+@router.route('/edit/<posproduct_id>', methods=["GET", "POST"])
 @login_required
 @ensure_user_admin
 def editposproduct(posproduct_id):
     form = request.json
 
-    pos = Key("PosProduct", posproduct_id, parent=TypeGroup.product_ancestor()).get()
+    pos = get_or_none(posproduct_id, PosProduct)
 
     if pos is None:
         return abort(404)
@@ -81,17 +82,18 @@ def editposproduct(posproduct_id):
     if request.method == "POST":
         try:
             if "product" in form:
-                pos.product = Key("Product", form['product'], parent=TypeGroup.product_ancestor())
-                prd = pos.product.get()
+                prd = get_or_none(form["product"], Product)
                 if prd is None:
                     raise BadValueError("Product does not exist.")
+                pos.product = prd.key
                 pos.name = prd.contenttype
+                pos.price = prd.value
             elif 'name' in form:
                 if len(form['name']) < 1:
                     raise BadValueError("Name too short!")
                 pos.name = form['name']
                 pos.product = None
-            pos.price = form.get('price', pos.price)
+                pos.price = form.get('price', pos.price)
             pos.scan_id = form.get('scan_id', pos.scan_id)
             pos.keycode = form.get('keycode', pos.keycode)
             pos.put()
@@ -99,7 +101,8 @@ def editposproduct(posproduct_id):
             return jsonify({"messages": [e.message]}, 400)
         return jsonify(pos)
 
-    return render_template('tantalus_posproduct.html', pos=pos)
+    return render_template('tantalus_posproduct.html', posproduct=pos,
+                           products=Product.query(Product.hidden == False).order(Product.contenttype).fetch())
 
 
 @router.route('/sales', defaults=dict(page=0))
@@ -130,7 +133,7 @@ def sell():
         return jsonify({"messages": ["No JSON supplied."]}, 400)
 
     try:
-        prd = Key("PosProduct", sale["product"], parent=TypeGroup.product_ancestor())
+        prd = get_or_none(sale["product"], PosProduct)
         if prd.get() is None:
             raise BadValueError("Product does not exist")
 
