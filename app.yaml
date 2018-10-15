@@ -7,9 +7,6 @@ handlers:
 - url: /static
   static_dir: static
   secure: always
-- url: /cloud-datastore-export
-  login: admin
-  script: cloud_datastore_admin.py
 - url: /.*
   script: entrypoint.app
   secure: always

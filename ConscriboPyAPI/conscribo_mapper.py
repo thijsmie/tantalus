@@ -125,17 +125,21 @@ class TransactionXML:
 
 
 class TransactionXMLRow:
-    def __init__(self, node=None, amount=0, account=999, credit=True):
+    def __init__(self, node=None, amount=0, account=999, credit=True, vatcode="", vat=0):
         if node is not None:
             self.amount = int(100 * float(node.xpath("amount")[0].text.replace(',', '.')))
             self.credit = node.xpath("side")[0].text == "credit"
             self.account = int(node.xpath("accountNr")[0].text)
             self.reference = node.xpath("reference")[0].text
+            self.vatCode = node.xpath("vatCode")[0].text
+            self.vatAmount = int(node.xpath("vatAmount")[0].text)
         else:
             self.amount = amount
             self.credit = credit
             self.account = account
             self.reference = ""
+            self.vatAmount = vat
+            self.vatCode = vatcode
 
     def toxml(self, reference, addto):
         node = etree.SubElement(addto, "transactionRow")
@@ -143,6 +147,8 @@ class TransactionXMLRow:
         etree.SubElement(node, "side").text = "credit" if self.credit else "debet"
         etree.SubElement(node, "accountNr").text = str(self.account)
         etree.SubElement(node, "reference").text = reference
+        etree.SubElement(node, "vatCode").text = self.vatCode
+        etree.SubElement(node, "vatAmount").text = str(self.vatAmount)
 
     def __repr__(self):
         return "{} to {} {}".format(self.amount, self.account, "Credit" if self.credit else "Debet")
@@ -192,4 +198,17 @@ class TransactionPutResult(Result):
         super(TransactionPutResult, self).__init__(data)
         if self.success:
             transaction.transactionid = int(self.root.xpath("transactionId")[0].text)
+
+
+class ListVatCodesRequest(Request):
+    def __init__(self, date=None):
+        super(ListVatCodesRequest, self).__init__("listVatCodes")
+        if date is None:
+            date = datetime.now().date()
+        etree.SubElement(self.request, "date").text = date.strftime("%Y-%m-%d")
+
+
+class ListVatCodeResult(Result):
+    def __init__(self, data):
+        super(ListVatCodeResult, self).__init__(data)
 

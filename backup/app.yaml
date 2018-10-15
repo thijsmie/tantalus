@@ -1,0 +1,14 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+service: cloud-datastore-admin
+
+
+handlers:
+- url: /cloud-datastore-export
+  login: admin
+  script: cloud_datastore_admin.app
+
+libraries:
+- name: webapp2
+  version: "latest"

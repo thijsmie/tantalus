@@ -39,6 +39,13 @@ def indexjson():
     return jsonify(Transaction.query().fetch())
 
 
+@router.route('.cjson')
+@login_required
+@ensure_user_transactions
+def indexconvinientjson():
+    return jsonify([transaction_record(t) for t in Transaction.query().fetch()])
+
+
 @router.route('/fromrelation/<string:relation_id>', defaults=dict(page=0))
 @router.route('/fromrelation/<string:relation_id>/page/<int:page>')
 @login_required

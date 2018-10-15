@@ -9,6 +9,8 @@ from ndbextensions.conscribo import ConscriboGroupLink, ConscriboRelationLink, \
     ConscriboTransactionLink
 from ndbextensions.config import Config
 
+from api.actions.transaction import transaction_record
+
 
 @ndb.transactional(xg=True)
 def sync_transactions(transactions):
@@ -34,8 +36,8 @@ def sync_transactions(transactions):
 def transaction_to_transactionXML(transaction, conscribo_link, todo_account):
     """"Convert a Tantalus Transaction to a Conscribo XML Transaction"""
     txml = TransactionXML(conscribo_link.conscribo_reference,
-                          reference="{} {}".format(transaction.relation.get().name, transaction.reference),
-                          description=transaction.description)
+                          reference="1819-{}".format(str(transaction.reference)),
+                          description="{} ({} {})".format(transaction.description, transaction.relation.get().name, transaction.informal_reference))
     txml.date = conscribo_link.bookdate or transaction.deliverydate
 
     rel_link = ConscriboRelationLink.get_by_relation(transaction.relation)
@@ -44,6 +46,8 @@ def transaction_to_transactionXML(transaction, conscribo_link, todo_account):
         total_account = todo_account
     else:
         total_account = rel_link.linked
+
+    record = transaction_record(transaction)
 
     txml.rows.append(TransactionXMLRow(account=total_account, amount=abs(transaction.total),
                                        credit=transaction.total < 0))
@@ -76,8 +80,8 @@ def transaction_to_transactionXML(transaction, conscribo_link, todo_account):
 # All functions below rely on the fact that ndb.Key is a hashable type 
 # and can be used as a dictionary key
 
-def rows_groups_totals(rowset):
-    groups_pretotal = defaultdict(int)
+def rows_groups_btws_totals(rowset):
+    groups_btws_pretotal = defaultdict(int)
     for row in rowset:
         group = row.product.get().group
         groups_pretotal[group] += row.value
