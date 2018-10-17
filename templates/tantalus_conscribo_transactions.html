@@ -23,7 +23,7 @@
       {% for link in transactionlinks if not link.pushed_revision == link.transaction.get().revision %}
         <tr>
           <td><input class="form-horizontal" type="checkbox" name="{{ link.key.urlsafe() }}"></td>
-          <td>{{ link.transaction.get().relation.get().name }} {{ link.transaction.get().reference }}</td>
+          <td>{{ link.transaction.get().relation.get().name }} {{ link.transaction.get().informal_reference }}</td>
           <td>{{ link.pushed_revision }}/{{ link.transaction.get().revision }}</td>
           <td>{{ link.feedback }}</td>
         </tr>
@@ -53,7 +53,7 @@
       <tbody>
       {% for link in transactionlinks if link.pushed_revision == link.transaction.get().revision %}
         <tr>
-          <td>T#[{{ link.conscribo_identifier }}]</td>
+          <td>T#[{{ link.conscribo_reference }}]</td>
           <td>{{ link.transaction.get().relation.get().name }} {{ link.transaction.get().reference }}</td>
           <td>{{ link.pushed_revision }}</td>
           <td>{{ link.feedback }}</td>

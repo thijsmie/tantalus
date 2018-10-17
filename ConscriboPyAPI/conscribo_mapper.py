@@ -52,7 +52,7 @@ class Request(object):
 
 class AuthenticateRequest(Request):
     def __init__(self, key, passphrase):
-        super(AuthenticateRequest, self).__init__("authenticate", apiIdentifierKey=key, passPhrase=passphrase)
+        super(AuthenticateRequest, self).__init__("authenticateWithUserAndPass", userName=key, passPhrase=passphrase)
 
 
 class AuthenticateResult(Result):
@@ -147,8 +147,9 @@ class TransactionXMLRow:
         etree.SubElement(node, "side").text = "credit" if self.credit else "debet"
         etree.SubElement(node, "accountNr").text = str(self.account)
         etree.SubElement(node, "reference").text = reference
-        etree.SubElement(node, "vatCode").text = self.vatCode
-        etree.SubElement(node, "vatAmount").text = str(self.vatAmount)
+        if self.vatCode != "":
+            etree.SubElement(node, "vatCode").text = self.vatCode
+            etree.SubElement(node, "vatAmount").text = "{:.2f}".format(float(self.vatAmount) / 100).replace('.', ',')
 
     def __repr__(self):
         return "{} to {} {}".format(self.amount, self.account, "Credit" if self.credit else "Debet")

@@ -169,6 +169,7 @@ def edit_transaction(t, data):
 def make_row_record(row):
     return {
         "contenttype": row.product.get().contenttype,
+        "group": row.product.get().group.get().name,
         "prevalue": row.prevalue,
         "value": row.value,
         "amount": row.amount,
@@ -181,6 +182,7 @@ def make_service_record(row):
         "contenttype": row.service,
         "amount": row.amount,
         "prevalue": row.value,
+        "value": row.value,
         "btw": row.btwtype.get().percentage
     }
 
@@ -230,6 +232,7 @@ def transaction_process(transaction):
         btwtotals[row["btw"]] += btw
         buybtwtotals[row["btw"]] += btw
         row["btwvalue"] = btw
+        row["value_exl"] = row["value"] * (1 - row["btw"] / 100.0 / (row["btw"]/100. + 1))
 
     for k, v in btwtotals.items():
         btwtotals[k] = int(round(v))

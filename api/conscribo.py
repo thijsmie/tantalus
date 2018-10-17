@@ -1,6 +1,7 @@
 from google.appengine.ext.ndb import Key, transactional
 from google.appengine.ext.db import BadValueError
 from google.appengine.api import taskqueue
+import json
 
 from flask import render_template, request, abort, redirect, url_for
 from flask_login import login_required
@@ -9,7 +10,7 @@ from appfactory.auth import ensure_user_admin
 
 from ndbextensions.ndbjson import jsonify
 from ndbextensions.models import Group, Relation, Transaction
-from ndbextensions.conscribo import ConscriboGroupLink, ConscriboRelationLink, ConscriboTransactionLink
+from ndbextensions.conscribo import ConscriboConfig, ConscriboTransactionLink
 from ndbextensions.utility import unlink, get_or_none
 
 from tantalus import bp_conscribo as router
@@ -19,71 +20,23 @@ from tantalus import bp_conscribo as router
 @login_required
 @ensure_user_admin
 def index():
-    groups = Group.query().fetch()
-    grouplinks = ConscriboGroupLink.query().fetch()
-    relations = Relation.query().fetch()
-    relationlinks = ConscriboRelationLink.query().fetch()
-    return render_template("tantalus_conscribo.html",
-                            groups=groups,
-                            grouplinks=grouplinks,
-                            relations=relations,
-                            relationlinks=relationlinks)
+    config = ConscriboConfig.get_config()
+    defaultconf = ConscriboConfig.default_config()
+    return render_template("tantalus_conscribo.html", config=config, defaultconf=defaultconf)
 
 
-@router.route("/link/group/add", methods=["POST"])
+@router.route("/configure", methods=["POST"])
 @login_required
 @ensure_user_admin
-def addgrouplink():
-    data = request.form
+def configure():
+    data = request.form["config"]
     try:
-        group = get_or_none(data["group"], Group)
-        if group is None:
-            return jsonify({}, 402)
-        link = ConscriboGroupLink.query(ConscriboGroupLink.group == group.key).get()
-        if link is not None:
-            link.linked = int(data["linked"])
-        else:    
-            link = ConscriboGroupLink(group=group.key, linked=int(data["linked"]))
-        link.put()
-    except (ValueError, KeyError, BadValueError):
-        return jsonify({}, 402)
-    
+        conf = json.loads(data)
+    except:
+        return jsonify({"error":"Incorrect json formatting"}, 400)
+
+    ConscriboConfig.set_config(conf)
     return redirect(url_for(".index"))
-
-
-@router.route("/link/relation/add", methods=["POST"])
-@login_required
-@ensure_user_admin
-def addrelationlink():
-    data = request.form
-    try:
-        relation = get_or_none(data["relation"], Relation)
-        if relation is None:
-            return jsonify({}, 402)
-        link = ConscriboRelationLink.query(ConscriboRelationLink.relation == relation.key).get()
-        if link is not None:
-            link.linked = int(data["linked"])
-        else:            
-            link = ConscriboRelationLink(relation=relation.key, linked=int(data["linked"]))
-        link.put()
-    except (ValueError, KeyError, BadValueError):
-        return jsonify({}, 402)
-    
-    return redirect(url_for(".index"))
-
-
-@router.route("/link/group/delete/<group_id>")
-@login_required
-@ensure_user_admin
-def deletegrouplink(group_id):
-    return unlink(group_id, ConscriboGroupLink)
-
-
-@router.route("/link/relation/delete/<relation_id>")
-@login_required
-@ensure_user_admin
-def deleterelationlink(relation_id):
-    return unlink(relation_id, ConscriboRelationLink)
 
 
 @router.route("/transactions")

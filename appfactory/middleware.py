@@ -9,6 +9,7 @@ from flask import current_app, render_template, request, session, abort
 from markupsafe import Markup
 
 from ndbextensions import ndbjson
+import json
 from appfactory.auth import generate_csrf_token
 
 LOG = getLogger(__name__)
@@ -130,6 +131,11 @@ def todict_filtered(o):
 @current_app.template_filter()
 def tr_todict(o):
     return ndbjson.transaction_recode(o)
+
+
+@current_app.template_filter()
+def fancy_json(dct):
+    return json.dumps(dct, indent=4)
 
 
 @current_app.after_request

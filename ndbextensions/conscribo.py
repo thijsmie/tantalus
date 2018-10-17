@@ -1,29 +1,34 @@
 from google.appengine.ext import ndb
 from ndbextensions.models import TypeGroup, Group, Relation, Transaction
+import json
 
 
-class ConscriboGroupLink(ndb.Model):
-    group = ndb.KeyProperty(kind=Group)
-    linked = ndb.IntegerProperty(default=999)
-
-    def __init__(self, *args, **kwargs):
-        super(ConscriboGroupLink, self).__init__(*args, parent=TypeGroup.conscribo_ancestor(), **kwargs)
+class ConscriboConfig(ndb.Model):
+    config = ndb.StringProperty(default="{}")
 
     @classmethod
-    def get_by_group(cls, groupkey):
-        return cls.query(cls.group == groupkey, ancestor=TypeGroup.conscribo_ancestor()).get()
-
-
-class ConscriboRelationLink(ndb.Model):
-    relation = ndb.KeyProperty(kind=Relation)
-    linked = ndb.IntegerProperty(default=999)
-
-    def __init__(self, *args, **kwargs):
-        super(ConscriboRelationLink, self).__init__(*args, parent=TypeGroup.conscribo_ancestor(), **kwargs)
+    def get_config(cls):
+        return json.loads(cls.get_or_insert("CONSCRIBO").config)
 
     @classmethod
-    def get_by_relation(cls, relationkey):
-        return cls.query(cls.relation == relationkey, ancestor=TypeGroup.conscribo_ancestor()).get()
+    def set_config(cls, config):
+        inst = cls.get_or_insert("CONSCRIBO")
+        inst.config = json.dumps(config)
+        inst.put()
+
+    @classmethod
+    def default_config(cls):
+        from ndbextensions.models import Group, Relation, BtwType
+        groups = Group.query().fetch()
+        relations = Relation.query().fetch()
+        types = BtwType.query().fetch()
+
+        return {
+            "todo": 999,
+            "groups": {g.name: {"inventory": 999, "profit": 999} for g in groups},
+            "relations": {r.name: 999 for r in relations},
+            "vatcodes": {str(t.percentage): "0" for t in types}
+        }
 
 
 class ConscriboTransactionLink(ndb.Model):
