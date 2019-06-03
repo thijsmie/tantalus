@@ -76,13 +76,12 @@ def transaction_to_transactionXML(transaction, conscribo_link):
             vatcode = config.get("vatcodes", {})[btwt]  # error if btwtype is not vatcoded: intentional!
 
             txml.rows.append(
-                TransactionXMLRow(account=inventory, amount=abs(values[2]), credit=False, vatcode=vatcode,
-                                  vat=abs(values[1])))
-            if abs(values[2] + values[1]) != abs(values[0] + values[1]):
-                txml.rows.append(
-                    TransactionXMLRow(account=profit, amount=abs(values[2] + values[1]), credit=True))
-                txml.rows.append(
-                    TransactionXMLRow(account=profit, amount=abs(values[0] + values[1]), credit=False))
+                TransactionXMLRow(account=inventory, amount=abs(values[2]), credit=False))
+            txml.rows.append(
+                TransactionXMLRow(account=profit, amount=abs(values[2] + values[1]), credit=True))
+            txml.rows.append(
+                TransactionXMLRow(account=profit, amount=abs(values[0] + values[1]), credit=False, vatcode=vatcode,
+                              vat=abs(values[1])))
             txml.rows.append(
                 TransactionXMLRow(account=total_account, amount=abs(values[0] + values[1]), credit=True))
             txml.description += "\nBuy Group total {}, btw{} with value {:.2f}.".format(group, btwt, values[2] / 100.0)
