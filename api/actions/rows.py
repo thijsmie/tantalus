@@ -43,6 +43,7 @@ def transform_collection(c1, c2, one_to_two):
         else:
             # We bought r1.amount but we dont want to anymore, give it back
             prd.take(r1.amount)
+        prd.put()
 
     # Add everything new in the transaction
     for r2 in c2:
