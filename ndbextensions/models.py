@@ -79,10 +79,6 @@ class Product(ndb.Model):
         if amount <= 0:
             raise validate.OperationError("Cannot take negative amount of {}!".format(self.contenttype))
 
-        if amount > self.amount:
-            raise validate.OperationError(
-                "Taking {} but only {} of {} in stock".format(amount, self.amount, self.contenttype))
-
         self.amount -= amount
      
         return TransactionLine(

@@ -2,7 +2,7 @@ from google.appengine.api import mail
 
 
 def send_invoice(relation, transaction, pdf_stringio):
-    mail.send_mail(sender="invoice@new-tantalus.appspotmail.com",
+    mail.send_mail(sender="invoice@tantalus-2019.appspotmail.com",
                    to=relation.email,
                    subject="Tantalusfactuur 1819-{}".format(str(transaction.reference).zfill(4)),
                    attachments=[
