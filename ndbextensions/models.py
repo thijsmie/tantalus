@@ -67,8 +67,8 @@ class Group(ndb.Model):
 class Product(ndb.Model):
     contenttype = ndb.StringProperty(required=True, validator=validate.ensurelength(4))
     tag = ndb.StringProperty(default="")
-    value = ndb.IntegerProperty(default=0, validator=validate.ensurepositive())
-    amount = ndb.IntegerProperty(default=0, validator=validate.ensurepositive())
+    value = ndb.IntegerProperty(default=0)
+    amount = ndb.IntegerProperty(default=0)
     
     hidden = ndb.BooleanProperty(default=False)
     group = ndb.KeyProperty(Group)

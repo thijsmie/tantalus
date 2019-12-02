@@ -39,7 +39,7 @@ def sync_transactions(transactions):
 def transaction_to_transactionXML(transaction, conscribo_link):
     """"Convert a Tantalus Transaction to a Conscribo XML Transaction"""
     txml = TransactionXML(conscribo_link.conscribo_reference,
-                          reference="1819-{} {} {}".format(str(transaction.reference), transaction.relation.get().name,
+                          reference="1920-{} {} {}".format(str(transaction.reference), transaction.relation.get().name,
                                                            transaction.informal_reference),
                           description="{} ({} {})".format(transaction.description, transaction.relation.get().name,
                                                           transaction.informal_reference))
@@ -55,6 +55,8 @@ def transaction_to_transactionXML(transaction, conscribo_link):
         total_account = rel_link
 
     record = transaction_record(transaction)
+    
+    absolute_total = 0
 
     for group, btwvalues in rows_groups_btws_totals(record["sell"]).iteritems():
         inventory = config.get("groups", {}).get(group).get("inventory") or todo_account
@@ -64,8 +66,9 @@ def transaction_to_transactionXML(transaction, conscribo_link):
 
             txml.rows.append(
                 TransactionXMLRow(account=inventory, amount=values[0], credit=True, vatcode=vatcode, vat=values[1]))
-            txml.rows.append(
-                TransactionXMLRow(account=total_account, amount=values[0] + values[1], credit=False))
+            #txml.rows.append(
+            #   TransactionXMLRow(account=total_account, amount=values[0] + values[1], credit=False))
+            absolute_total += values[0] + values[1]
             txml.description += "\nSell Group total {}, btw{} with value {:.2f}.".format(group, btwt, values[2] / 100.0)
 
     for group, btwvalues in rows_groups_btws_totals(record["buy"], record["two_to_one_has_btw"]).iteritems():
@@ -74,16 +77,25 @@ def transaction_to_transactionXML(transaction, conscribo_link):
 
         for btwt, values in btwvalues.iteritems():
             vatcode = config.get("vatcodes", {})[btwt]  # error if btwtype is not vatcoded: intentional!
+            print(values[0], values[1], values[2], values[3])
 
-            txml.rows.append(
-                TransactionXMLRow(account=inventory, amount=abs(values[2]), credit=False))
-            txml.rows.append(
-                TransactionXMLRow(account=profit, amount=abs(values[2] + values[1]), credit=True))
-            txml.rows.append(
-                TransactionXMLRow(account=profit, amount=abs(values[0] + values[1]), credit=False, vatcode=vatcode,
-                              vat=abs(values[1])))
-            txml.rows.append(
-                TransactionXMLRow(account=total_account, amount=abs(values[0] + values[1]), credit=True))
+            if values[1] == 0:
+                txml.rows.append(
+                    TransactionXMLRow(account=inventory, amount=abs(values[0]), credit=False))
+                #txml.rows.append(
+                #    TransactionXMLRow(account=total_account, amount=abs(values[0]), credit=True))
+                absolute_total -= abs(values[0])
+            else:
+                txml.rows.append(
+                    TransactionXMLRow(account=inventory, amount=abs(values[3]), credit=False))
+                #txml.rows.append(
+                #    TransactionXMLRow(account=total_account, amount=abs(values[0] + values[1]), credit=True))
+                absolute_total -= abs(values[0] + values[1])
+                txml.rows.append(
+                    TransactionXMLRow(account=profit, amount=abs(values[3]), credit=True))
+                txml.rows.append(
+                    TransactionXMLRow(account=profit, amount=abs(values[0]), credit=False, vatcode=vatcode,
+                                  vat=abs(values[1])))
             txml.description += "\nBuy Group total {}, btw{} with value {:.2f}.".format(group, btwt, values[2] / 100.0)
 
     for service in record["service"]:
@@ -94,21 +106,26 @@ def transaction_to_transactionXML(transaction, conscribo_link):
             TransactionXMLRow(account=todo_account, amount=abs(service["value"] - service["btwvalue"]),
                               credit=service["value"] > 0, vatcode=vatcode, vat=service["btwvalue"]))
         txml.description += "\nService {} with value {:.2f}.".format(service["contenttype"], service["value"] / 100.0)
-
+    txml.rows.append(
+        TransactionXMLRow(account=total_account, amount=abs(absolute_total), credit=absolute_total < 0))
     return txml
 
 
 def rows_groups_btws_totals(rowset, includes_btw=True):
-    group_valuebtw = defaultdict(lambda: defaultdict(lambda: [0., 0., 0.]))
+    group_valuebtw = defaultdict(lambda: defaultdict(lambda: [0., 0., 0., 0.]))
 
     for row in rowset:
         group_valuebtw[row["group"]][str(row["btw"])][0] += row["prevalue"] - (row["btwvalue"] if includes_btw else 0)
         group_valuebtw[row["group"]][str(row["btw"])][1] += row["btwvalue"]
         group_valuebtw[row["group"]][str(row["btw"])][2] += row.get("value_excl", row["value"])
+        group_valuebtw[row["group"]][str(row["btw"])][3] += row.get("value_excl", row["value"]) / (1.0 + row["btw"] / 100.0)
+        
 
     for group, values in group_valuebtw.iteritems():
         for btwt, valuebtw in values.iteritems():
             group_valuebtw[group][btwt][0] = int(round(valuebtw[0]))
             group_valuebtw[group][btwt][1] = int(round(valuebtw[1]))
+            group_valuebtw[group][btwt][2] = int(round(valuebtw[2]))
+            group_valuebtw[group][btwt][3] = int(round(valuebtw[3]))
 
     return group_valuebtw
