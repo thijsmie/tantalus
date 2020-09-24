@@ -2,7 +2,7 @@ from datetime import datetime, date, time
 from google.appengine.ext import ndb
 from flask.json import jsonify as fjsonify
 
-from ndbextensions.models import Product
+from ndbextensions.models import Product, BtwType
 from ndbextensions.utility import get_or_none
 
 
@@ -73,7 +73,9 @@ def transaction_recode(o):
     for row in t['services']:
         row['contenttype'] = row['service']
         row['price'] = row['value']
+        row['btw'] = get_or_none(row['btwtype'], BtwType).percentage
         del row['value']
         del row['service']
+        del row['btwtype']
 
     return t

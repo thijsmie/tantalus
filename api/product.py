@@ -32,6 +32,18 @@ def index(page):
 def indexjson():
     return jsonify(Product.query(Product.hidden == False).fetch())
 
+@router.route('/group.json')
+@login_required
+@ensure_user_stock
+def groupjson():
+    return jsonify(Group.query().fetch())
+
+@router.route('/btwtype.json')
+@login_required
+@ensure_user_stock
+def btwtypejson():
+    return jsonify(BtwType.query().fetch())
+
 
 @router.route('/group/<string:group_id>', defaults=dict(page=0))
 @router.route('/group/<string:group_id>/page/<int:page>')

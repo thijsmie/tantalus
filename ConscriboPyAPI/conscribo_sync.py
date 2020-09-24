@@ -38,8 +38,10 @@ def sync_transactions(transactions):
 
 def transaction_to_transactionXML(transaction, conscribo_link):
     """"Convert a Tantalus Transaction to a Conscribo XML Transaction"""
+    mconfig = Config.get_config()
+
     txml = TransactionXML(conscribo_link.conscribo_reference,
-                          reference="1920-{} {} {}".format(str(transaction.reference), transaction.relation.get().name,
+                          reference="{}-{} {} {}".format(mconfig.yearcode, str(transaction.reference), transaction.relation.get().name,
                                                            transaction.informal_reference),
                           description="{} ({} {})".format(transaction.description, transaction.relation.get().name,
                                                           transaction.informal_reference))

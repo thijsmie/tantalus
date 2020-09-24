@@ -14,8 +14,8 @@ with open(os.path.join(mydir, "invoice.md")) as f2:
     tx = Template(f2.read())
 
 
-def make_invoice(transaction, relation, budget=None):
-    mx = tx.render(transaction=transaction, relation=relation, budget=budget)
+def make_invoice(transaction, relation, yearcode, budget=None):
+    mx = tx.render(transaction=transaction, relation=relation, budget=budget, yearcode=yearcode)
     html = markdown.markdown(mx, ['markdown.extensions.extra'], output_format="html4")
     html = template.replace("{{ html }}", html)
     output = StringIO()

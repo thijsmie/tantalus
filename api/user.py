@@ -62,7 +62,7 @@ def adduser():
 def edituser(user_id):
     form = request.json or request.form
 
-    user = get_or_none(user_id)
+    user = get_or_none(user_id, User)
     if user is None:
         return abort(404)
 

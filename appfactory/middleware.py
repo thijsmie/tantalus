@@ -9,8 +9,9 @@ from flask import current_app, render_template, request, session, abort
 from markupsafe import Markup
 
 from ndbextensions import ndbjson
+from ndbextensions.models import User
 import json
-from appfactory.auth import generate_csrf_token
+from appfactory.auth import generate_csrf_token, new_user
 
 LOG = getLogger(__name__)
 
@@ -154,4 +155,11 @@ def csrf_protect():
             if not token or token != request.form.get('_csrf_token'):
                 abort(403)
 
+
+# On first request check if any users exist. If not, make sure there is a default admin user
+@current_app.before_first_request
+def ensure_there_is_a_user():
+    if len(User.query().fetch()) == 0:
+        user = new_user("admin", "AdminAdmin", True, None, True, True, True)
+        user.put()
 current_app.jinja_env.globals['csrf_token'] = generate_csrf_token
