@@ -26,7 +26,7 @@ support for simple ingredient-to-product processes.
 │
 ├─ templates/        # Jinja2 templates
 │
-├─ ndbextensions     # All data models, for use in the Google Appengine NDB
+├─ tantalus_db     # All data models, for use in the Google Appengine NDB
 │
 ├─ pdfworker/        # Invoice creation and sending
 │

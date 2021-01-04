@@ -10,3 +10,8 @@ dist
 
 *.pyc
 *.egg-info
+
+
+variables.env
+src/config.json
+.vscode/*

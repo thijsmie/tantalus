@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+{% from 'tantalus_general_helpers.html' import format_currency %}
+
+{% block container %}
+  <div>
+    <h1>Users</h1>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Relation</th>
+        <th>Admin</th>
+        <th>Stock</th>
+        <th>All Transactions</th>
+        <th>Point-of-Sale</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for user in pagination.items %}
+        <tr>
+          <td><a href="{{ url_for(".edituser", user_id=user.key.urlsafe()) }}">{{ user.username }}</a></td>
+
+          {%- if user.relation %}
+            <td>{{ user.relation.get().name }}</td>
+          {% else %}
+            <td></td>
+          {% endif %}
+          <td>{% if user.right_admin %}<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
+          <td>{% if user.right_viewstock %}<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}
+          </td>
+          <td>{% if user.right_viewalltransactions %}
+            <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
+          <td>{% if user.right_posaction %}<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="6" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <a href="{{ url_for('.adduser') }}" class="btn btn-default">Add user</a>
+  {{ paginator_buttons(pagination) }}
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <style type="text/css">
+    @-moz-document url-prefix() {
+      fieldset {
+        display: table-cell;
+      }
+    }
+  </style>
+{% endblock %}

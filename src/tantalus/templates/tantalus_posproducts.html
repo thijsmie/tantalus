@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+
+{% block container %}
+  <div>
+    <h1>Point of Sale Products</h1>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Coupled</th>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Scan Id</th>
+        <th>Keycode</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for posproduct in pagination.items %}
+        <tr>
+          <td>{% if posproduct.product is not none %}
+            <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
+          <td><a href="{{ url_for('.editposproduct', posproduct_id=posproduct.key.urlsafe()) }}">{{ posproduct.name }}</a></td>
+          <td align="right">{{ posproduct.price | format_currency }}</td>
+          <td>{{ posproduct.scan_id }}</td>
+          <td>{{ posproduct.keycode }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="5" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <a href="{{ url_for('.addposproduct') }}" class="btn btn-default">Add Pos-Product</a>
+  <a href="{{ url_for('.sales') }}" class="btn btn-default">Go To Sales</a>
+  {{ paginator_buttons(pagination) }}
+{% endblock %}
+

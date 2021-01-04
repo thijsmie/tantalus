@@ -1,0 +1,53 @@
+version: '3.1'
+
+services:
+  database:
+    image: postgres
+    env_file:
+      - variables.env
+    expose:
+      - "5433"
+    volumes:
+      - ./cache/postgres-data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: "rabbitmq:3"
+    container_name: "rabbitmq"
+    expose:
+      - "5672"
+    volumes:
+      - ./config/rabbitmq.config:/etc/rabbitmq/rabbitmq.config
+  
+  worker:
+    build: 
+      dockerfile: Dockerfile
+    command: [celery, worker, --app=entrypoint_celery.app, --pool=gevent, --concurrency=4, --loglevel=INFO]
+    container_name: worker
+    env_file:
+      - variables.env
+    depends_on:
+      - database
+      - rabbitmq
+
+  worker-beat:
+    build: 
+      dockerfile: Dockerfile
+    command: [celery, beat, --app=entrypoint_celery.app, --loglevel=INFO]
+    container_name: worker-beat
+    env_file:
+      - variables.env
+    depends_on:
+      - database
+      - rabbitmq
+
+  application:
+    build: 
+      dockerfile: Dockerfile
+    container_name: application
+    command: [gunicorn, -w 2, -b 0.0.0.0:80, --capture-output, --log-level=INFO, entrypoint_flask:app]
+    env_file:
+      - variables.env
+    depends_on:
+      - worker
+    expose:
+      - "80"

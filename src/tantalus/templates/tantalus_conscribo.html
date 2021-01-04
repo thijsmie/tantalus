@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+
+{% block container %}
+<h1>Conscribo Config</h1>
+
+<form action="{{ url_for('.configure') }}" method="post" class="col-md-6">
+    <h4>New config</h4>
+    <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
+    <textarea name="config" class="form-control" rows="20">{{ config | fancy_json }}</textarea>
+    <input type="submit" class="form-control">
+</form>
+
+<a href="{{ url_for(".transactions") }}" class="btn btn-default">Goto transactions</a>
+{% endblock %}

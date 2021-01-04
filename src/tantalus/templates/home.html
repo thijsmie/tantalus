@@ -1,0 +1,83 @@
+{% extends 'bootstrap/base.html' %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Tantalus{%- block append_title %}{% endblock %}{% endblock %}
+
+{% block styles %}
+  <meta charset="utf-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  {{ super() }}
+  <link rel="shortcut icon" href="/static/favicon.ico?"/>
+  <link rel="stylesheet" href="/static/css/custombootstrap.min.css">
+  <link href="/static/css/cover.css" rel="stylesheet">
+{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  {{ fixes.ie8() }}
+{% endblock %}
+
+{% block content %}
+  <div class="site-wrapper">
+    <div class="site-wrapper-inner">
+      <div class="cover-container">
+        <div class="inner cover">
+          <img alt="Brand" src="/static/logo.svg" height="100px"><br>
+          <h1 class="cover-heading">
+            Tantalus
+          </h1>
+          <form class="form-signin" action="{{ url_for(".login") }}" method="post">
+            <label for="inputUser" class="sr-only">Username</label>
+            <input name="username" id="inputUser" class="form-control" placeholder="Username" required autofocus>
+            <label for="inputPassword" class="sr-only">Password</label>
+            <input name="password" type="password" id="inputPassword" class="form-control" placeholder="Password"
+                   required>
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" name="remember-me" value="remember-me"> Remember me
+              </label>
+            </div>
+            <button class="btn btn-lg btn-default btn-block">Sign in</button>
+            <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
+          </form>
+        </div>
+        <div class="mastfoot">
+          <div class="inner">
+            <p class="text-muted">Made by Thijs Miedema, view on
+              <a class="btn btn-default btn-xs" href="https://github.com/thijsmie/tantalus">GitHub</a></p>
+          </div>
+        </div>
+
+      </div>
+      {% with messages = messages or get_flashed_messages(with_categories=True) -%}
+        {%- set transform={
+  'critical': 'danger',
+  'error': 'danger',
+  'info': 'info',
+  'warning': 'warning',
+  'debug': 'info',
+  'notset': 'info',
+  'message': 'info',
+} -%}
+        <!-- begin message block -->
+        <div class="container flashed-messages">
+          <div class="row">
+            <div id="messages" class="col-md-12">
+              {% for cat, msg in messages %}
+                <div class="alert alert-{{ transform.get(cat.lower(), default_category or cat) }}
+              {%- if dismissible %} alert-dismissible{% endif %}" role="alert">
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span>
+                  </button>
+                  {{ msg }}
+                </div>
+              {%- endfor -%}
+            </div>
+          </div>
+        </div>
+        <!-- end message block -->
+      {% endwith %}
+    </div>
+  </div>
+{% endblock %}

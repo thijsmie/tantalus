@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block container %}
+
+  <form id="newposproductform" class="form-horizontal" method="POST">
+    <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
+    <div class="col-lg-6">
+      <div class="well bs-component">
+        <fieldset>
+          <legend>{% if posproduct is defined %}Edit{% else %}New{% endif %} Pos-Product</legend>
+          <div class="form-group">
+            <label for="product" class="col-lg-3 control-label">Product</label>
+            <div class="col-lg-9">
+              <select class="form-control" id="product">
+                <option></option>
+                {% for product in products %}
+                  <option value="{{ product.key.urlsafe() }}"{% if posproduct and posproduct.product == product.key -%}
+                          selected{% endif %}>{{ product.contenttype }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="name" class="col-lg-3 control-label">Name</label>
+            <div class="col-lg-9">
+              <input type="text" class="form-control" id="name" name="name" placeholder="Name"
+                     value="{% if posproduct %}{{ posproduct.name }}{% endif %}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="scan_id" class="col-lg-3 control-label">Scan ID</label>
+            <div class="col-lg-9">
+              <input type="text" class="form-control" id="scan_id" name="scan_id" placeholder="Scan ID"
+                     value="{% if posproduct %}{{ posproduct.scan_id }}{% endif %}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="keycode" class="col-lg-3 control-label">Keycode</label>
+            <div class="col-lg-9">
+              <input type="text" class="form-control" id="keycode" name="keycode" placeholder="Keycode"
+                     value="{% if posproduct %}{{ posproduct.keycode }}{% endif %}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="price" class="col-lg-3 control-label">Price</label>
+            <div class="col-lg-9">
+              <div id="valwrap" class="input-group">
+                  <span class="input-group-addon"><span class="glyphicon glyphicon-euro"
+                                                        aria-hidden="true"></span></span>
+                <input id="price" name="price" type="text" class="form-control" placeholder="Price"
+                       value="{% if posproduct %}{{ posproduct.price | format_currency }}{% endif %}">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-lg-9 col-lg-offset-3">
+              <button type="button" class="btn btn-primary" onclick="submit_posproduct();">Submit</button>
+              <p>Only enter a name when you did not define a product!</p>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </form>
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script type="text/javascript">
+
+      function submit_posproduct() {
+          tosubmit = {};
+          tosubmit.name = $('#name').val();
+
+          var prd = $('#product').val();
+          if (prd !== "")
+              tosubmit.product = prd;
+
+          var prc = $('#price').val();
+          if (prc !== "")
+            tosubmit.price = parseInt(parseFloat(prc.replace(",", ".")) * 100);
+
+          tosubmit.scan_id = $('#scan_id').val();
+          tosubmit.keycode = $('#keycode').val();
+
+          {% if posproduct -%}
+              post_object(tosubmit, "{{ url_for(".editposproduct", posproduct_id=posproduct.key.urlsafe()) }}", "{{ url_for(".index") }}");
+          {%- else -%}
+              post_object(tosubmit, "{{ url_for(".addposproduct") }}", "{{ url_for(".index") }}");
+          {%- endif %}
+
+          return true;
+      }
+
+  </script>
+{% endblock %}
