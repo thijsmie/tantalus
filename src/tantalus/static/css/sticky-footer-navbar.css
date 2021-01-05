@@ -44,3 +44,10 @@ body {
     -moz-border-radius: 4px;
     border-radius: 4px;
 }
+
+
+@page { size: A4; margin: 1cm }
+@media print {
+    nav { display: none }
+    .footer { display: none }
+}

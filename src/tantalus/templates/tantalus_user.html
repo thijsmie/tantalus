@@ -27,7 +27,7 @@
             <div class="col-lg-9">
               <select class="form-control" id="relation" name="relation">
                 {% if user is defined and user.relation %}
-                  <option value="{{ user.relation.urlsafe() }}">{{ user.relation.name }}</option>{% endif %}
+                  <option value="{{ user.relation.id }}">{{ user.relation.name }}</option>{% endif %}
                 <option value=""></option>
                 {% for relation in relations %}
                   <option value="{{ relation.id }}">{{ relation.name }}</option>{% endfor %}

@@ -20,7 +20,7 @@
       <tbody>
       {% for possale in pagination.items %}
         <tr>
-          <td><a href="{{ url_for('.editposproduct', posproduct_id=possale.product.urlsafe()) }}">{{ possale.product.name }}</a></td>
+          <td><a href="{{ url_for('.editposproduct', posproduct_id=possale.product.id) }}">{{ possale.product.name }}</a></td>
           <td align="right">{{ possale.amount }}</td>
           <td>{{ possale.time | format_datetime}}</td>
           <td>{{ possale.user.username }}</td>

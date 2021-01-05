@@ -100,8 +100,8 @@ function field_validate_float_or_none(field) {
 }
 
 function field_validate_money(field) {
-    if (valid_float($(field).val())) {
-        var val = parseFloat($(field).val()) * 100.0;
+    if (valid_float($(field).val().replace(',', '.'))) {
+        var val = parseFloat($(field).val().replace(',', '.')) * 100.0;
 
         // There's no trusting float comparison.
         if (Math.floor(val) == val && Math.ceil(val) == val) {
@@ -116,4 +116,16 @@ function field_validate_money_or_none(field) {
     if ($(field).val() == '')
         return true;
     return field_validate_money(field);
+}
+
+function parseMoney(val) {
+    if (valid_float(val)) {
+        var val = parseFloat(val) * 100.0;
+
+        // There's no trusting float comparison.
+        if (Math.floor(val) == val && Math.ceil(val) == val) {
+            return Math.floor(val);
+        }
+    }
+    return 0;
 }

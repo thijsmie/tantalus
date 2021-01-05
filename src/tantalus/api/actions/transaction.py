@@ -269,7 +269,7 @@ def transaction_record(transaction):
         "total": int(total),
         "id": transaction.id,
         "revision": transaction.revision,
-        "lastedit": transaction.lastedit,
+        "lastedit": transaction.time_updated,
         "two_to_one_has_btw": transaction.two_to_one_has_btw,
         "two_to_one_btw_per_row": transaction.two_to_one_btw_per_row
     }

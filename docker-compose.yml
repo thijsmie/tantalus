@@ -39,7 +39,7 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-    command: [celery, --app=celery_entrypoint.app, worker, --pool=gevent, --concurrency=4, --loglevel=INFO]
+    command: [celery, --app=celery_entrypoint.app, worker, --pool=gevent, --concurrency=4, --loglevel=INFO, "-E"]
     container_name: worker
     env_file:
       - variables.env

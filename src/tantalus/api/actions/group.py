@@ -22,3 +22,9 @@ def group_values():
         group.name: sum(product.amount * product.value for product in group.products)
             for group in Group.query.all()
     }
+
+def group_excl_values():
+    return {
+        group.name: sum(product.amount * product.value / (1 + product.btwtype.percentage / 100.0) for product in group.products)
+            for group in Group.query.all()
+    }

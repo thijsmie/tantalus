@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% from 'tantalus_general_helpers.html' import format_currency %}
+
+{% block container %}
+<h1>Financial Overview</h1>
+
+<div class="col-lg-6">
+    <div class="well bs-component">
+        <fieldset>
+            <legend>Group Values</legend>
+            <div class="col-lg-12 table-responsive">
+                <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+    
+                <tbody>
+                {% for group, value in group_values.items() %}
+                    <tr>
+                        <td>{{ group }}</td>
+                        <td>{{ format_currency(value) }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="2" style="text-align: center"><h2>&empty;</h2></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+</div>
+
+<div class="col-lg-6">
+    <div class="well bs-component">
+        <fieldset>
+            <legend>Group Values Excl BTW (rounded)</legend>
+            <div class="col-lg-12 table-responsive">
+                <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+    
+                <tbody>
+                {% for group, value in group_excl_values.items() %}
+                    <tr>
+                        <td>{{ group }}</td>
+                        <td>{{ format_currency(value) }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="2" style="text-align: center"><h2>&empty;</h2></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+</div>
+
+<div class="col-lg-6">
+    <div class="well bs-component">
+        <fieldset>
+            <legend>Service Values</legend>
+            <div class="col-lg-12 table-responsive">
+                <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th>Service</th>
+                    <th>Positive</th>
+                    <th>Negative</th>
+                    <th>Total</th>
+                </tr>
+                </thead>
+    
+                <tbody>
+                {% for service, value in service_values.items() %}
+                    <tr>
+                        <td>{{ service }}</td>
+                        <td>{{ format_currency(value[1]) }}</td>
+                        <td>{{ format_currency(value[2]) }}</td>
+                        <td>{{ format_currency(value[0]) }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center"><h2>&empty;</h2></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+</div>
+<div class="col-lg-6">
+    <div class="well bs-component">
+        <fieldset>
+            <legend>Service Values Excl BTW (rounded)</legend>
+            <div class="col-lg-12 table-responsive">
+                <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th>Service</th>
+                    <th>Positive</th>
+                    <th>Negative</th>
+                    <th>Total</th>
+                </tr>
+                </thead>
+    
+                <tbody>
+                {% for service, value in service_excl_values.items() %}
+                    <tr>
+                        <td>{{ service }}</td>
+                        <td>{{ format_currency(value[1]) }}</td>
+                        <td>{{ format_currency(value[2]) }}</td>
+                        <td>{{ format_currency(value[0]) }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center"><h2>&empty;</h2></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+</div>
+
+{% endblock %}

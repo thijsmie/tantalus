@@ -20,7 +20,8 @@ from worker.worker import conscribo_sync
 @ensure_user_admin
 def index():
     config = ConscriboConfig.get_config()
-    return render_template("tantalus_conscribo.html", config=config)
+    transactionlinks = ConscriboTransactionLink.query.all()
+    return render_template("tantalus_conscribo.html", config=config, transactionlinks=transactionlinks)
 
 
 @router.route("/configure", methods=["POST"])
@@ -36,14 +37,6 @@ def configure():
     ConscriboConfig.set_config(conf)
     db.session.commit()
     return redirect(url_for(".index"))
-
-
-@router.route("/transactions")
-@login_required
-@ensure_user_admin
-def transactions():
-    transactionlinks = ConscriboTransactionLink.query.all()
-    return render_template("tantalus_conscribo_transactions.html", transactionlinks=transactionlinks)
 
 
 @router.route("/sync", methods=["POST"])

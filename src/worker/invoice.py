@@ -1,23 +1,11 @@
-from jinja2 import Template
-import markdown
-from xhtml2pdf import pisa
-from io import StringIO
+from flask_weasyprint import HTML
+from flask import render_template
+from io import BytesIO
 import os
 
-mydir = os.path.abspath(os.path.dirname(__file__))
 
-
-with open(os.path.join(mydir, "resources/layout.html")) as f:
-    template = f.read()
-
-with open(os.path.join(mydir, "resources/invoice.md")) as f2:
-    tx = Template(f2.read())
-
-
-def make_invoice(transaction, relation, yearcode, budget=None):
-    mx = tx.render(transaction=transaction, relation=relation, budget=budget, yearcode=yearcode)
-    html = markdown.markdown(mx, ['markdown.extensions.extra'], output_format="html4")
-    html = template.replace("{{ html }}", html)
-    output = StringIO()
-    status = pisa.CreatePDF(html, dest=output)
+def make_invoice(transaction, record, relation, yearcode, budget=None):
+    output = BytesIO()
+    html = render_template('invoice.html', transaction=transaction, record=record, relation=relation, yearcode=yearcode, budget=budget)
+    HTML(string=html).write_pdf(output)
     return output

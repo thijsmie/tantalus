@@ -2,14 +2,100 @@
 {% from 'tantalus_paginator.html' import paginator_buttons with context %}
 
 {% block container %}
-<h1>Conscribo Config</h1>
+<h1>Conscribo</h1>
 
-<form action="{{ url_for('.configure') }}" method="post" class="col-md-6">
-    <h4>New config</h4>
+<form action="{{ url_for('.configure') }}" method="post" class="col-lg-12">
     <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
-    <textarea name="config" class="form-control" rows="20">{{ config | fancy_json }}</textarea>
-    <input type="submit" class="form-control">
+    <div class="well bs-component">
+        <fieldset>
+            <legend>Configuration</legend>
+            <div class="form-group">
+                <textarea name="config" class="form-control" rows="12">{{ config | fancy_json }}</textarea>
+            </div>
+            <div class="form-group">
+                <div class="col-lg-12">
+                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                </div>
+            </div>
+        </fieldset>
+    </div>
 </form>
 
-<a href="{{ url_for(".transactions") }}" class="btn btn-default">Goto transactions</a>
+<form id="relationlink" class="form-horizontal col-lg-12" action="{{ url_for(".sync") }}" method="post">
+  <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+  <div class="well bs-component">
+    <fieldset>
+        <legend>Staged Transactions</legend>
+        <div class="col-lg-12 table-responsive">
+            <table class="table table-condensed table-striped">
+            <thead>
+            <tr>
+                <th>Sync</th>
+                <th>Transaction</th>
+                <th>Synced/Current</th>
+                <th>Last Feedback</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for link in transactionlinks if not link.pushed_revision == link.transaction.revision %}
+                <tr>
+                <td><input class="form-horizontal" type="checkbox" name="{{ link.id }}"></td>
+                <td>{{ link.transaction.relation.name }} {{ link.transaction.informal_reference }}</td>
+                <td>{{ link.pushed_revision }}/{{ link.transaction.revision }}</td>
+                <td>{{ link.feedback }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                <td colspan="4" style="text-align: center"><h2>&empty;</h2></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+        <div class="form-group">
+            <div class="col-lg-12">
+                <button type="submit" class="btn btn-sm btn-primary">Sync Selected Transactions</button>
+                <a href="{{ url_for(".generate") }}" class="btn btn-sm btn-primary ml-4">Stage New Transactions</a>
+            </div>
+        </div>
+    </fieldset>
+  </div>
+</form>
+
+<div class="col-lg-12">
+    <div class="well bs-component">
+        <fieldset>
+            <legend>Synced Transactions</legend>
+            <div class="col-lg-12 table-responsive">
+                <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Transaction</th>
+                    <th>Synced</th>
+                    <th>Last Feedback</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for link in transactionlinks if link.pushed_revision == link.transaction.revision %}
+                    <tr>
+                    <td>T#[{{ link.conscribo_reference }}]</td>
+                    <td>{{ link.transaction.relation.name }} {{ link.transaction.reference }}</td>
+                    <td>{{ link.pushed_revision }}</td>
+                    <td>{{ link.feedback }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                    <td colspan="4" style="text-align: center"><h2>&empty;</h2></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+</div>
+
 {% endblock %}

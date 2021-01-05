@@ -37,7 +37,7 @@ def run_invoicing(transaction_id):
         budget = None
 
     if relation.send_mail:
-        pdf = make_invoice(record, relation, yearcode, budget)
+        pdf = make_invoice(transaction, record, relation, yearcode, budget)
         send_invoice(relation, transaction, pdf)
 
 

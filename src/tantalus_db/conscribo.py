@@ -11,23 +11,24 @@ class ConscriboConfig(Base):
 
     @classmethod
     def get_config(cls):
-        config = db.session.query.filter(cls).one_or_none()
+        config = cls.query.one_or_none()
         if not config:
             config = cls()
+            config.config = "{}"
             db.session.add(config)
-            db.session.commit()
 
         return json.loads(config.config)
 
     @classmethod
     def set_config(cls, config):
-        config = db.session.query.filter(cls).one_or_none()
+        config = cls.query.one_or_none()
         if not config:
             config = cls()
+            config.config = "{}"
             db.session.add(config)
-            db.session.commit()
 
         config.config = json.dumps(config)
+        db.session.commit()
 
 
 class ConscriboTransactionLink(Base):

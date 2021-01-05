@@ -52,7 +52,7 @@
               <div id="valwrap" class="input-group">
                 <span class="input-group-addon"><span class="glyphicon glyphicon-euro" aria-hidden="true"></span></span>
                 <input id="value" type="text" class="form-control" placeholder="Value" {% if product %}
-                       value="{{ product.value }}"{% endif %}>
+                       value="{{ format_currency(product.value) }}"{% endif %}>
               </div>
             </div>
           </div>
@@ -94,7 +94,7 @@
                   tosubmit.amount = parseInt($('#amount').val());
 
               if ($('#value').val() != "")
-                  tosubmit.value = parseInt($('#value').val());
+                  tosubmit.value = parseMoney($('#value').val().replace(',', '.'));
               {% if not product %}
                   post_object(tosubmit, "{{ url_for(".addproduct") }}", "{{ url_for(".index") }}");
               {% else %}

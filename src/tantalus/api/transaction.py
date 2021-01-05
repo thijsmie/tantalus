@@ -1,5 +1,6 @@
 from flask import render_template, request, abort, redirect, url_for
 from flask_login import login_required
+from flask_weasyprint import HTML, render_pdf
 
 from tantalus_db.base import db
 from tantalus_db.encode import jsonify
@@ -7,10 +8,12 @@ from tantalus_db.models import Transaction, Product, Relation
 from tantalus_db.paginator import Paginator
 from tantalus_db.utility import get_or_none
 
+from tantalus.appfactory import flash
 from tantalus.appfactory.auth import ensure_user_admin, ensure_user_transactions, ensure_user_relation, ensure_user_transaction
 from tantalus.api.routers import bp_transaction as router
 from tantalus.api.actions.transaction import new_transaction, edit_transaction, transaction_record
 
+from context import get_config
 from worker.worker import run_invoicing
 
 from datetime import datetime
@@ -78,14 +81,10 @@ def addtransaction():
 
     if request.method == "POST":
         relation = Relation.query.get_or_404(int(form['relation']))
-
-        try:
-            transaction = new_transaction(form)
-            relation.budget -= transaction.total
-            run_invoicing.delay(transaction.id)
-            db.session.commit()
-        except:
-            return jsonify({"messages": ["Invalid data"]}, 400)
+        transaction = new_transaction(form)
+        relation.budget -= transaction.total
+        run_invoicing.delay(transaction.id)
+        db.session.commit()
         return jsonify(transaction)
 
     return render_template('tantalus_transaction.html',
@@ -130,6 +129,51 @@ def showtransaction(transaction_id):
     return render_template('tantalus_transaction_viewer.html', **transaction_record(transaction))
 
 
+@router.route('/invoice/<int:transaction_id>')
+@login_required
+@ensure_user_transaction
+def showinvoice(transaction_id):
+    transaction = get_or_none(transaction_id, Transaction)
+    relation = transaction.relation
+    record = transaction_record(transaction)
+    yearcode = get_config().yearcode
+
+    def get_budget():
+        after = Transaction.query.filter(
+            Transaction.reference > transaction.reference, Transaction.relation == transaction.relation).all()
+        return relation.budget + sum([t.total for t in after])
+
+    if relation.has_budget:
+        budget = get_budget()
+    else:
+        budget = None
+
+    return render_template('invoice.html', transaction=transaction, record=record, relation=relation, yearcode=yearcode, budget=budget)
+
+
+@router.route('/invoice/<int:transaction_id>.pdf')
+@login_required
+@ensure_user_transaction
+def showinvoicepdf(transaction_id):
+    transaction = get_or_none(transaction_id, Transaction)
+    relation = transaction.relation
+    record = transaction_record(transaction)
+    yearcode = get_config().yearcode
+
+    def get_budget():
+        after = Transaction.query.filter(
+            Transaction.reference > transaction.reference, Transaction.relation == transaction.relation).all()
+        return relation.budget + sum([t.total for t in after])
+
+    if relation.has_budget:
+        budget = get_budget()
+    else:
+        budget = None
+
+    html = render_template('invoice.html', transaction=transaction, record=record, relation=relation, yearcode=yearcode, budget=budget)
+    return render_pdf(HTML(string=html))
+
+
 @router.route('/resend/<int:transaction_id>')
 @login_required
 @ensure_user_admin
@@ -139,6 +183,8 @@ def resend(transaction_id):
         return abort(404)
 
     run_invoicing.delay(transaction.id)
+    flash.success("Resend queued (might take a few minutes to arrive).")
+
     return redirect(url_for(".showtransaction", transaction_id=transaction_id))
     
     
@@ -158,7 +204,7 @@ def history():
         if (t.deliverydate > enddate):
             break
         for r in t.one_to_two:
-            key = r.product.urlsafe()
+            key = r.product.id
             if key not in products:
                 products[key] = {
                     "name": r.product.contenttype,
@@ -167,7 +213,7 @@ def history():
                 }
             products[key]["sell"] += [[r.amount, r.prevalue]]
         for r in t.two_to_one:
-            key = r.product.urlsafe()
+            key = r.product.id
             if key not in products:
                 products[key] = {
                     "name": r.product.contenttype,

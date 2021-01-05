@@ -10,10 +10,8 @@ import logging
 
 @transactional
 def new_product(data):
-    logging.log(logging.CRITICAL, "We get here!")
     group = get_group(data['group'])
     btwtype = get_btwtype(data['btw'])
-    logging.log(logging.CRITICAL, "We get here2!")
 
     product = Product(
         contenttype=data['name'],
@@ -25,7 +23,6 @@ def new_product(data):
         btwtype=btwtype
     )
     db.session.add(product)
-    logging.log(logging.CRITICAL, "We get her3e!")
     
     return product
 
