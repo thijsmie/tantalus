@@ -1,7 +1,7 @@
 from jinja2 import Template
 import markdown
 from xhtml2pdf import pisa
-from StringIO import StringIO
+from io import StringIO
 import os
 
 mydir = os.path.abspath(os.path.dirname(__file__))

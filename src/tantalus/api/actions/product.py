@@ -2,18 +2,22 @@ from tantalus_db.base import db
 from tantalus_db.models import Product, Group, BtwType
 from tantalus_db.utility import transactional
 
-from api.actions.group import get_group
-from api.actions.btwtype import get_btwtype
+from tantalus.api.actions.group import get_group
+from tantalus.api.actions.btwtype import get_btwtype
+
+import logging
 
 
 @transactional
 def new_product(data):
+    logging.log(logging.CRITICAL, "We get here!")
     group = get_group(data['group'])
     btwtype = get_btwtype(data['btw'])
+    logging.log(logging.CRITICAL, "We get here2!")
 
     product = Product(
-        contenttype=data['contenttype'],
-        tag=data.get(tag, ''),
+        contenttype=data['name'],
+        tag=data.get('tag', ''),
         group=group,
         amount=int(data.get('amount', 0)),
         value=int(data.get('value', 0)),
@@ -21,6 +25,7 @@ def new_product(data):
         btwtype=btwtype
     )
     db.session.add(product)
+    logging.log(logging.CRITICAL, "We get her3e!")
     
     return product
 

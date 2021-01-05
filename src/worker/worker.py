@@ -20,9 +20,9 @@ celery = Celery(__name__, autofinalize=False)
 
 
 @celery.task
-def make_invoice(transaction_id)
+def run_invoicing(transaction_id):
     transaction = get_or_none(transaction_id, Transaction)
-    relation = transaction.relation.get()
+    relation = transaction.relation
     record = transaction_record(transaction)
     yearcode = get_config().yearcode
 
@@ -43,5 +43,5 @@ def make_invoice(transaction_id)
 
 @celery.task
 def conscribo_sync(transaction_ids):
-    transactions = [get_or_none(key, Transaction) for id in transaction_ids]
+    transactions = [get_or_none(id, Transaction) for id in transaction_ids]
     sync_transactions(transactions)

@@ -11,7 +11,7 @@ from markupsafe import Markup
 from tantalus_db import encode
 from tantalus_db.models import User
 import json
-from appfactory.auth import generate_csrf_token, new_user
+from tantalus.appfactory.auth import generate_csrf_token, new_user
 
 LOG = getLogger(__name__)
 
@@ -155,6 +155,7 @@ def csrf_protect():
 @current_app.before_first_request
 def ensure_there_is_a_user():
     if len(User.query.all()) == 0:
+        from tantalus_db.base import db
         user = new_user("admin", "AdminAdmin", True, None, True, True, True)
-        user.put()
+        db.session.add(user)
 current_app.jinja_env.globals['csrf_token'] = generate_csrf_token

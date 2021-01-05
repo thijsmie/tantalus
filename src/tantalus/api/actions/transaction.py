@@ -1,9 +1,8 @@
 from tantalus_db.base import db
 from tantalus_db.models import Referencing, Transaction, TransactionLine, ServiceLine, Relation, Product, BtwType
-from tantalus_db.validate import OperationError
 from tantalus_db.utility import get_or_none, transactional
 
-from api.actions.rows import transform_collection
+from tantalus.api.actions.rows import transform_collection
 
 from collections import defaultdict
 from datetime import datetime
@@ -15,15 +14,15 @@ def new_transaction(data):
     relation = get_or_none(data['relation'], Relation)
     
     if relation is None:
-        raise OperationError("Relation does not exist!")
+        raise Exception("Relation does not exist!")
     
     if relation.numbered_reference:
         reference = Referencing.get_reference()
     else:
         reference = 0        
 
-    tr = Transaction.query.filter(Transaction.relation == relation.key).order_by(
-        Transaction.informal_reference.desc()).first_or_none()
+    tr = Transaction.query.filter(Transaction.relation == relation).order_by(
+        Transaction.informal_reference.desc()).first()
 
     if tr is None:
         informal_reference = 1
@@ -44,14 +43,14 @@ def new_transaction(data):
     for prd in data["sell"]:
         product = get_or_none(prd["id"], Product)
         if product is None:
-            raise OperationError("Product with id {} does not exist.".format(prd["id"]))
+            raise Exception("Product with id {} does not exist.".format(prd["id"]))
         line = product.take(int(prd['amount']))
         t.one_to_two.append(line)
 
     for prd in data["buy"]:
         product = get_or_none(prd["id"], Product)
         if product is None:
-            raise OperationError("Product with id {} does not exist.".format(prd["id"]))
+            raise Exception("Product with id {} does not exist.".format(prd["id"]))
 
         line = TransactionLine(
             product=product,
@@ -66,7 +65,7 @@ def new_transaction(data):
 
     for prd in data["service"]:
         btw = prd.get('btw', 0)
-        btwtype = BtwType.query.filter(BtwType.percentage == btw).first_or_none()
+        btwtype = BtwType.query.filter(BtwType.percentage == btw).first()
 
         if btwtype is None:
             btwtype = BtwType(
@@ -110,7 +109,7 @@ def edit_transaction(t, data):
     for prd in data["sell"]:
         product = get_or_none(prd["id"], Product)
         if product is None:
-            raise OperationError("Product with id {} does not exist.".format(prd["id"]))
+            raise Exception("Product with id {} does not exist.".format(prd["id"]))
 
         line = TransactionLine(
             value=int(prd['amount'])*product.value,
@@ -128,7 +127,7 @@ def edit_transaction(t, data):
     for prd in data["buy"]:
         product = get_or_none(prd["id"], Product)
         if product is None:
-            raise OperationError("Product with id {} does not exist.".format(prd["id"]))
+            raise Exception("Product with id {} does not exist.".format(prd["id"]))
         line = TransactionLine(
             product=product,
             amount=int(prd['amount']),
@@ -143,7 +142,7 @@ def edit_transaction(t, data):
     t.services = []
     for prd in data["service"]:
         btw = prd.get('btw', 0)
-        btwtype = BtwType.query.filter(BtwType.percentage == btw).first_or_none()
+        btwtype = BtwType.query.filter(BtwType.percentage == btw).first()
         if btwtype is None:
             btwtype = BtwType(
                 name=str(btw)+"%",
@@ -155,7 +154,7 @@ def edit_transaction(t, data):
             service=prd['contenttype'],
             amount=int(prd['amount']),
             value=int(prd['price']),
-            btwtype=btwtype.key
+            btwtype=btwtype
         )
 
         t.services.append(line)
@@ -268,7 +267,7 @@ def transaction_record(transaction):
         "processeddate": transaction.processeddate,
         "deliverydate": transaction.deliverydate,
         "total": int(total),
-        "id": transaction.key.urlsafe(),
+        "id": transaction.id,
         "revision": transaction.revision,
         "lastedit": transaction.lastedit,
         "two_to_one_has_btw": transaction.two_to_one_has_btw,

@@ -23,7 +23,7 @@
         <tr>
           <td>{% if posproduct.product is not none %}
             <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
-          <td><a href="{{ url_for('.editposproduct', posproduct_id=posproduct.key.urlsafe()) }}">{{ posproduct.name }}</a></td>
+          <td><a href="{{ url_for('.editposproduct', posproduct_id=posproduct.id) }}">{{ posproduct.name }}</a></td>
           <td align="right">{{ posproduct.price | format_currency }}</td>
           <td>{{ posproduct.scan_id }}</td>
           <td>{{ posproduct.keycode }}</td>

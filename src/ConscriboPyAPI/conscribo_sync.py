@@ -1,13 +1,14 @@
 from collections import defaultdict
 
-from conscribo_api import Conscribo
-from conscribo_mapper import TransactionXML, TransactionXMLRow, ResultException
+from .conscribo_api import Conscribo
+from .conscribo_mapper import TransactionXML, TransactionXMLRow, ResultException
 
-from tantalus_db.models import TypeGroup
 from tantalus_db.conscribo import ConscriboConfig, ConscriboTransactionLink
 from tantalus_db.utility import transactional
 
-from api.actions.transaction import transaction_record
+from context import get_config
+
+from tantalus.api.actions.transaction import transaction_record
 import traceback
 
 

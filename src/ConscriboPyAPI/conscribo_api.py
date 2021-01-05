@@ -1,4 +1,4 @@
-from conscribo_mapper import AuthenticateRequest, AuthenticateResult, TransactionRequest, TransactionResult,\
+from .conscribo_mapper import AuthenticateRequest, AuthenticateResult, TransactionRequest, TransactionResult,\
     ListAccountsRequest, ListAccountsResult, TransactionPutRequest, TransactionPutResult
 import requests
 from datetime import date

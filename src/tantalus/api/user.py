@@ -2,8 +2,8 @@ from flask import render_template, request, abort
 from flask_login import login_required
 
 from tantalus.appfactory.auth import ensure_user_admin, new_user, update_password
-from tantalus.api.common import common_collection
 
+from tantalus_db.base import db
 from tantalus_db.encode import jsonify
 from tantalus_db.models import User, Relation
 from tantalus_db.paginator import Paginator
@@ -11,13 +11,25 @@ from tantalus_db.utility import get_or_none
 
 from tantalus.api.routers import bp_user as router
 
+@router.route('/', defaults=dict(page=0))
+@router.route('/page/<int:page>')
+@login_required
+@ensure_user_admin
+def index(page):
+    if page < 0:
+        page = 0
 
-common_collection(
-    router,
-    ensure_user_admin,
-    User.query.order_by(User.username),
-    'tantalus_users.html'
-)
+    query = User.query.order_by(User.username)
+    pagination = Paginator(query, page, 20)
+    return render_template('tantalus_users.html', pagination=pagination)
+
+
+@router.route('.json')
+@login_required
+@ensure_user_admin
+def indexjson():
+    query = User.query.order_by(User.username)
+    return jsonify(query.all())
 
 @router.route('/add', methods=["GET", "POST"])
 @login_required
@@ -35,6 +47,7 @@ def adduser():
             user = new_user(form['username'], form['password'], form.get('is_admin', False), form.get('relation', None),
                             form.get('viewstock', False), form.get('viewtransactions', False),
                             form.get('posaction', False))
+            db.session.commit()
         except:
             return jsonify({"messages": ["Invalid data"]}, 403)
         return jsonify(user)
@@ -67,8 +80,7 @@ def edituser(user_id):
         user.right_viewstock = form.get('viewstock', user.right_viewstock)
         user.right_viewalltransactions = form.get('viewtransactions', user.right_viewalltransactions)
         user.right_posaction = form.get('posaction', user.right_posaction)
-
-        user.put()
+        db.session.commit()
         return jsonify(user)
 
     return render_template('tantalus_user.html', user=user, relations=Relation.query.all())

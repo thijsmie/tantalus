@@ -1,4 +1,5 @@
 from datetime import datetime, date, time
+from inspect import isfunction
 
 from sqlalchemy.orm import class_mapper, relationship
 from flask.json import jsonify as flask_jsonify
@@ -34,13 +35,15 @@ def model_to_dict(obj, visited_children=None, back_relationships=None):
 
 def recurse_encode(o):
     if isinstance(o, Base):
-        return model_to_dict(obj)
+        return model_to_dict(o)
     elif isinstance(o, dict):
         return {k: recurse_encode(v) for k, v in o.items()}
     elif isinstance(o, list):
         return [recurse_encode(v) for v in o]
     elif isinstance(o, (datetime, date, time)):
         return str(o)
+    elif isfunction(o):
+        return "[func]"
     else:
         return o
 
@@ -72,5 +75,7 @@ def transaction_recode(o):
     return t
 
 
-def jsonify(arg, *args, **kwargs):
-    return flask_jsonify(recurse_encode(arg), *args, **kwargs)
+def jsonify(arg, status_code=200, **kwargs):
+    dict = recurse_encode(arg)
+    dict.update(**kwargs)
+    return flask_jsonify(dict), status_code

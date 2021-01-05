@@ -1,13 +1,12 @@
 from .base import Base, db
-from tantalus_db.models import Group, Relation, Transaction
-from sqlalchemy import Column, Text, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Text, Integer, Date, ForeignKey
 from sqlalchemy.orm import relationship
 
 import json
 
 
 
-class ConscriboConfig(ndb.Model):
+class ConscriboConfig(Base):
     config = Column(Text, default="{}")
 
     @classmethod
@@ -16,6 +15,7 @@ class ConscriboConfig(ndb.Model):
         if not config:
             config = cls()
             db.session.add(config)
+            db.session.commit()
 
         return json.loads(config.config)
 
@@ -25,11 +25,12 @@ class ConscriboConfig(ndb.Model):
         if not config:
             config = cls()
             db.session.add(config)
+            db.session.commit()
 
         config.config = json.dumps(config)
 
 
-class ConscriboTransactionLink(ndb.Model):
+class ConscriboTransactionLink(Base):
     transaction_id = Column(Integer, ForeignKey('transaction.id'))
     transaction = relationship("Transaction", back_populates="conscribo_transaction")
 

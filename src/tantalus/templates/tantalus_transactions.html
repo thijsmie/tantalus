@@ -27,8 +27,8 @@
       {% for transaction in pagination.items %}
         <tr>
           <td>
-            <a href="{{ url_for('.showrelation', relation_id=transaction.relation.urlsafe()) }}">{{ transaction.relation.get().name }}</a>
-            <a href="{{ url_for('.showtransaction', transaction_id=transaction.key.urlsafe()) }}">{{ (transaction.informal_reference | string).zfill(3) }}</a>
+            <a href="{{ url_for('.showrelation', relation_id=transaction.relation.urlsafe()) }}">{{ transaction.relation.name }}</a>
+            <a href="{{ url_for('.showtransaction', transaction_id=transaction.id) }}">{{ (transaction.informal_reference | string).zfill(3) }}</a>
           </td>
           <td>{{ (transaction.deliverydate | format_date) }}</td>
           <td>{{ transaction.processeddate | format_date }}</td>

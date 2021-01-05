@@ -1,6 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy import Column, Integer, DateTime
 from sqlalchemy.sql import func
+from flask_sqlalchemy import SQLAlchemy
 
 
 db = SQLAlchemy()

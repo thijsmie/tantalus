@@ -3,14 +3,16 @@ import json
 from flask import render_template, request, abort, redirect, url_for
 from flask_login import login_required
 
-from appfactory.auth import ensure_user_admin
+from tantalus.appfactory.auth import ensure_user_admin
 
+from tantalus_db.base import db
 from tantalus_db.encode import jsonify
-from tantalus_db.models import Group, Relation, Transaction
+from tantalus_db.models import Transaction
 from tantalus_db.conscribo import ConscriboConfig, ConscriboTransactionLink
-from tantalus_db.utility import get_or_none, transactional
+from tantalus_db.utility import get_or_none
 
 from tantalus.api.routers import bp_conscribo as router
+from worker.worker import conscribo_sync
 
 
 @router.route("/")
@@ -32,6 +34,7 @@ def configure():
         return jsonify({"error":"Incorrect json formatting"}, 400)
 
     ConscriboConfig.set_config(conf)
+    db.session.commit()
     return redirect(url_for(".index"))
 
 
@@ -57,7 +60,8 @@ def sync():
                 return jsonify({"message": "Unknown transactionlink {}".format(t)}, 400)
             else:
                 trs.append(l.transaction)
-        taskqueue.add(url="/csync", target="worker", params={"transactions": ",".join([t.id for t in trs])})
+        conscribo_sync.delay([t.id for t in trs])
+        db.session.commit()
     except (ValueError, KeyError, Exception):
         return jsonify({"message": "Bad data"}, 400)
     return redirect(url_for(".index"))
@@ -79,11 +83,12 @@ def generate():
             t.conscribo_transaction = ConscriboTransactionLink(
                 pushed_revision=-1,
                 conscribo_reference=next_id,
-                transaction=t.key,
+                transaction=t,
                 bookdate=t.deliverydate
             )
             next_id += 1
             db.session.add(t.conscribo_transaction)
+    db.session.commit()
     return jsonify({})
 
 

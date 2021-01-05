@@ -6,25 +6,41 @@ from flask_bootstrap import Bootstrap
 
 from context import set_config
 
-from tantalus.api import routes
-from worker.worker import celery
 from tantalus_db.base import db
+import tantalus_db.models
+import tantalus_db.conscribo
+
+from tantalus.api import routers
+from worker.worker import celery
 
 from .auth import auth
-import .paths
+import tantalus.appfactory.paths as paths
+
+from celery import Task
 
 
-def create_app(config):
+def create_app(config, create_db=False):
     app = Flask(__name__, template_folder=paths.TEMPLATE_FOLDER, static_folder=paths.STATIC_FOLDER)
-    app.config.update(**config.flask.config)
-    celery.conf.update(**config.celery.config)
+    app.config.update(**config.flask.dict)
+    celery.conf.update(**config.celery.dict)
+
+    class ContextTask(Task):
+        abstract = True
+
+        def __call__(self, *args, **kwargs):
+            with app.test_request_context():
+                res = self.run(*args, **kwargs)
+                return res
+
+    celery.Task = ContextTask
+    celery.finalize()
 
     Bootstrap(app)
     auth.init_app(app)
     db.init_app(app)
 
     app.add_url_rule('/favicon.ico', 'favicon', lambda: app.send_static_file('favicon.ico'))
-    for bp in tantalus.blueprints:
+    for bp in routers.blueprints:
         app.register_blueprint(bp)
 
     # Logging, remove in production
@@ -35,7 +51,9 @@ def create_app(config):
 
     # Activate middleware.
     with app.app_context():
-        import_module("appfactory.middleware")
+        import_module("tantalus.appfactory.middleware")
         set_config(config)
+        if create_db:
+            db.create_all()
 
     return app, celery

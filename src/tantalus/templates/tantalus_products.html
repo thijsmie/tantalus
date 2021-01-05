@@ -25,7 +25,7 @@
       {% for product in pagination.items %}
         <tr>
           <td>{{ product.tag or "" }}</td>
-          <td><a href="{{ url_for('.editproduct', product_id=product.key.urlsafe()) }}">{{ product.contenttype }}</a></td>
+          <td><a href="{{ url_for('.editproduct', product_id=product.id) }}">{{ product.contenttype }}</a></td>
           {% if product.amount == 0 -%}
             <td align="right">0.00</td>
           {%- else -%}

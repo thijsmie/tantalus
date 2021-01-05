@@ -6,7 +6,7 @@ def get_group(name):
     if type(name) != str or len(name) < 4:
         raise Exception("Invalid group name")
 
-    group = Group.query.filter(Group.name == name).first_or_none()
+    group = Group.query.filter(Group.name == name).first()
 
     if not group:
         group = Group(

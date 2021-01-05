@@ -4,7 +4,7 @@ from tantalus_db.models import BtwType
 
 def get_btwtype(percentage):
     percentage = int(percentage)
-    btwtype = BtwType.query.filter(BtwType.percentage == percentage).first_or_none()
+    btwtype = BtwType.query.filter(BtwType.percentage == percentage).first()
 
     if not btwtype:
         btwtype = BtwType(

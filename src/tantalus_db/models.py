@@ -1,6 +1,6 @@
 from .base import Base, db
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, Date, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, Date, DateTime, Text
 from sqlalchemy.orm import relationship, validates
 
 import datetime
@@ -11,7 +11,7 @@ class Referencing(Base):
 
     @classmethod
     def get_reference(cls):
-        inst = cls.query.first_or_none()
+        inst = cls.query.first()
         if not inst:
             inst = cls()
             db.session.add(inst)
@@ -33,7 +33,8 @@ class Relation(Base):
     email = Column(String(512), nullable=False, default="")
     address = Column(String(512), nullable=False, default="")
 
-    users = relation('User', back_populates='relation')
+    users = relationship('User', back_populates='relation')
+    transactions = relationship('Transaction', back_populates='relation')
 
     @validates('name')
     def validate_name(self, key, name):
@@ -45,7 +46,7 @@ class BtwType(Base):
     name = Column(String, nullable=False)
     percentage = Column(Integer, nullable=False)
 
-    products = relationship("Product", back_populates="group")
+    products = relationship("Product", back_populates="btwtype")
     transaction_lines = relationship('TransactionLine', back_populates="btwtype")
     service_lines = relationship('ServiceLine', back_populates="btwtype")
 
@@ -114,8 +115,6 @@ class Product(Base):
 
 
 class TransactionLine(Base):
-    __abstract__ = True
-
     transaction_id_one_to_two = Column(Integer, ForeignKey('transaction.id'), index=True, nullable=True)
     transaction_one_to_two = relationship('Transaction', back_populates='one_to_two', foreign_keys=[transaction_id_one_to_two])
 
@@ -132,8 +131,6 @@ class TransactionLine(Base):
     btwtype = relationship("BtwType", back_populates="transaction_lines")
     
     amount = Column(Integer, nullable=False)
-    
-    conscribo_transaction = relationship("ConscriboTransactionLink", back_populates="transaction", uselist=False)
 
     def take(self, amount):
         assert amount > 0
@@ -177,16 +174,18 @@ class Transaction(Base):
     processeddate = Column(Date, nullable=False)
     description = Column(Text, default="")
 
-    relation_id = Column(Integer, ForeignKey('transaction.id'), index=True, nullable=False)
+    relation_id = Column(Integer, ForeignKey('relation.id'), index=True, nullable=False)
     relation = relationship("Relation", back_populates="transactions")
 
-    one_to_two = relationship('TransactionLine', lazy='joined')
-    two_to_one = relationship('TransactionLine', lazy='joined')
+    one_to_two = relationship('TransactionLine', lazy='joined', foreign_keys=[TransactionLine.transaction_id_one_to_two])
+    two_to_one = relationship('TransactionLine', lazy='joined', foreign_keys=[TransactionLine.transaction_id_two_to_one])
     services = relationship('ServiceLine', back_populates='transaction', lazy='joined')
 
     total = Column(Integer, nullable=False, default=0)
     two_to_one_has_btw = Column(Boolean, nullable=False, default=False)
-    two_to_one_btw_per_row = Column(Booleanh, nullable=False, default=False)
+    two_to_one_btw_per_row = Column(Boolean, nullable=False, default=False)
+
+    conscribo_transaction = relationship("ConscriboTransactionLink", back_populates="transaction", uselist=False)
 
 
 class User(Base):

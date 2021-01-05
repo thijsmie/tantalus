@@ -1,9 +1,11 @@
 from flask import render_template, redirect, url_for, request
 from flask_login import current_user
-from tantalus.api.routers import bp_base as router
 
-from appfactory import flash
-from appfactory.auth import do_login, do_logout
+from tantalus.api.routers import bp_base as router
+from tantalus.appfactory import flash
+from tantalus.appfactory.auth import do_login, do_logout
+
+from tantalus_db.base import db
 from tantalus_db.encode import jsonify
 
 
@@ -20,6 +22,7 @@ def login():
     form = request.form
     if 'username' in form:
         if do_login(form['username'], form['password'], 'remember-me' in form):
+            db.session.commit()
             flash.success("Logged in successfully.")
         else:
             flash.danger("Incorrect login data, please try again.")
@@ -29,6 +32,7 @@ def login():
 @router.route('/logout')
 def logout():
     do_logout()
+    db.session.commit()
     return redirect(url_for('.index'))
 
 
@@ -37,6 +41,7 @@ def token():
     form = request.json
     try:
         if do_login(form['username'], form['password'], 'remember-me' in form):
+            db.session.commit()
             return jsonify({})
         else:
             return jsonify({"error": "Incorrect login!"}, 401)

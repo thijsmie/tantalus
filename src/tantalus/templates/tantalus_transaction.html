@@ -3,7 +3,7 @@
 
 {% block container %}
   {% if transaction is defined %}
-    <h2>Edit {{ transaction.relation.get().name }} {{ (transaction.reference | string).zfill(3) }}</h2>
+    <h2>Edit {{ transaction.relation.name }} {{ (transaction.reference | string).zfill(3) }}</h2>
   {% else %}
     <h2>New transaction</h2>
   {% endif %}
@@ -169,7 +169,7 @@
       window.relations = {{ relations|todict|tojson|safe }};
 
       {% if transaction is defined %}
-          transaction.init("{{ url_for(".edittransaction", transaction_id=transaction.key.urlsafe()) }}");
+          transaction.init("{{ url_for(".edittransaction", transaction_id=transaction.id) }}");
       {% else %}
           transaction.init("{{ url_for(".addtransaction") }}");
       {% endif %}
@@ -188,7 +188,7 @@
           });
 
           var prd = $("#relation-input").data('predictor');
-          prd.selected = {{ relations.index(transaction.relation.get()) }};
+          prd.selected = {{ relations.index(transaction.relation) }};
           prd.finalize();
       {% endif %}
   </script>

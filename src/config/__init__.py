@@ -36,3 +36,10 @@ class Config:
             return self[key]
         else:
             return default
+
+    @property
+    def dict(self):
+        a = {}
+        for key in self.config:
+            a[key] = self[key]
+        return a

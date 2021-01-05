@@ -1,50 +1,39 @@
-from flask import render_template, request, abort
-from flask_login import login_required
+"""Tantalus api blueprint gen"""
+from flask import Blueprint
 
-from appfactory.auth import ensure_user_admin
-
-from tantalus_db.encode import jsonify
-from tantalus_db.models import Relation
-from tantalus_db.utility import get_or_none
-
-from api.common import common_collection
-from api.actions.relation import new_relation
-
-from tantalus.api.routers import bp_relation as router
+blueprints = []
 
 
-common_collection(
-    router, 
-    ensure_user_admin,
-    Relation.query.order_by(Relation.name), 
-    'tantalus_relations.html'
-)
+def blueprint_factory(name, import_name, url_prefix):
+    """Generates blueprint objects for view modules.
+    Positional arguments:
+    partial_module_string -- string representing a view module without the absolute path
+    url_prefix -- URL prefix passed to the blueprint.
+    Returns:
+    Blueprint instance for a view module.
+    """
+
+    blueprint = Blueprint(name, import_name, url_prefix=url_prefix)
+    blueprints.append(blueprint)
+    return blueprint
 
 
-@router.route('/add', methods=["GET", "POST"])
-@login_required
-@ensure_user_admin
-def addrelation():
-    form = request.json
+# Create blueprints, can be imported by views
+bp_base = blueprint_factory("tantalus", 'tantalus.api.base', '')
+bp_product = blueprint_factory("tantalus.product", 'tantalus.api.product', '/product')
+bp_relation = blueprint_factory('tantalus.relation', 'tantalus.api.relation', '/relation')
+bp_transaction = blueprint_factory('tantalus.transaction', 'tantalus.api.transaction', '/transaction')
+bp_user = blueprint_factory('tantalus.user', 'tantalus.api.user', '/user')
+#bp_pos = blueprint_factory('tantalus.pos', '/pos')
+bp_conscribo = blueprint_factory('tantalus.conscribo', 'tantalus.api.conscribo', '/conscribo')
 
-    if request.method == "POST":
-        try:
-            new_relation(form)
-        except:
-            return jsonify({"messages": ["Invalid data"]}, 403)
-        return jsonify(relation)
-    return render_template('tantalus_relation.html')
+# Import modules to make them register, this needs to be after the blueprint definition
+# Otherwise you get an unresolvable circular import
+# This is ungodly ugly, TODO: FIX THIS CRAP
 
-
-@router.route('/edit/<int:relation_id>', methods=["GET", "POST"])
-@login_required
-@ensure_user_admin
-def editrelation(relation_id):
-    form = request.json or request.form
-
-    relation = Relation.query.get_or_404(relation_id)
-
-    if request.method == "POST":
-        edit_relation(relation, form)
-
-    return render_template('tantalus_relation.html', relation=relation)
+import tantalus.api.base
+import tantalus.api.product
+import tantalus.api.conscribo
+import tantalus.api.relation
+import tantalus.api.transaction
+import tantalus.api.user

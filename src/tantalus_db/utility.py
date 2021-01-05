@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from .base import db
 
 
@@ -11,13 +10,14 @@ def get_or_none(id, obj):
     return obj.query.filter(obj.id == id).first()
 
 
-@contextmanager
-def transaction():
-    db.session.commit()
-    
-    try:
-        yield
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        raise e
+def transactional(func):
+    def new_func(*args, **kwargs):
+        try:
+            ret = func(*args, **kwargs)
+            db.session.commit()
+            return ret
+        except Exception as e:
+            db.session.rollback()
+            raise e
+
+    return new_func

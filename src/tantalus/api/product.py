@@ -1,26 +1,36 @@
 from flask import render_template, request, abort
 from flask_login import login_required
 
-from appfactory.auth import ensure_user_admin, ensure_user_stock
-
-from tantalus_db.base import db
 from tantalus_db.encode import jsonify
-from tantalus_db.models import Product
+from tantalus_db.models import Product, Group, BtwType
+from tantalus_db.paginator import Paginator
 from tantalus_db.utility import get_or_none
 
-from api.common import common_collection
-from api.actions.group import group_values
-from api.actions.product import new_product, edit_product
-
+from tantalus.appfactory.auth import ensure_user_admin, ensure_user_stock
+from tantalus.api.actions.group import group_values
+from tantalus.api.actions.product import new_product, edit_product
 from tantalus.api.routers import bp_product as router
 
 
-common_collection(
-    router,
-    ensure_user_stock,
-    Product.query.filter(product.hidden == False).order_by(Product.contenttype), 
-    'tantalus_products_showgroup.html'
-)
+@router.route('/', defaults=dict(page=0))
+@router.route('/page/<int:page>')
+@login_required
+@ensure_user_stock
+def index(page):
+    if page < 0:
+        page = 0
+
+    query = Product.query.filter(Product.hidden == False).order_by(Product.contenttype)
+    pagination = Paginator(query, page, 20)
+    return render_template('tantalus_products_showgroup.html', pagination=pagination)
+
+
+@router.route('.json')
+@login_required
+@ensure_user_stock
+def indexjson():
+    query = Product.query.filter(Product.hidden == False).order_by(Product.contenttype)
+    return jsonify(query.all())
 
 
 @router.route('/group.json')
@@ -50,7 +60,7 @@ def showgroup(group_id, page):
         return abort(404)
 
     pagination = Paginator(
-        Product.query.filter(Product.hidden == False and Product.group == group.key).order_by(Product.contenttype),
+        Product.query.filter(Product.hidden == False and Product.group == group).order_by(Product.contenttype),
         page, 20, group_id=group_id
     )
     return render_template('tantalus_products.html', group=group.name, showgroup=False, pagination=pagination)
@@ -63,7 +73,7 @@ def showgroupjson(group_id):
     group = get_or_none(group_id, Group)
     if group is None:
         return abort(404)
-    return jsonify(Product.query.filter(Product.hidden == False and Product.group == group.key).all())
+    return jsonify(Product.query.filter(Product.hidden == False and Product.group == group).all())
 
 
 @router.route('/add', methods=["GET", "POST"])
@@ -74,7 +84,7 @@ def addproduct():
 
     if request.method == "POST":
         try:
-            new_product(form)
+            product = new_product(form)
         except:
             return jsonify({"messages": ["Invalid data"]}, 400)
         return jsonify(product)

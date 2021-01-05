@@ -23,10 +23,10 @@
       <tbody>
       {% for user in pagination.items %}
         <tr>
-          <td><a href="{{ url_for(".edituser", user_id=user.key.urlsafe()) }}">{{ user.username }}</a></td>
+          <td><a href="{{ url_for(".edituser", user_id=user.id) }}">{{ user.username }}</a></td>
 
           {%- if user.relation %}
-            <td>{{ user.relation.get().name }}</td>
+            <td>{{ user.relation.name }}</td>
           {% else %}
             <td></td>
           {% endif %}

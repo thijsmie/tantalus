@@ -1,15 +1,17 @@
 from flask import render_template, request, abort, redirect, url_for
 from flask_login import login_required
 
-from appfactory.auth import ensure_user_admin, ensure_user_transactions, ensure_user_relation, ensure_user_transaction
-
+from tantalus_db.base import db
 from tantalus_db.encode import jsonify
 from tantalus_db.models import Transaction, Product, Relation
 from tantalus_db.paginator import Paginator
 from tantalus_db.utility import get_or_none
 
+from tantalus.appfactory.auth import ensure_user_admin, ensure_user_transactions, ensure_user_relation, ensure_user_transaction
 from tantalus.api.routers import bp_transaction as router
-from actions.transaction import new_transaction, edit_transaction, transaction_record
+from tantalus.api.actions.transaction import new_transaction, edit_transaction, transaction_record
+
+from worker.worker import run_invoicing
 
 from datetime import datetime
 
@@ -80,10 +82,8 @@ def addtransaction():
         try:
             transaction = new_transaction(form)
             relation.budget -= transaction.total
-
-            taskqueue.add(url='/invoice',
-                          target='worker',
-                          params={'transaction': transaction.key.urlsafe()})
+            run_invoicing.delay(transaction.id)
+            db.session.commit()
         except:
             return jsonify({"messages": ["Invalid data"]}, 400)
         return jsonify(transaction)
@@ -108,12 +108,10 @@ def edittransaction(transaction_id):
             old_total = transaction.total
             transaction = edit_transaction(transaction, form)
             transaction.relation.budget += old_total - transaction.total
-
-            taskqueue.add(url='/invoice',
-                          target='worker',
-                          params={'transaction': transaction.key.urlsafe()})
-        except BadValueError as e:
-            return jsonify({"messages": [e.message]}, 400)
+            run_invoicing.delay(transaction.id)
+            db.session.commit()
+        except:
+            return jsonify({"messages": ["Invalid data"]}, 400)
         return jsonify(transaction)
 
     return render_template('tantalus_transaction.html', transaction=transaction,
@@ -140,9 +138,7 @@ def resend(transaction_id):
     if transaction is None:
         return abort(404)
 
-    taskqueue.add(url='/invoice',
-                  target='worker',
-                  params={'transaction': transaction.key.urlsafe()})
+    run_invoicing.delay(transaction.id)
     return redirect(url_for(".showtransaction", transaction_id=transaction_id))
     
     
@@ -165,7 +161,7 @@ def history():
             key = r.product.urlsafe()
             if key not in products:
                 products[key] = {
-                    "name": r.product.get().contenttype,
+                    "name": r.product.contenttype,
                     "buy": [],
                     "sell": []
                 }
@@ -174,7 +170,7 @@ def history():
             key = r.product.urlsafe()
             if key not in products:
                 products[key] = {
-                    "name": r.product.get().contenttype,
+                    "name": r.product.contenttype,
                     "buy": [],
                     "sell": []
                 }
