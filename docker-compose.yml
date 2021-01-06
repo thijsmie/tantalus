@@ -34,11 +34,23 @@ services:
     volumes:
       - ./config/rabbitmq.config:/etc/rabbitmq/rabbitmq.config
   
-  worker:
+  application:
     image: tantalus-python
     build: 
       context: .
       dockerfile: Dockerfile
+    container_name: application
+    command: [gunicorn, -w 2, -b 0.0.0.0:80, --capture-output, --log-level=INFO, flask_entrypoint:app]
+    env_file:
+      - variables.env
+    depends_on:
+      - database
+      - rabbitmq
+    ports:
+      - 8000:80
+
+  worker:
+    image: tantalus-python
     command: [celery, --app=celery_entrypoint.app, worker, --pool=gevent, --concurrency=4, --loglevel=INFO, "-E"]
     container_name: worker
     env_file:
@@ -46,6 +58,7 @@ services:
     depends_on:
       - database
       - rabbitmq
+      - application
 
   worker-beat:
     image: tantalus-python
@@ -56,16 +69,4 @@ services:
     depends_on:
       - database
       - rabbitmq
-
-  application:
-    image: tantalus-python
-    container_name: application
-    command: [gunicorn, -w 2, -b 0.0.0.0:80, --capture-output, --log-level=INFO, flask_entrypoint:app]
-    env_file:
-      - variables.env
-    depends_on:
-      - worker
-      - database
-      - rabbitmq
-    ports:
-      - 8000:80
+      - application

@@ -70,7 +70,7 @@ class BtwType(Base):
 
     @validates('percentage')
     def validate_percenctage(self, key, percentage):
-        assert percentage > 0
+        assert percentage >= 0
         return percentage
 
     def dict(self):
@@ -218,9 +218,9 @@ class Transaction(Base):
     relation_id = Column(Integer, ForeignKey('relation.id'), index=True, nullable=False)
     relation = relationship("Relation", back_populates="transactions")
 
-    one_to_two = relationship('TransactionLine', lazy='joined', foreign_keys=[TransactionLine.transaction_id_one_to_two])
-    two_to_one = relationship('TransactionLine', lazy='joined', foreign_keys=[TransactionLine.transaction_id_two_to_one])
-    services = relationship('ServiceLine', back_populates='transaction', lazy='joined')
+    one_to_two = relationship('TransactionLine', foreign_keys=[TransactionLine.transaction_id_one_to_two])
+    two_to_one = relationship('TransactionLine', foreign_keys=[TransactionLine.transaction_id_two_to_one])
+    services = relationship('ServiceLine', back_populates='transaction')
 
     total = Column(Integer, nullable=False, default=0)
     two_to_one_has_btw = Column(Boolean, nullable=False, default=False)
@@ -260,6 +260,7 @@ class User(Base):
     right_viewstock = Column(Boolean, nullable=False, default=False)
     right_viewalltransactions = Column(Boolean, nullable=False, default=False)
     right_posaction = Column(Boolean, nullable=False, default=False)
+    right_api = Column(Boolean, nullable=False, default=False)
 
     @validates('username')
     def validate_username(self, key, username):

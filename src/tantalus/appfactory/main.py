@@ -9,6 +9,7 @@ from context import set_config
 from tantalus_db.base import db
 import tantalus_db.models
 import tantalus_db.conscribo
+import tantalus_db.snapshot
 
 from tantalus.api import routers
 from worker.worker import celery

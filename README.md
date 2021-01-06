@@ -51,3 +51,17 @@ items on offer the price is reduced for all items you have, instead of it being 
 
 In madmin transactions were basically immutable. This caused many problems, since mistakes happen ([pebcak](https://en.wiktionary.org/wiki/PEBCAK)). Therefore IMP moves to the other end of the spectrum. A transaction is editable
 in an easy way, invoices get resent and changes are pushed to Conscribo with the press of a button.
+
+## Docker-Compose deployment procedure
+
+First start all containers:
+
+```bash
+    docker-compose up --build -d
+```
+
+Initially the database won't be created. You have to do this manually by starting a one-off container:
+
+```bash
+    docker-compose run --rm application python /app/createdb_entrypoint.py
+```

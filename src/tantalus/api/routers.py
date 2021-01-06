@@ -27,6 +27,8 @@ bp_user = blueprint_factory('tantalus.user', 'tantalus.api.user', '/user')
 #bp_pos = blueprint_factory('tantalus.pos', '/pos')
 bp_conscribo = blueprint_factory('tantalus.conscribo', 'tantalus.api.conscribo', '/conscribo')
 bp_financial = blueprint_factory('tantalus.financial', 'tantalus.api.financial', '/financial')
+bp_snapshot = blueprint_factory('tantalus.snapshot', 'tantalus.api.snapshot', '/snapshot')
+bp_api = blueprint_factory('tantalus.api', 'tantalus.api.api', '/api')
 
 # Import modules to make them register, this needs to be after the blueprint definition
 # Otherwise you get an unresolvable circular import
@@ -39,3 +41,4 @@ import tantalus.api.relation
 import tantalus.api.transaction
 import tantalus.api.user
 import tantalus.api.financial
+import tantalus.api.snapshot

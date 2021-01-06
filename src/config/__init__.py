@@ -43,3 +43,15 @@ class Config:
         for key in self.config:
             a[key] = self[key]
         return a
+
+    def keys(self):
+        return self.config.keys()
+
+    def values(self):
+        return self.config.values()
+
+    def items(self):
+        return self.config.items()
+
+    def __contains__(self, item):
+        return item in self.config

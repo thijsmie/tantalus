@@ -10,7 +10,7 @@ db = SQLAlchemy()
 class Base(db.Model):
     __abstract__ = True
 
-    id = Column(Integer, primary_key=True, nullable=False, unique=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     time_created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     time_updated = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 

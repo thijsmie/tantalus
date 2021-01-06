@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% from 'tantalus_general_helpers.html' import format_currency %}
+
+{% block container %}
+<div>
+  <h1>Snapshot {{ snapshot.name }} ({{ snapshot.yearcode }}.{{ snapshot.id }})</h1>
+  <h5>Created {{ snapshot.time_created | format_date }}</h5>
+</div>
+
+<div class="col-12 col-lg-12">
+
+<div class="col-12 col-lg-12">
+  <div class="well bs-component">
+    <fieldset>
+      <legend>Service Totals</legend>
+      <div class="col-lg-12 table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th class="align-r">Positive Excl</th>
+              <th class="align-r">Negative Excl</th>
+              <th class="align-r">Total Excl</th>
+              <th class="align-r">Positive</th>
+              <th class="align-r">Negative</th>
+              <th class="align-r">Total</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for service, value in service_values.items() %}{% set exclvalue = service_excl_values[service] %}
+            <tr>
+              <td>{{ service }}</td>
+              <td class="align-r">&euro;{{ exclvalue[1] | format_currency }}</td>
+              <td class="align-r">&euro;{{ exclvalue[2] | format_currency }}</td>
+              <td class="align-r">&euro;{{ exclvalue[0] | format_currency }}</td>
+              <td class="align-r">&euro;{{ value[1] | format_currency }}</td>
+              <td class="align-r">&euro;{{ value[2] | format_currency }}</td>
+              <td class="align-r">&euro;{{ value[0] | format_currency }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" style="text-align: center">
+                <h2>&empty;</h2>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<div class="col-12 col-lg-8">
+  <div class="well bs-component">
+    <fieldset>
+      <legend>Group Values</legend>
+      <div class="col-lg-12 table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th class="align-r">Value Excl</th>
+              <th class="align-r">Value</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for group, value in group_values.items() %}{% set exclvalue = group_excl_values[group] %}
+            <tr>
+              <td>{{ group }}</td>
+              <td class="align-r">&euro;{{ exclvalue | format_currency }}</td>
+              <td class="align-r">&euro;{{ value | format_currency }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" style="text-align: center">
+                <h2>&empty;</h2>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<div class="col-12 col-lg-4">
+  <div class="well bs-component">
+    <fieldset>
+      <legend>Relations</legend>
+      <div class="col-lg-12 table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th class="align-r">Budget</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for relation in snapshot.relations %}
+            <tr>
+              <td>{{ relation.name }}</td>
+              <td class="align-r">&euro;{{ relation.budget | format_currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<div class="col-12 col-lg-12">
+  <div class="well bs-component">
+    <fieldset>
+      <legend>Products</legend>
+      <div class="col-lg-12 table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Group</th>
+              <th class="align-r">Stock</th>
+              <th class="align-r">Unit price</th>
+              <th class="align-r">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in snapshot.products %}
+            <tr>
+              <td>{{ product.contenttype }}</td>
+              <td>{{ product.group.name }}</td>
+              <td class="align-r">{{ product.amount }}</td>
+              <td class="align-r">&euro;{{ product.value | format_currency}}</td>
+              <td class="align-r">&euro;{{ (product.amount * product.value) | format_currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<div class="col-12 col-lg-12">
+  <div class="well bs-component">
+    <fieldset>
+      <legend>Transactions</legend>
+      <div class="col-lg-12 table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <tr>
+              <th>View</th>
+              <th>Reference</th>
+              <th>Name</th>
+              <th>Event Date</th>
+              <th>Processing Date</th>
+              <th class="align-r">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for transaction in snapshot.transactions %}
+            <tr>
+              <td><a href="{{ url_for('.pdf', transaction_id=transaction.id) }}" class="btn btn-primary btn-xs">PDF</a></td>
+              <td>{{ "{}-{:04d}".format(snapshot.yearcode, transaction.reference) }}</td>
+              <td>{{ transaction.relation.name }} {{ transaction.informal_reference }}</td>
+              <td>{{ transaction.deliverydate | format_date }}</td>
+              <td>{{ transaction.processeddate | format_date }}</td>
+              <td class="align-r">&euro;{{ transaction.total | format_currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+  </div>
+</div>
+</div>
+{% endblock %}

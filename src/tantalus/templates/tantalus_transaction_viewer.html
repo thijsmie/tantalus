@@ -22,10 +22,10 @@
       <thead>
       <tr>
         <th>Product</th>
-        <th style="text-align: right;">Amount</th>
-        <th style="text-align: right;">Unit price</th>
-        <th style="text-align: right;">Total</th>
-        <th style="text-align: right;">BTW%</th>
+        <th class="align-r">Amount</th>
+        <th class="align-r">Unit price</th>
+        <th class="align-r">Total</th>
+        <th class="align-r">BTW%</th>
       </tr>
       </thead>
 
@@ -33,10 +33,10 @@
       {% for row in sell %}
         <tr>
           <td>{{ row.contenttype }}</td>
-          <td style="text-align: right;">{{ row.amount }}</td>
-          <td style="text-align: right;">{{ (row.value / row.amount) | format_currency }}</td>
-          <td style="text-align: right;">{{ row.value | format_currency }}</td>
-          <td style="text-align: right;">{{ row.btw }}%</td>
+          <td class="align-r">{{ row.amount }}</td>
+          <td class="align-r">{{ (row.value / row.amount) | format_currency }}</td>
+          <td class="align-r">{{ row.value | format_currency }}</td>
+          <td class="align-r">{{ row.btw }}%</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -49,10 +49,11 @@
       <thead>
       <tr>
         <th>Product</th>
-        <th style="text-align: right;">Amount</th>
-        <th style="text-align: right;">Total</th>
-        <th style="text-align: right;">BTW%</th>
-        <th style="text-align: right;">Inventory Value</th>
+        <th class="align-r">Amount</th>
+        <th class="align-r">Unit price (rounded)</th>
+        <th class="align-r">Total</th>
+        <th class="align-r">Total Excl.</th>
+        <th class="align-r">BTW%</th>
       </tr>
       </thead>
 
@@ -60,10 +61,11 @@
       {% for row in buy %}
         <tr>
           <td>{{ row.contenttype }}</td>
-          <td style="text-align: right;">{{ row.amount }}</td>
-          <td style="text-align: right;">{{ row.prevalue | format_currency }}</td>
-          <td style="text-align: right;">{{ row.btw }}%</td>
-          <td style="text-align: right;">{{ row.value | format_currency }}</td>
+          <td class="align-r">{{ row.amount }}</td>
+          <td class="align-r">{{ (row.prevalue / row.amount) | format_currency }}</td>
+          <td class="align-r">{{ row.prevalue | format_currency }}</td>
+          <td class="align-r">{{ row.value | format_currency }}</td>
+          <td class="align-r">{{ row.btw }}%</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -77,9 +79,9 @@
         <thead>
         <tr>
           <th>Name</th>
-          <th style="text-align: right;">Amount</th>
-          <th style="text-align: right;">Price</th>
-          <th style="text-align: right;">BTW%</th>
+          <th class="align-r">Amount</th>
+          <th class="align-r">Price</th>
+          <th class="align-r">BTW%</th>
         </tr>
         </thead>
 
@@ -87,9 +89,9 @@
         {% for row in service %}
           <tr>
             <td>{{ row.contenttype }}</td>
-            <td style="text-align: right;">{% if row.amount and row.amount != 0 %}{{ row.amount }}{% endif %}</td>
-            <td style="text-align: right;">{{ row.prevalue | format_currency }}</td>
-            <td style="text-align: right;">{{ row.btw }}</td>
+            <td class="align-r">{% if row.amount and row.amount != 0 %}{{ row.amount }}{% endif %}</td>
+            <td class="align-r">{{ row.prevalue | format_currency }}</td>
+            <td class="align-r">{{ row.btw }}</td>
           </tr>
         {% endfor %}
         </tbody>
@@ -104,7 +106,7 @@
           <thead>
           <tr>
             <th>BTW%</th>
-            <th style="text-align: right;">BTW&euro;</th>
+            <th class="align-r">BTW&euro;</th>
           </tr>
           </thead>
 
@@ -112,7 +114,7 @@
           {% for percentage,value in btwtotals.items() %}
             <tr>
               <td>{{ percentage }}%</td>
-              <td style="text-align: right;">{{ value|format_currency }}</td>
+              <td class="align-r">{{ -value|format_currency }}</td>
             </tr>
           {% endfor %}
           </tbody>

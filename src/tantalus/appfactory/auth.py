@@ -62,14 +62,15 @@ def update_password(user, password):
     user.passhash = hashf.hash(password)
 
 
-def new_user(username, password, isadmin=False, relation=None, viewstock=False, viewtransactions=False, ispos=False):
+def new_user(username, password, isadmin=False, relation=None, viewstock=False, viewtransactions=False, ispos=False, api=False):
     user = User(
         username=username,
         passhash=hashf.hash(password),
         right_admin=isadmin,
         right_viewstock=viewstock,
         right_viewalltransactions=viewtransactions,
-        right_posaction=ispos
+        right_posaction=ispos,
+        right_api=api
     )
 
     if relation is not None:
@@ -155,4 +156,15 @@ def ensure_user_stock(f):
                 return redirect('/')
         return f(*args, **kwargs)
 
+    return decorated_function
+
+
+def ensure_user_api(f):
+    # Note, should be placed below @login_required
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.right_api:
+            flash.danger("Your user account is not allowed to perform this action.")
+            return redirect('/'), 403
+        return f(*args, **kwargs)
     return decorated_function

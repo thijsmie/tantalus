@@ -17,6 +17,7 @@
         <th>Stock</th>
         <th>All Transactions</th>
         <th>Point-of-Sale</th>
+        <th>API</th>
       </tr>
       </thead>
 
@@ -36,6 +37,8 @@
           <td>{% if user.right_viewalltransactions %}
             <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
           <td>{% if user.right_posaction %}<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}
+          </td>
+          <td>{% if user.right_api %}<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}
           </td>
         </tr>
       {% else %}

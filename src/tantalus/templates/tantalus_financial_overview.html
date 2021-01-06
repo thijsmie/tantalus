@@ -4,135 +4,108 @@
 {% block container %}
 <h1>Financial Overview</h1>
 
-<div class="col-lg-6">
+<div class="col-12 col-lg-12">
     <div class="well bs-component">
-        <fieldset>
-            <legend>Group Values</legend>
-            <div class="col-lg-12 table-responsive">
-                <table class="table table-condensed table-striped">
-                <thead>
-                <tr>
-                    <th>Group</th>
-                    <th>Value</th>
-                </tr>
-                </thead>
-    
-                <tbody>
-                {% for group, value in group_values.items() %}
-                    <tr>
-                        <td>{{ group }}</td>
-                        <td>{{ format_currency(value) }}</td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="2" style="text-align: center"><h2>&empty;</h2></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-                </table>
-            </div>
-        </fieldset>
+      <fieldset>
+        <legend>Service Totals</legend>
+        <div class="col-lg-12 table-responsive">
+          <table class="table table-condensed table-striped">
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th class="align-r">Positive Excl</th>
+                <th class="align-r">Negative Excl</th>
+                <th class="align-r">Total Excl</th>
+                <th class="align-r">Positive</th>
+                <th class="align-r">Negative</th>
+                <th class="align-r">Total</th>
+              </tr>
+            </thead>
+  
+            <tbody>
+              {% for service, value in service_values.items() %}{% set exclvalue = service_excl_values[service] %}
+              <tr>
+                <td>{{ service }}</td>
+                <td class="align-r">&euro;{{ exclvalue[1] | format_currency }}</td>
+                <td class="align-r">&euro;{{ exclvalue[2] | format_currency }}</td>
+                <td class="align-r">&euro;{{ exclvalue[0] | format_currency }}</td>
+                <td class="align-r">&euro;{{ value[1] | format_currency }}</td>
+                <td class="align-r">&euro;{{ value[2] | format_currency }}</td>
+                <td class="align-r">&euro;{{ value[0] | format_currency }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="7" style="text-align: center">
+                  <h2>&empty;</h2>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </fieldset>
     </div>
-</div>
-
-<div class="col-lg-6">
+  </div>
+  
+  <div class="col-12 col-lg-8">
     <div class="well bs-component">
-        <fieldset>
-            <legend>Group Values Excl BTW (rounded)</legend>
-            <div class="col-lg-12 table-responsive">
-                <table class="table table-condensed table-striped">
-                <thead>
-                <tr>
-                    <th>Group</th>
-                    <th>Value</th>
-                </tr>
-                </thead>
-    
-                <tbody>
-                {% for group, value in group_excl_values.items() %}
-                    <tr>
-                        <td>{{ group }}</td>
-                        <td>{{ format_currency(value) }}</td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="2" style="text-align: center"><h2>&empty;</h2></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-                </table>
-            </div>
-        </fieldset>
+      <fieldset>
+        <legend>Group Values</legend>
+        <div class="col-lg-12 table-responsive">
+          <table class="table table-condensed table-striped">
+            <thead>
+              <tr>
+                <th>Group</th>
+                <th class="align-r">Value Excl</th>
+                <th class="align-r">Value</th>
+              </tr>
+            </thead>
+  
+            <tbody>
+              {% for group, value in group_values.items() %}{% set exclvalue = group_excl_values[group] %}
+              <tr>
+                <td>{{ group }}</td>
+                <td class="align-r">&euro;{{ exclvalue | format_currency }}</td>
+                <td class="align-r">&euro;{{ value | format_currency }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="3" style="text-align: center">
+                  <h2>&empty;</h2>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </fieldset>
     </div>
-</div>
-
-<div class="col-lg-6">
+  </div>
+  
+  <div class="col-12 col-lg-4">
     <div class="well bs-component">
-        <fieldset>
-            <legend>Service Values</legend>
-            <div class="col-lg-12 table-responsive">
-                <table class="table table-condensed table-striped">
-                <thead>
-                <tr>
-                    <th>Service</th>
-                    <th>Positive</th>
-                    <th>Negative</th>
-                    <th>Total</th>
-                </tr>
-                </thead>
-    
-                <tbody>
-                {% for service, value in service_values.items() %}
-                    <tr>
-                        <td>{{ service }}</td>
-                        <td>{{ format_currency(value[1]) }}</td>
-                        <td>{{ format_currency(value[2]) }}</td>
-                        <td>{{ format_currency(value[0]) }}</td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="4" style="text-align: center"><h2>&empty;</h2></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-                </table>
-            </div>
-        </fieldset>
+      <fieldset>
+        <legend>Relations</legend>
+        <div class="col-lg-12 table-responsive">
+          <table class="table table-condensed table-striped">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th class="align-r">Budget</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for relation in relations %}
+              <tr>
+                <td>{{ relation.name }}</td>
+                <td class="align-r">&euro;{{ relation.budget | format_currency }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </fieldset>
     </div>
-</div>
-<div class="col-lg-6">
-    <div class="well bs-component">
-        <fieldset>
-            <legend>Service Values Excl BTW (rounded)</legend>
-            <div class="col-lg-12 table-responsive">
-                <table class="table table-condensed table-striped">
-                <thead>
-                <tr>
-                    <th>Service</th>
-                    <th>Positive</th>
-                    <th>Negative</th>
-                    <th>Total</th>
-                </tr>
-                </thead>
-    
-                <tbody>
-                {% for service, value in service_excl_values.items() %}
-                    <tr>
-                        <td>{{ service }}</td>
-                        <td>{{ format_currency(value[1]) }}</td>
-                        <td>{{ format_currency(value[2]) }}</td>
-                        <td>{{ format_currency(value[0]) }}</td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="4" style="text-align: center"><h2>&empty;</h2></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-                </table>
-            </div>
-        </fieldset>
-    </div>
-</div>
+  </div>
 
 {% endblock %}

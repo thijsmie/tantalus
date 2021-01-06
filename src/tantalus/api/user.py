@@ -31,6 +31,7 @@ def indexjson():
     query = User.query.order_by(User.username)
     return jsonify(query.all())
 
+
 @router.route('/add', methods=["GET", "POST"])
 @login_required
 @ensure_user_admin
@@ -46,7 +47,7 @@ def adduser():
 
             user = new_user(form['username'], form['password'], form.get('is_admin', False), form.get('relation', None),
                             form.get('viewstock', False), form.get('viewtransactions', False),
-                            form.get('posaction', False))
+                            form.get('posaction', False), form.get('api', False))
             db.session.commit()
         except:
             return jsonify({"messages": ["Invalid data"]}, 403)

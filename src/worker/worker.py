@@ -4,7 +4,9 @@ import sys
 
 from context import get_config
 
+from tantalus.snapshot.create import create_snapshot
 from tantalus.api.actions.transaction import transaction_record
+
 from tantalus_db.utility import get_or_none
 from tantalus_db.models import Transaction
 
@@ -45,3 +47,8 @@ def run_invoicing(transaction_id):
 def conscribo_sync(transaction_ids):
     transactions = [get_or_none(id, Transaction) for id in transaction_ids]
     sync_transactions(transactions)
+
+
+@celery.task
+def run_create_snapshot(name):
+    create_snapshot(name)

@@ -12,6 +12,4 @@ logging.basicConfig()
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 config = Config(filename=os.path.join(directory, "config.json"))
-flask, celery = create_app(config)
-
-app = flask
+create_app(config, True)

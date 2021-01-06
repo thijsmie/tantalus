@@ -19,7 +19,7 @@
         <th>Event Date</th>
         <th>Processingdate</th>
         <th>Description</th>
-        <th>Total</th>
+        <th class="align-r">Total</th>
       </tr>
       </thead>
 
@@ -33,7 +33,7 @@
           <td>{{ (transaction.deliverydate | format_date) }}</td>
           <td>{{ transaction.processeddate | format_date }}</td>
           <td>{{ transaction.description }}</td>
-          <td align="right">{{ transaction.total | format_currency }}</td>
+          <td class="align-r">&euro;{{ transaction.total | format_currency }}</td>
         </tr>
       {% else %}
         <tr>
