@@ -6,7 +6,6 @@ from tantalus.api.actions.rows import transform_collection
 
 from collections import defaultdict
 from datetime import datetime
-from pytz import timezone
 
 
 @transactional
@@ -34,7 +33,7 @@ def new_transaction(data):
         informal_reference=informal_reference,
         relation=relation,
         deliverydate=datetime.strptime(data["deliverydate"], "%Y-%m-%d").date(),
-        processeddate=datetime.now(timezone("Europe/Amsterdam")).date(),
+        processeddate=datetime.now().date(),
         description=data.get("description", ""),
         two_to_one_has_btw=data.get("two_to_one_has_btw", False),
         two_to_one_btw_per_row=data.get("two_to_one_btw_per_row", False)

@@ -28,10 +28,10 @@
           {% if product.amount == 0 -%}
             <td align="right">0.00</td>
           {%- else -%}
-            <td align="right">{{ format_currency(product.value) }}</td>
+            <td align="right">{{ product.value | format_currency }}</td>
           {%- endif %}
           <td align="right">{{ product.amount }}</td>
-          <td align="right">{{ format_currency(product.value * product.amount) }}</td>
+          <td align="right">{{ (product.value * product.amount) | format_currency }}</td>
           <td align="right">{{ product.btwtype.percentage }}</td>
         </tr>
       {% else %}

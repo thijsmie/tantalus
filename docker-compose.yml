@@ -25,14 +25,6 @@ services:
     ports:
       - "5000:80"
     restart: unless-stopped
-
-  rabbitmq:
-    image: "rabbitmq:3"
-    container_name: "rabbitmq"
-    expose:
-      - "5672"
-    volumes:
-      - ./config/rabbitmq.config:/etc/rabbitmq/rabbitmq.config
   
   application:
     image: tantalus-python
@@ -45,28 +37,16 @@ services:
       - variables.env
     depends_on:
       - database
-      - rabbitmq
     ports:
       - 8000:80
 
   worker:
     image: tantalus-python
-    command: [celery, --app=celery_entrypoint.app, worker, --pool=gevent, --concurrency=4, --loglevel=INFO, "-E"]
+    command: [python, "worker_entrypoint.py"]
     container_name: worker
     env_file:
       - variables.env
     depends_on:
       - database
-      - rabbitmq
       - application
 
-  worker-beat:
-    image: tantalus-python
-    command: [celery, --app=celery_entrypoint.app, beat, --loglevel=INFO]
-    container_name: worker-beat
-    env_file:
-      - variables.env
-    depends_on:
-      - database
-      - rabbitmq
-      - application

@@ -183,8 +183,8 @@
             <tr>
                 <td>{{ row.contenttype }}</td>
                 <td>{{ row.amount }}</td>
-                <td>{{ format_currency(row.prevalue / row.amount) }}</td>
-                <td>{{ format_currency(row.prevalue) }}</td> 
+                <td>{{ (row.prevalue / row.amount) | format_currency }}</td>
+                <td>{{ row.prevalue | format_currency }}</td> 
                 <td>{{ row.btw }}%</td>
             </tr>
 {% endfor %}
@@ -208,10 +208,10 @@
             <tr>
                 <td>{{ row.contenttype }}</td>
                 <td>{{ row.amount }}</td>
-                <td>{{ format_currency(row.prevalue / row.amount) }}</td>
-                <td>{{ format_currency(row.prevalue) }}</td> 
+                <td>{{ (row.prevalue / row.amount) | format_currency }}</td>
+                <td>{{ row.prevalue | format_currency }}</td> 
                 <td>{{ row.btw }}%</td>
-                {% if record.two_to_one_btw_per_row %}<td>{{ format_currency(row.btwvalue) }}</td>{% endif %}
+                {% if record.two_to_one_btw_per_row %}<td>{{ row.btwvalue | format_currency }}</td>{% endif %}
             </tr>
 {% endfor %}
         </tbody>
@@ -233,8 +233,8 @@
             <tr>
                 <td>{{ row.contenttype }}</td>
                 <td>{{ row.amount }}</td>
-                <td>{{ format_currency(row.prevalue / row.amount) }}</td>
-                <td>{{ format_currency(row.prevalue) }}</td> 
+                <td>{{ (row.prevalue / row.amount) | format_currency }}</td>
+                <td>{{ row.prevalue | format_currency }}</td> 
                 <td>{{ row.btw }}%</td>
             </tr>
 {% endfor %}
@@ -251,38 +251,38 @@
 {% if record.sell|length > 0 %}
             <tr>
                 <td>Geleverd totaal</td>
-                <td>&euro;{{ format_currency(record.selltotal) }}</td>
+                <td>&euro;{{ record.selltotal | format_currency }}</td>
             </tr>
 {% endif %}
 {% if record.buy|length > 0 %}
             <tr>
                 <td>Retour totaal</td>
-                <td>&euro;{{ format_currency(record.buytotal) }}</td>
+                <td>&euro;{{ record.buytotal | format_currency }}</td>
             </tr>
 {% endif %}
 {% if record.service|length > 0 %}
             <tr>
                 <td>Service totaal</td>
-                <td>&euro;{{ format_currency(record.servicetotal) }}</td>
+                <td>&euro;{{ record.servicetotal | format_currency }}</td>
             </tr>
 {% endif %}          
             <tr>
                 <td>Exclusief BTW</td>
-                <td>&euro;{{ format_currency(record.total + record.btwtotal) }}</td>
+                <td>&euro;{{ (record.total + record.btwtotal) | format_currency }}</td>
             </tr>
             <tr>
                 <td>BTW</td>
-                <td>&euro;{{ format_currency(-record.btwtotal) }}</td>
+                <td>&euro;{{ (-record.btwtotal) | format_currency }}</td>
             </tr>
             <tr>
                 <td>Eindtotaal</td>
-                <td>&euro;{{ format_currency(record.total) }}</td>
+                <td>&euro;{{ record.total | format_currency }}</td>
             </tr>
         </tbody>
     </table>
 
     {% if budget %}
-    Het factuurtotaal is afgeschreven van uw borrelsaldo, wat na deze factuur nog &euro;{{ format_currency(budget)}} bedraagt. Extra borrelsaldo kan overgemaakt worden naar rekeningnummer NL02 ABNA 0800 2042 55 t.n.v. Stichting Tartarus te Nijmegen.
+    Het factuurtotaal is afgeschreven van uw borrelsaldo, wat na deze factuur nog &euro;{{ budget | format_currency}} bedraagt. Extra borrelsaldo kan overgemaakt worden naar rekeningnummer NL02 ABNA 0800 2042 55 t.n.v. Stichting Tartarus te Nijmegen.
     {% else %}
     Wij verzoeken u vriendelijk om het verschuldigde bedrag binnen 30 dagen over te maken onder vermelding van de referentie naar rekeningnummer NL02 ABNA 0800 2042 55 t.n.v. Stichting Tartarus te Nijmegen.
     {% endif %}

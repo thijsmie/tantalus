@@ -1,3 +1,4 @@
+import logging
 import os
 from smtplib import SMTP
 import ssl
@@ -37,3 +38,4 @@ def send_invoice(relation, transaction, pdf_stringio):
         msg.attach(attachment)
 
         smtp.send_message(msg)
+        logging.info('Message sent')

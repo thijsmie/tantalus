@@ -22,7 +22,7 @@
           <td><a href="{{ url_for(".editrelation", relation_id=relation.id) }}">{{ relation.name }}</a></td>
           <td>{{ relation.email }}</td>
           {%- if relation.has_budget %}
-            <td align="right">{{ format_currency(relation.budget) }}</td>
+            <td align="right">{{ relation.budget | format_currency }}</td>
           {% else %}
             <td></td>
           {% endif %}

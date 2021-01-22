@@ -67,7 +67,7 @@ def addtransaction():
         relation = Relation.query.get_or_404(int(form['relation']))
         transaction = new_transaction(form)
         relation.budget -= transaction.total
-        run_invoicing.delay(transaction.id)
+        run_invoicing(transaction.id)
         db.session.commit()
         return jsonify(transaction)
 
@@ -91,7 +91,7 @@ def edittransaction(transaction_id):
             old_total = transaction.total
             transaction = edit_transaction(transaction, form)
             transaction.relation.budget += old_total - transaction.total
-            run_invoicing.delay(transaction.id)
+            run_invoicing(transaction.id)
             db.session.commit()
         except:
             return jsonify({"messages": ["Invalid data"]}, 400)
@@ -166,7 +166,7 @@ def resend(transaction_id):
     if transaction is None:
         return abort(404)
 
-    run_invoicing.delay(transaction.id)
+    run_invoicing(transaction.id)
     flash.success("Resend queued (might take a few minutes to arrive).")
 
     return redirect(url_for(".showtransaction", transaction_id=transaction_id))

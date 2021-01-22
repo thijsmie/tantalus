@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -7,3 +8,6 @@ sys.path.insert(0, directory)
 
 from tantalus.appfactory.main import create_app
 flask, app = create_app()
+
+logging.basicConfig(level=logging.INFO)
+app.work()

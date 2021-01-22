@@ -114,7 +114,7 @@ Buy btw rounded per row: {{ two_to_one_btw_per_row }}<br>
         {% for percentage,value in btwtotals.items() %}
         <tr>
           <td>{{ percentage }}%</td>
-          <td class="align-r">&euro;{{ -value|format_currency }}</td>
+          <td class="align-r">&euro;{{ (-value) | format_currency }}</td>
         </tr>
         {% endfor %}
       </tbody>

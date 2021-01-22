@@ -53,7 +53,7 @@ def sync():
                 return jsonify({"message": "Unknown transactionlink {}".format(t)}, 400)
             else:
                 trs.append(l.transaction)
-        conscribo_sync.delay([t.id for t in trs])
+        conscribo_sync([t.id for t in trs])
         db.session.commit()
     except (ValueError, KeyError, Exception):
         return jsonify({"message": "Bad data"}, 400)

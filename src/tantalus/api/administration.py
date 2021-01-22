@@ -19,7 +19,7 @@ from worker.worker import advance_bookyear
 @ensure_user_admin
 def index():
     unprocessed = PosSale.query.filter(PosSale.processed == False).count()
-    return render_template('tantalus_administration.html', settings=Setting.query.all(), unprocessed=unprocessed)
+    return render_template('tantalus_administration.html', settings=Setting.query.order_by(Setting.name).all(), unprocessed=unprocessed)
 
 
 

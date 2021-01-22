@@ -7,6 +7,9 @@ from tantalus_db.config import Setting
 
 class Config:
     def __init__(self):
+        self.refresh()
+
+    def refresh(self):
         settings = {s.name: s.value for s in Setting.query.all()}
         if not settings:
             default_configure()

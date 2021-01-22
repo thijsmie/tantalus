@@ -15,29 +15,78 @@ from config import config
 
 from ConscriboPyAPI.conscribo_sync import sync_transactions
 
-from celery import Celery
-from celery.schedules import crontab
+from psycopg2 import connect
+from pq import PQ
+import logging
+import time
+import traceback
 
 
-celery = Celery(__name__, autofinalize=False)
+class Worker:
+    def __init__(self):
+        self.conn_data = ""
+        self.conn = None
+        self.pq = None
+        self.fn = {}
+        self.app = None
 
-@celery.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    # Clear up stale sessions every 3 hours
-    sender.add_periodic_task(
-        datetime.timedelta(hours=3),
-        cleanup_sessions.s(),
-    )
+    def init_app(self, app):
+        self.app = app
+        self.conn_data = app.config['SQLALCHEMY_DATABASE_URI']
 
+    def ensure_pq(self):
+        if self.conn is None:
+            self.conn = connect(self.conn_data)
+            self.pq = PQ(self.conn, table='_task_queue')
+            self.pq.create()
 
-@celery.task
-def cleanup_sessions():
-    stale_time = datetime.datetime.utcnow() - datetime.timedelta(hours=12)
-    Session.query.filter(Session.time_created < stale_time).delete()
-    db.session.commit()
+    def task(self, fn):
+        self.fn[fn.__name__] = fn
+        def runner(*args, **kwargs):
+            self.schedule(fn.__name__, *args, **kwargs)
+        return runner
 
+    def schedule(self, name, *args, **kwargs):
+        data = {'name': name, 'args': args, 'kwargs': kwargs}
+        self.ensure_pq()
+        self.pq['main'].put(data)
 
-@celery.task
+    def work(self):
+        self.ensure_pq() 
+        queue = self.pq['main']
+        while True:
+            job = queue.get(timeout=60)
+            if job is None:
+                continue
+
+            with self.app.test_request_context():
+                config.refresh()
+                try:
+                    self.fn[job.data['name']](*job.data['args'], **job.data['kwargs'])
+                    logging.info("Job has succeeded: " +
+                        f"{job.data['name']}(" +
+                        ", ".join(f"{i}" for i in job.data['args']) + ", "
+                        ", ".join(f"{k}={v}" for k,v in job.data['kwargs'].items()) +
+                        ")")
+                    self.cleanup_sessions()
+                except:
+                    logging.critical(
+                        "Job has failed: " +
+                        f"{job.data['name']}(" +
+                        ", ".join(f"{i}" for i in job.data['args']) + ", "
+                        ", ".join(f"{k}={v}" for k,v in job.data['kwargs'].items()) +
+                        ")\n" + traceback.format_exc()
+                    )
+                
+
+    def cleanup_sessions(self):
+        stale_time = datetime.datetime.utcnow() - datetime.timedelta(hours=12)
+        Session.query.filter(Session.time_created < stale_time).delete()
+        db.session.commit()
+
+worker = Worker()
+
+@worker.task
 def run_invoicing(transaction_id):
     transaction = get_or_none(transaction_id, Transaction)
     relation = transaction.relation
@@ -59,18 +108,18 @@ def run_invoicing(transaction_id):
         send_invoice(relation, transaction, pdf)
 
 
-@celery.task
+@worker.task
 def conscribo_sync(transaction_ids):
     transactions = [get_or_none(id, Transaction) for id in transaction_ids]
     sync_transactions(transactions)
 
 
-@celery.task
+@worker.task
 def run_create_snapshot(name):
     create_snapshot(name)
 
 
-@celery.task
+@worker.task
 def advance_bookyear(yearcode):
     disable_logins()
     try:

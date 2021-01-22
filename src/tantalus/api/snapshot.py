@@ -48,7 +48,7 @@ def create():
         flash.danger("No data supplied")
         return redirect(url_for(".index"))
     
-    run_create_snapshot.delay(form["name"])
+    run_create_snapshot(form["name"])
     flash.success("Snapshot creation started, sit tight!")
     return redirect(url_for(".index"))
 

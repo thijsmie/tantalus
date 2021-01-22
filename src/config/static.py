@@ -35,9 +35,3 @@ def config_loader(prefix):
 def get_flask_config():
     """ All Flask Config should be prefixed with FL_ """
     return config_loader("FL_")
-
-
-def get_celery_config():
-    """ All Celery Config should be prefixed with CEL_ """
-    return config_loader("CEL_")
-

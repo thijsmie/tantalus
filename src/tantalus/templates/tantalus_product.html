@@ -51,7 +51,7 @@
             <div id="valwrap" class="input-group">
               <span class="input-group-addon"><span class="glyphicon glyphicon-euro" aria-hidden="true"></span></span>
               <input id="value" type="text" class="form-control" placeholder="Value" {% if product %}
-                value="{{ format_currency(product.value) }}" {% endif %}>
+                value="{{ product.value | format_currency }}" {% endif %}>
             </div>
           </div>
         </div>
