@@ -14,8 +14,13 @@ def get_or_none(id, obj):
 def transactional(func):
     
     @wraps(func)
-    def new_func(*args, **kwargs):
+    def transaction(*args, **kwargs):
+        # Nested transactionals become part of the bigger transactional
+        if transaction.in_transaction:
+            return func(*args, **kwargs)
+            
         with db.session.no_autoflush:
+            transaction.in_transaction = True
             try:
                 ret = func(*args, **kwargs)
                 db.session.commit()
@@ -23,5 +28,8 @@ def transactional(func):
             except Exception as e:
                 db.session.rollback()
                 raise e
-
-    return new_func
+            finally:
+                transaction.in_transaction = False
+    
+    transaction.in_transaction = False
+    return transaction

@@ -11,6 +11,7 @@ from tantalus_db.utility import get_or_none
 
 from tantalus.api.routers import bp_user as router
 
+
 @router.route('/', defaults=dict(page=0))
 @router.route('/page/<int:page>')
 @login_required
@@ -22,14 +23,6 @@ def index(page):
     query = User.query.order_by(User.username)
     pagination = Paginator(query, page, 20)
     return render_template('tantalus_users.html', pagination=pagination)
-
-
-@router.route('.json')
-@login_required
-@ensure_user_admin
-def indexjson():
-    query = User.query.order_by(User.username)
-    return jsonify(query.all())
 
 
 @router.route('/add', methods=["GET", "POST"])
@@ -48,6 +41,7 @@ def adduser():
             user = new_user(form['username'], form['password'], form.get('is_admin', False), form.get('relation', None),
                             form.get('viewstock', False), form.get('viewtransactions', False),
                             form.get('posaction', False), form.get('api', False))
+            db.session.add(user)
             db.session.commit()
         except:
             return jsonify({"messages": ["Invalid data"]}, 403)
@@ -81,6 +75,7 @@ def edituser(user_id):
         user.right_viewstock = form.get('viewstock', user.right_viewstock)
         user.right_viewalltransactions = form.get('viewtransactions', user.right_viewalltransactions)
         user.right_posaction = form.get('posaction', user.right_posaction)
+        user.right_api = form.get('api', user.right_api)
         db.session.commit()
         return jsonify(user)
 

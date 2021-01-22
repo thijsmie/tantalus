@@ -54,6 +54,8 @@ class Relation(Base):
             "address": self.address,
         }
 
+    filters = classmethod(dict)
+
 
 class BtwType(Base):
     name = Column(String, nullable=False)
@@ -80,6 +82,7 @@ class BtwType(Base):
             "percentage": self.percentage
         }
 
+    filters = classmethod(dict)
         
 class Group(Base):
     name = Column(String, nullable=False)
@@ -97,6 +100,7 @@ class Group(Base):
             "name": self.name
         }
 
+    filters = classmethod(dict)
 
 class Product(Base):
     contenttype = Column(String, nullable=False, index=True)
@@ -104,7 +108,7 @@ class Product(Base):
     value = Column(Integer, nullable=False, default=0)
     amount = Column(Integer, nullable=False, default=0)
     
-    hidden = Column(Boolean, nullable=False, default=False)
+    discontinued = Column(Boolean, nullable=False, default=False)
     group_id = Column(Integer, ForeignKey('group.id'), nullable=False)
     group = relationship("Group", back_populates="products")
     
@@ -146,11 +150,12 @@ class Product(Base):
             "tag": self.tag,
             "value": self.value,
             "amount": self.amount,
-            "hidden": self.hidden,
+            "discontinued": self.discontinued,
             "group": self.group_id,
             "btwtype": self.btwtype_id
         }
 
+    filters = classmethod(dict)
 
 class TransactionLine(Base):
     transaction_id_one_to_two = Column(Integer, ForeignKey('transaction.id'), index=True, nullable=True)
@@ -180,6 +185,7 @@ class TransactionLine(Base):
             "amount": self.amount
         }
 
+    filters = classmethod(dict)
 
 class ServiceLine(Base):
     transaction_id = Column(Integer, ForeignKey('transaction.id'), index=True, nullable=True)
@@ -206,6 +212,7 @@ class ServiceLine(Base):
             "amount": self.amount
         }
 
+    filters = classmethod(dict)
 
 class Transaction(Base):
     reference = Column(Integer, index=True, nullable=False)
@@ -218,9 +225,9 @@ class Transaction(Base):
     relation_id = Column(Integer, ForeignKey('relation.id'), index=True, nullable=False)
     relation = relationship("Relation", back_populates="transactions")
 
-    one_to_two = relationship('TransactionLine', foreign_keys=[TransactionLine.transaction_id_one_to_two])
-    two_to_one = relationship('TransactionLine', foreign_keys=[TransactionLine.transaction_id_two_to_one])
-    services = relationship('ServiceLine', back_populates='transaction')
+    one_to_two = relationship('TransactionLine', cascade="all, delete-orphan", foreign_keys=[TransactionLine.transaction_id_one_to_two])
+    two_to_one = relationship('TransactionLine', cascade="all, delete-orphan", foreign_keys=[TransactionLine.transaction_id_two_to_one])
+    services = relationship('ServiceLine', cascade="all, delete-orphan", back_populates='transaction')
 
     total = Column(Integer, nullable=False, default=0)
     two_to_one_has_btw = Column(Boolean, nullable=False, default=False)
@@ -246,10 +253,23 @@ class Transaction(Base):
             "two_to_one_btw_per_row": self.two_to_one_btw_per_row
         }
 
+    @classmethod
+    def filters(cls):
+        return {
+            "id": cls.id,
+            "reference": cls.reference,
+            "informal_reference": cls.informal_reference,
+            "revision": cls.revision,
+            "deliverydate": cls.deliverydate,
+            "processeddate": cls.processeddate,
+            "description": cls.description,
+            "relation": cls.relation_id,
+            "total": cls.total,
+            "two_to_one_has_btw": cls.two_to_one_has_btw,
+            "two_to_one_btw_per_row": cls.two_to_one_btw_per_row
+        }
 
 class User(Base):
-    session = Column(String(256), index=True, nullable=True)
-
     username = Column(String(200), index=True, nullable=False)
     passhash = Column(Text)
 
@@ -266,6 +286,23 @@ class User(Base):
     def validate_username(self, key, username):
         assert len(username) >= 4
         return username
+
+    def dict(self):
+        return {
+            "username": self.username,
+            "relation": self.relation_id,
+            "right_admin": self.right_admin,
+            "right_viewstock": self.right_viewstock,
+            "right_viewalltransactions": self.right_viewalltransactions,
+            "right_posaction": self.right_posaction
+        }
+
+    filters = classmethod(dict)
+
+class Session(Base):
+    session = Column(String(128), index=True, nullable=True)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship('User', lazy='joined')
 
     # Flask-Login required functionality
 
@@ -284,12 +321,116 @@ class User(Base):
     def get_id(self):
         return self.session
 
+
+class PosEndpoint(Base):
+    name = Column(String)
+    relation_id = Column(Integer, ForeignKey('relation.id'))
+    relation = relationship('Relation')
+
+    sales = relationship('PosSale', back_populates="posendpoint")
+
+    @validates('name')
+    def validate_name(self, key, name):
+        assert len(name) >= 1
+        return name
+
     def dict(self):
         return {
-            "username": self.username,
-            "relation": self.relation_id,
-            "right_admin": self.right_admin,
-            "right_viewstock": self.right_viewstock,
-            "right_viewalltransactions": self.right_viewalltransactions,
-            "right_posaction": self.right_posaction
+            "id": self.id,
+            "name": self.name,
+            "relation": self.relation_id
         }
+    filters = classmethod(dict)
+
+
+class PosProduct(Base):
+    name = Column(String, nullable=False)
+    discontinued = Column(Boolean, nullable=False, default=False)
+
+    product_id = Column(Integer, ForeignKey('product.id'), nullable=True)
+    product = relationship('Product')
+
+    service = Column(String, nullable=True)
+    service_btw_id = Column(Integer, ForeignKey('btwtype.id'), nullable=True)
+    service_btw = relationship('BtwType')
+    service_price = Column(Integer, nullable=True)
+
+    scan_id = Column(String, default="")
+    keycode = Column(String, default="")
+
+    sales = relationship('PosSale', back_populates="posproduct")
+
+    @property
+    def is_service(self):
+        return self.product == None
+
+    @validates('name')
+    def validate_name(self, key, name):
+        assert len(name) >= 1
+        return name
+
+    def dict(self):
+        dc = {
+            "id": self.id,
+            "name": self.name,
+            "discontinued": self.discontinued,
+            "scan_id": self.scan_id,
+            "keycode": self.keycode,
+            "is_service": self.is_service
+        }
+        if self.is_service:
+            dc.update({
+                "service": self.service,
+                "btwtype": self.service_btw_id,
+                "price": self.service_price
+            })
+        else:
+            dc.update({
+                "product": self.product_id,
+                "price": self.product.value
+            })
+        return dc
+
+    @classmethod
+    def filters(cls):
+        return {
+            "id": cls.id,
+            "name": cls.name,
+            "discontinued": cls.discontinued,
+            "scan_id": cls.scan_id,
+            "keycode": cls.keycode,
+            "service": cls.service,
+            "btwtype": cls.service_btw_id,
+            "price": cls.service_price,
+            "product": cls.product_id
+        }
+
+    
+class PosSale(Base):
+    # Note: the price and btw need to be tracked in the sale to make sure that price
+    #       and btw changes have no influence on the past
+    posendpoint_id = Column(Integer, ForeignKey('posendpoint.id'), nullable=False)
+    posendpoint = relationship("PosEndpoint", back_populates="sales")
+    posproduct_id = Column(Integer, ForeignKey('posproduct.id'), nullable=False)
+    posproduct = relationship("PosProduct", back_populates="sales")
+    amount = Column(Integer, nullable=False, default=1)
+    unit_price = Column(Integer, nullable=False)
+    btwtype_id = Column(Integer, ForeignKey('btwtype.id'), nullable=True)
+    btwtype = relationship('BtwType')
+    processed = Column(Boolean, nullable=False, default=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    user = relationship('User')
+
+    def dict(self):
+        return {
+            "id": self.id,
+            "posendpoint": self.posendpoint_id,
+            "posproduct": self.posproduct_id,
+            "amount": self.amount,
+            "unit_price": self.unit_price,
+            "btwtype": self.btwtype_id,
+            "processed": self.processed,
+            "user": self.user_id
+        }
+
+    filters = classmethod(dict)

@@ -2,6 +2,7 @@ import requests
 from getpass import getpass
 from haikunator import Haikunator
 import random
+import sys
 
 
 h = Haikunator()
@@ -17,8 +18,12 @@ def check(r, msg):
 
 base = "http://localhost:8000"
 
-username = input("Username: ")
-password = getpass("Password: ")
+if sys.argv == 1:
+    username = input("Username: ")
+    password = getpass("Password: ")
+else:
+    username = sys.argv[1]
+    password = sys.argv[2]
 
 s = requests.session()
 

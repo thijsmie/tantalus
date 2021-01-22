@@ -20,31 +20,9 @@ def index(page):
     if page < 0:
         page = 0
 
-    query = Product.query.filter(Product.hidden == False).order_by(Product.contenttype)
+    query = Product.query.filter(Product.discontinued == False).order_by(Product.contenttype)
     pagination = Paginator(query, page, 20)
     return render_template('tantalus_products_showgroup.html', pagination=pagination)
-
-
-@router.route('.json')
-@login_required
-@ensure_user_stock
-def indexjson():
-    query = Product.query.filter(Product.hidden == False).order_by(Product.contenttype)
-    return jsonify(query.all())
-
-
-@router.route('/group.json')
-@login_required
-@ensure_user_stock
-def groupjson():
-    return jsonify(Group.query.all())
-
-
-@router.route('/btwtype.json')
-@login_required
-@ensure_user_stock
-def btwtypejson():
-    return jsonify(BtwType.query.all())
 
 
 @router.route('/group/<string:group_id>', defaults=dict(page=0))
@@ -60,20 +38,10 @@ def showgroup(group_id, page):
         return abort(404)
 
     pagination = Paginator(
-        Product.query.filter(Product.hidden == False and Product.group == group).order_by(Product.contenttype),
+        Product.query.filter(Product.discontinued == False and Product.group == group).order_by(Product.contenttype),
         page, 20, group_id=group_id
     )
     return render_template('tantalus_products.html', group=group.name, showgroup=False, pagination=pagination)
-
-
-@router.route('/group/<string:group_id>.json')
-@login_required
-@ensure_user_stock
-def showgroupjson(group_id):
-    group = get_or_none(group_id, Group)
-    if group is None:
-        return abort(404)
-    return jsonify(Product.query.filter(Product.hidden == False and Product.group == group).all())
 
 
 @router.route('/add', methods=["GET", "POST"])
@@ -110,10 +78,3 @@ def editproduct(product_id):
         return jsonify(product)
 
     return render_template('tantalus_product.html', product=product)
-
-
-@router.route('/values.json')
-@login_required
-@ensure_user_admin
-def values():
-    return jsonify(group_values())

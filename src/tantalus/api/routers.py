@@ -1,5 +1,6 @@
 """Tantalus api blueprint gen"""
 from flask import Blueprint
+from importlib import import_module
 
 blueprints = []
 
@@ -24,21 +25,16 @@ bp_product = blueprint_factory("tantalus.product", 'tantalus.api.product', '/pro
 bp_relation = blueprint_factory('tantalus.relation', 'tantalus.api.relation', '/relation')
 bp_transaction = blueprint_factory('tantalus.transaction', 'tantalus.api.transaction', '/transaction')
 bp_user = blueprint_factory('tantalus.user', 'tantalus.api.user', '/user')
-#bp_pos = blueprint_factory('tantalus.pos', '/pos')
+bp_pos = blueprint_factory('tantalus.pos', 'tantalus.api.pos', '/pos')
 bp_conscribo = blueprint_factory('tantalus.conscribo', 'tantalus.api.conscribo', '/conscribo')
 bp_financial = blueprint_factory('tantalus.financial', 'tantalus.api.financial', '/financial')
 bp_snapshot = blueprint_factory('tantalus.snapshot', 'tantalus.api.snapshot', '/snapshot')
 bp_api = blueprint_factory('tantalus.api', 'tantalus.api.api', '/api')
+bp_administration = blueprint_factory('tantalus.administration', 'tantalus.api.administration', '/administration')
 
-# Import modules to make them register, this needs to be after the blueprint definition
-# Otherwise you get an unresolvable circular import
-# This is ungodly ugly, TODO: FIX THIS CRAP
+bp_pos_client = blueprint_factory('tantalus.pos_client', 'tantalus.api.pos_client', '/poscl')
 
-import tantalus.api.base
-import tantalus.api.product
-import tantalus.api.conscribo
-import tantalus.api.relation
-import tantalus.api.transaction
-import tantalus.api.user
-import tantalus.api.financial
-import tantalus.api.snapshot
+
+def activate_routes():
+    for blueprint in blueprints:
+        import_module(blueprint.import_name)

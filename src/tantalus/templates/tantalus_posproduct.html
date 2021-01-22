@@ -1,97 +1,128 @@
 {% extends 'base.html' %}
 
 {% block container %}
+<div class="col-12 col-lg-6">
+  <div class="well bs-component">
+    <form class="form-horizontal">
+      <fieldset>
+        <legend>POS-{% if product.is_service %}Service{% else %}Product{% endif %} {{ product.name }}</legend>
+        <div class="form-group">
+          <label for="name" class="col-lg-3 control-label">Name</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="name" placeholder="Name" value="{{ product.name }}">
+          </div>
+        </div>
+        {% if product.is_service %}
+        <div class="form-group">
+          <label for="service" class="col-lg-3 control-label">Service</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="service" name="service" placeholder="Service" value="{{ product.service }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="price" class="col-lg-3 control-label">Price</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="price" name="price" placeholder="Price" value="{{ product.service_price | format_currency }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="btw" class="col-lg-3 control-label">BTW</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="btw" name="btw" placeholder="BTW%" value="{{ product.service_btw.percentage }}">
+          </div>
+        </div>
+        {% else %}
+        <div class="form-group">
+          <label for="product" class="col-lg-3 control-label">Product</label>
+          <div class="col-lg-9">
+            <select class="form-control" id="product">
+              <option></option>
+              {% for p in products %}
+              <option value="{{ p.id }}" {% if p == product.product %}selected{% endif %}>{{ p.contenttype }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        {% endif %}
+        <div class="form-group">
+          <label for="scan_id" class="col-lg-3 control-label">Scan ID</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="scan_id" name="scan_id" placeholder="Scan ID"
+              value="{{ product.scan_id }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="keycode" class="col-lg-3 control-label">Keycode</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="keycode" name="keycode" placeholder="Keycode" value="{{ product.keycode }}">
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  </div>
+</div>
 
-  <form id="newposproductform" class="form-horizontal" method="POST">
-    <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
-    <div class="col-lg-6">
-      <div class="well bs-component">
-        <fieldset>
-          <legend>{% if posproduct is defined %}Edit{% else %}New{% endif %} Pos-Product</legend>
-          <div class="form-group">
-            <label for="product" class="col-lg-3 control-label">Product</label>
-            <div class="col-lg-9">
-              <select class="form-control" id="product">
-                <option></option>
-                {% for product in products %}
-                  <option value="{{ product.id }}"{% if posproduct and posproduct.product == product.key -%}
-                          selected{% endif %}>{{ product.contenttype }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="name" class="col-lg-3 control-label">Name</label>
-            <div class="col-lg-9">
-              <input type="text" class="form-control" id="name" name="name" placeholder="Name"
-                     value="{% if posproduct %}{{ posproduct.name }}{% endif %}">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="scan_id" class="col-lg-3 control-label">Scan ID</label>
-            <div class="col-lg-9">
-              <input type="text" class="form-control" id="scan_id" name="scan_id" placeholder="Scan ID"
-                     value="{% if posproduct %}{{ posproduct.scan_id }}{% endif %}">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="keycode" class="col-lg-3 control-label">Keycode</label>
-            <div class="col-lg-9">
-              <input type="text" class="form-control" id="keycode" name="keycode" placeholder="Keycode"
-                     value="{% if posproduct %}{{ posproduct.keycode }}{% endif %}">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="price" class="col-lg-3 control-label">Price</label>
-            <div class="col-lg-9">
-              <div id="valwrap" class="input-group">
-                  <span class="input-group-addon"><span class="glyphicon glyphicon-euro"
-                                                        aria-hidden="true"></span></span>
-                <input id="price" name="price" type="text" class="form-control" placeholder="Price"
-                       value="{% if posproduct %}{{ posproduct.price | format_currency }}{% endif %}">
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-lg-9 col-lg-offset-3">
-              <button type="button" class="btn btn-primary" onclick="submit_posproduct();">Submit</button>
-              <p>Only enter a name when you did not define a product!</p>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-    </div>
-  </form>
+<div class="col-12 col-lg-6">
+  <div class="well bs-component">
+    {% if product.is_service %}
+    <p>
+      Changing the price or btw will not change existing sales. If you want changes here to be applied retroactively
+      consult your friendly local Tantalus-maintainance-nerd.<br>
+      Discontinuing a service will not remove existing sales. It will prevent any more sales to be registered and will
+      be fully deleted on bookyear transition.
+    </p>
+    <button type="button" onclick="discontinue_pos_product();" class="btn btn-block btn-danger">Discontinue</button>
+    <button type="button" onclick="submit_pos_service();" class="btn btn-block btn-primary">Update</button>
+    {% else %}
+    <p>
+      Changing the product this POS-Product is tied to is an action that is not recommended. All sales not yet processed
+      into a transaction will be applied to the new product. In most cases you want to make a new POS-Product and discontinue
+      the old one instead.<br>
+      Discontinuing a product will not remove existing sales, they will still show up in the next transaction generation. 
+      However, it will prevent any more sales to be registered and will be fully deleted on bookyear transition.
+    </p>
+    <button type="button" onclick="discontinue_pos_product();" class="btn btn-block btn-danger">Discontinue</button>
+    <button type="button" onclick="submit_pos_product();" class="btn btn-block btn-primary">Update</button>
+    {% endif %}
+
+    <a class="btn btn-block btn-default" href="{{ url_for('.index') }}">Back</a>
+  </div>
+</div>
 
 {% endblock %}
 
 {% block scripts %}
-  {{ super() }}
-  <script type="text/javascript">
+{{ super() }}
+<script type="text/javascript">
+  function submit_pos_product() {
+    tosubmit = {};
+    tosubmit.name = $('#name').val();
+    tosubmit.product = $('#product').val();
+    tosubmit.scan_id = $('#scan_id').val();
+    tosubmit.keycode = $('#keycode').val();
 
-      function submit_posproduct() {
-          tosubmit = {};
-          tosubmit.name = $('#name').val();
+    post_object(tosubmit, "{{ url_for('.edit_product', pos_product_id=product.id) }}", "{{ url_for('.index') }}");
 
-          var prd = $('#product').val();
-          if (prd !== "")
-              tosubmit.product = prd;
+    return true;
+  }
 
-          var prc = $('#price').val();
-          if (prc !== "")
-            tosubmit.price = parseInt(parseFloat(prc.replace(",", ".")) * 100);
+  function submit_pos_service() {
+    tosubmit = {};
+    tosubmit.name = $('#name').val();
+    tosubmit.service = $('#service').val();
+    tosubmit.price = parseMoney($('#price').val());
+    tosubmit.btw = parseInt($('#btw').val());
+    tosubmit.scan_id = $('#scan_id').val();
+    tosubmit.keycode = $('#keycode').val();
 
-          tosubmit.scan_id = $('#scan_id').val();
-          tosubmit.keycode = $('#keycode').val();
+    post_object(tosubmit, "{{ url_for('.edit_service', pos_product_id=product.id) }}", "{{ url_for('.index') }}");
 
-          {% if posproduct -%}
-              post_object(tosubmit, "{{ url_for(".editposproduct", posproduct_id=posproduct.id) }}", "{{ url_for(".index") }}");
-          {%- else -%}
-              post_object(tosubmit, "{{ url_for(".addposproduct") }}", "{{ url_for(".index") }}");
-          {%- endif %}
+    return true;
+  }
 
-          return true;
-      }
-
-  </script>
+  function discontinue_pos_product() {
+    post_object({}, "{{ url_for('.discontinue', pos_product_id=product.id) }}", "{{ url_for('.index') }}");
+    return true;
+  }
+</script>
 {% endblock %}

@@ -12,10 +12,8 @@ from tantalus.appfactory import flash
 
 from tantalus.api.actions.snapshot import snapshot_group_excl_values, snapshot_group_values, \
     snapshot_service_excl_values, snapshot_service_values
-from context import get_config
 from worker.worker import run_create_snapshot
 
-from datetime import datetime
 
 
 @router.route('/', defaults=dict(page=0))

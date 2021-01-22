@@ -4,7 +4,7 @@ from tantalus_db.models import Group, Relation, BtwType, Product, Transaction
 from tantalus_db.snapshot import Snapshot, GroupSnapshot, BtwTypeSnapshot, RelationSnapshot, ProductSnapshot, \
     TransactionLineSnapshot, ServiceLineSnapshot, TransactionSnapshot
 
-from context import get_config
+from config import config
 
 
 def db_preload(instance):
@@ -15,8 +15,6 @@ def db_preload(instance):
 
 @transactional
 def create_snapshot(name):
-    config = get_config()
-
     snapshot = Snapshot(
         name=name,
         yearcode=config.yearcode
@@ -61,7 +59,7 @@ def create_snapshot(name):
             tag=product.tag,
             value=product.value,
             amount=product.amount,
-            hidden=product.hidden,
+            discontinued=product.discontinued,
             group_id=group_id_mapping[product.group_id],
             btwtype_id=btwtype_id_mapping[product.btwtype_id]
         )

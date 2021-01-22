@@ -54,14 +54,19 @@ in an easy way, invoices get resent and changes are pushed to Conscribo with the
 
 ## Docker-Compose deployment procedure
 
-First start all containers:
+Start all containers with:
 
 ```bash
     docker-compose up --build -d
 ```
 
-Initially the database won't be created. You have to do this manually by starting a one-off container:
+Note that all DB tables will be created upon the first http request to the application.
+
+## Testing (re-)deployment
 
 ```bash
-    docker-compose run --rm application python /app/createdb_entrypoint.py
+    docker-compose down && \
+    sudo rm -rf path/to/cache/* && \
+    docker-compose up --build -d && \
+    python scripts/populate_with_testdata.py admin AdminAdmin
 ```

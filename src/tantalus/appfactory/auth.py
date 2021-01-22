@@ -4,8 +4,12 @@ from functools import wraps
 from passlib.hash import pbkdf2_sha256 as hashf
 
 from tantalus.appfactory import flash
-from tantalus_db.models import User, Relation, Transaction
+
+from tantalus_db.base import db
+from tantalus_db.models import Session, User, Relation, Transaction
 from tantalus_db.utility import get_or_none
+
+from config import config
 
 
 # Random session key generation, inspired by django.utils.crypto.get_random_string
@@ -37,10 +41,13 @@ auth.session_protection = "strong"
 
 @auth.user_loader
 def load_user(session_token):
-    return User.query.filter(User.session == session_token).first()
+    return Session.query.filter(Session.session == session_token).first()
 
 
 def do_login(username, password, rememberme):
+    if config.nologin.lower() == 'true':
+        return False
+        
     user = User.query.filter(User.username == username).first()
 
     if user is None:
@@ -49,12 +56,21 @@ def do_login(username, password, rememberme):
     if not hashf.verify(password, user.passhash):
         return False
 
-    user.session = generate_random_string(256)
+    session = Session(
+        user=user,
+        session=generate_random_string(128)
+    )
+    db.session.add(session)
+    db.session.commit()
 
-    return login_user(user, remember=rememberme)
+    return login_user(session, remember=rememberme)
 
 
 def do_logout():
+    try:
+        current_user.delete()
+    except:
+        pass
     logout_user()
 
 
@@ -86,7 +102,7 @@ def ensure_user_admin(f):
     # Note, should be placed below @login_required
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.right_admin:
+        if not current_user.user.right_admin:
             flash.danger("Your user account is not allowed to perform this action.")
             return redirect('/')
         return f(*args, **kwargs)
@@ -98,7 +114,7 @@ def ensure_user_pos(f):
     # Note, should be placed below @login_required
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not (current_user.right_admin or current_user.right_posaction):
+        if not (current_user.user.right_admin or current_user.user.right_posaction):
             flash.danger("Your user account is not allowed to perform this action.")
             return redirect('/')
         return f(*args, **kwargs)
@@ -110,8 +126,8 @@ def ensure_user_relation(f):
     # Note, should be placed below @login_required
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not (current_user.right_admin or current_user.right_viewalltransactions):
-            if not (current_user.relation is not None and current_user.relation == kwargs.get('relation_id')):
+        if not (current_user.user.right_admin or current_user.user.right_viewalltransactions):
+            if not (current_user.user.relation is not None and current_user.user.relation == kwargs.get('relation_id')):
                 flash.danger("Your user account is not allowed to perform this action.")
                 return redirect('/')
         return f(*args, **kwargs)
@@ -123,7 +139,7 @@ def ensure_user_transactions(f):
     # Note, should be placed below @login_required
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not (current_user.right_admin or current_user.right_viewalltransactions):
+        if not (current_user.user.right_admin or current_user.user.right_viewalltransactions):
             flash.danger("Your user account is not allowed to perform this action.")
             return redirect('/')
         return f(*args, **kwargs)
@@ -135,10 +151,10 @@ def ensure_user_transaction(f):
     # Note, should be placed below @login_required
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not (current_user.right_admin or current_user.right_viewalltransactions):
+        if not (current_user.user.right_admin or current_user.user.right_viewalltransactions):
             transaction = get_or_none(kwargs.get('transaction_id'), Transaction)
-            if transaction is None or not (
-                            current_user.relation is not None and current_user.relation == transaction.relation):
+            if transaction is None or not (current_user.user.relation is not None \
+                    and current_user.user.relation == transaction.relation):
                 flash.danger("Your user account is not allowed to perform this action.")
                 return redirect('/')
         return f(*args, **kwargs)
@@ -150,8 +166,8 @@ def ensure_user_stock(f):
     # Note, should be placed below @login_required
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.right_admin:
-            if not current_user.right_viewstock:
+        if not current_user.user.right_admin:
+            if not current_user.user.right_viewstock:
                 flash.danger("Your user account is not allowed to perform this action.")
                 return redirect('/')
         return f(*args, **kwargs)
@@ -163,7 +179,7 @@ def ensure_user_api(f):
     # Note, should be placed below @login_required
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.right_api:
+        if not current_user.user.right_api:
             flash.danger("Your user account is not allowed to perform this action.")
             return redirect('/'), 403
         return f(*args, **kwargs)

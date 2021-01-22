@@ -79,7 +79,7 @@ class ProductSnapshot(SnapshotBase):
     value = Column(Integer, nullable=False, default=0)
     amount = Column(Integer, nullable=False, default=0)
     
-    hidden = Column(Boolean, nullable=False, default=False)
+    discontinued = Column(Boolean, nullable=False, default=False)
     group_id = Column(Integer, ForeignKey('groupsnapshot.id'), nullable=False)
     group = relationship("GroupSnapshot", back_populates="products")
     
@@ -96,7 +96,7 @@ class ProductSnapshot(SnapshotBase):
             "tag": self.tag,
             "value": self.value,
             "amount": self.amount,
-            "hidden": self.hidden,
+            "discontinued": self.discontinued,
             "group": self.group_id,
             "btwtype": self.btwtype_id
         }

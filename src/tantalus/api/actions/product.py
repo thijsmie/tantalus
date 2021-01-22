@@ -19,7 +19,7 @@ def new_product(data):
         group=group,
         amount=int(data.get('amount', 0)),
         value=int(data.get('value', 0)),
-        hidden=False,
+        discontinued=False,
         btwtype=btwtype
     )
     db.session.add(product)

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+
+{% block container %}
+<div>
+  <h1>Administration</h1>
+</div>
+
+<div class="col-12 col-lg-12">
+  <div class="well bs-component">
+    <fieldset>
+      <legend>Year Advancement</legend>
+      <div class="form-group">
+        This is the danger zone! Provide a yearcode and move the system to a next booking year. This will perform the
+        following actions:
+        <ul>
+          <li>Disable the creation of new sessions.</li>
+          <li>Empty the Session table to remove all logged in sessions.</li>
+          <li>Make a snapshot named "End of year"</li>
+          <li>Delete all Transactions</li>
+          <li>Delete all discontinued Products, POS-Products and POS-Services</li>
+          <li>Update the yearcode and set the reference counter to 0</li>
+          <li>Make a snapshot named "Begin of year"</li>
+          <li>Enable the creation of new sessions.</li>
+        </ul>
+        This process can take several minutes. Once you are able to log in again the system should be ready for another
+        year. It might be wise to notify your friendly local Tantalus-maintainer before you click this button and ask for a 
+        manual backup. You never know.
+      </div>
+      <form action="{{ url_for('.advance') }}" method="post" class="form-horizontal">
+        <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+        <div class="form-group">
+          <label for="name" class="col-lg-3 control-label">Yearcode</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="yearcode" name="yearcode">
+          </div>
+        </div>
+        {% if unprocessed > 0 %}
+        <p>
+          There are {{ unprocessed }} POS sales in the system not marked as processed. If these are part of a discontinued product 
+          the advance year functionality will fail.
+        </p>
+        {% endif%}
+        <button type="submit" class="btn btn-block btn-danger">Advance Year</button>
+      </form>
+    </fieldset>
+  </div>
+</div>
+
+<div class="col-12 col-lg-12">
+  <div class="well bs-component">
+    <fieldset>
+      <legend>Settings</legend>
+      <div class="form-group">
+        Most settings are hidden due to their sensitive nature, but you can still set them from this interface.
+        Setting the nologin setting to true will disable session creation and will lock down the system after existing
+        sessions have expired. It should almost never be needed to change anything here.
+      </div>
+      {% for setting in settings %}
+      <form action="{{ url_for('.setting', id=setting.id) }}" method="post" class="form-horizontal">
+        <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+        <div class="form-group">
+          <label for="name" class="col-lg-3 control-label">{{ setting.name }}</label>
+          <div class="col-lg-9">
+            <div class="input-group">
+              <input type="text" class="form-control" id="value" name="value"
+                value="{% if not setting.secret %}{{ setting.value }}{% endif %}">
+              <span class="input-group-btn">
+                <button class="btn btn-primary" type="button">Update</button>
+              </span>
+            </div>
+          </div>
+        </div>
+      </form>
+      {% endfor %}
+    </fieldset>
+  </div>
+</div>
+{% endblock %}

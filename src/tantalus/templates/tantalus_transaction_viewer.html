@@ -2,24 +2,24 @@
 {% from 'tantalus_paginator.html' import paginator_buttons with context %}
 
 {% block container %}
-  <div>
-    <h1>{{ name }}</h1>
-  </div>
+<div>
+  <h1>{{ name }}</h1>
+</div>
 
-  Event date: {{ deliverydate }}<br>
-  Processed date: {{ processeddate }}<br>
-  Formal Reference: {{ reference }}<br>
-  Last edit: {{ lastedit }}<br>
-  Description: {{ description }}<br>
-  Revision: {{ revision }}<br><br>
-  
-  Buy included btw: {{ two_to_one_has_btw }}<br>
-  Buy btw rounded per row: {{ two_to_one_btw_per_row }}<br>  
+Event date: {{ deliverydate }}<br>
+Processed date: {{ processeddate }}<br>
+Formal Reference: {{ reference }}<br>
+Last edit: {{ lastedit }}<br>
+Description: {{ description }}<br>
+Revision: {{ revision }}<br><br>
 
-  <h2>Sold</h2>
-  <div class="table-responsive">
-    <table class="table table-condensed table-striped">
-      <thead>
+Buy included btw: {{ two_to_one_has_btw }}<br>
+Buy btw rounded per row: {{ two_to_one_btw_per_row }}<br>
+
+<h2>Sold</h2>
+<div class="table-responsive">
+  <table class="table table-condensed table-striped">
+    <thead>
       <tr>
         <th>Product</th>
         <th class="align-r">Amount</th>
@@ -27,26 +27,26 @@
         <th class="align-r">Total</th>
         <th class="align-r">BTW%</th>
       </tr>
-      </thead>
+    </thead>
 
-      <tbody>
+    <tbody>
       {% for row in sell %}
-        <tr>
-          <td>{{ row.contenttype }}</td>
-          <td class="align-r">{{ row.amount }}</td>
-          <td class="align-r">{{ (row.value / row.amount) | format_currency }}</td>
-          <td class="align-r">{{ row.value | format_currency }}</td>
-          <td class="align-r">{{ row.btw }}%</td>
-        </tr>
+      <tr>
+        <td>{{ row.contenttype }}</td>
+        <td class="align-r">{{ row.amount }}</td>
+        <td class="align-r">&euro;{{ (row.value / row.amount) | format_currency }}</td>
+        <td class="align-r">&euro;{{ row.value | format_currency }}</td>
+        <td class="align-r">{{ row.btw }}%</td>
+      </tr>
       {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  
-  <h2>Bought</h2>
-  <div class="table-responsive">
-    <table class="table table-condensed table-striped">
-      <thead>
+    </tbody>
+  </table>
+</div>
+
+<h2>Bought</h2>
+<div class="table-responsive">
+  <table class="table table-condensed table-striped">
+    <thead>
       <tr>
         <th>Product</th>
         <th class="align-r">Amount</th>
@@ -55,88 +55,102 @@
         <th class="align-r">Total Excl.</th>
         <th class="align-r">BTW%</th>
       </tr>
-      </thead>
+    </thead>
 
-      <tbody>
+    <tbody>
       {% for row in buy %}
-        <tr>
-          <td>{{ row.contenttype }}</td>
-          <td class="align-r">{{ row.amount }}</td>
-          <td class="align-r">{{ (row.prevalue / row.amount) | format_currency }}</td>
-          <td class="align-r">{{ row.prevalue | format_currency }}</td>
-          <td class="align-r">{{ row.value | format_currency }}</td>
-          <td class="align-r">{{ row.btw }}%</td>
-        </tr>
+      <tr>
+        <td>{{ row.contenttype }}</td>
+        <td class="align-r">{{ row.amount }}</td>
+        <td class="align-r">&euro;{{ (row.prevalue / row.amount) | format_currency }}</td>
+        <td class="align-r">&euro;{{ row.prevalue | format_currency }}</td>
+        <td class="align-r">&euro;{{ row.value | format_currency }}</td>
+        <td class="align-r">{{ row.btw }}%</td>
+      </tr>
       {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    </tbody>
+  </table>
+</div>
 
-  <div class="col-12 col-lg-7" style="margin-left:0">
-    <h2>Services</h2>
-    <div class="table-responsive">
-      <table class="table table-condensed table-striped">
-        <thead>
+<div class="col-12 col-lg-7" style="margin-left:0">
+  <h2>Services</h2>
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
         <tr>
           <th>Name</th>
           <th class="align-r">Amount</th>
           <th class="align-r">Price</th>
           <th class="align-r">BTW%</th>
         </tr>
-        </thead>
+      </thead>
 
-        <tbody>
+      <tbody>
         {% for row in service %}
-          <tr>
-            <td>{{ row.contenttype }}</td>
-            <td class="align-r">{% if row.amount and row.amount != 0 %}{{ row.amount }}{% endif %}</td>
-            <td class="align-r">{{ row.prevalue | format_currency }}</td>
-            <td class="align-r">{{ row.btw }}</td>
-          </tr>
+        <tr>
+          <td>{{ row.contenttype }}</td>
+          <td class="align-r">{% if row.amount and row.amount != 0 %}{{ row.amount }}{% endif %}</td>
+          <td class="align-r">&euro;{{ row.prevalue | format_currency }}</td>
+          <td class="align-r">{{ row.btw }}%</td>
+        </tr>
         {% endfor %}
-        </tbody>
-      </table>
-    </div>
+      </tbody>
+    </table>
   </div>
-  <div class="col-0 col-lg-1"></div>
-  <div class="col-12 col-lg-4" style="margin-right:0">
+</div>
+<div class="col-0 col-lg-1"></div>
+<div class="col-12 col-lg-4" style="margin-right:0">
   <h2>BTW</h2>
-      <div class="table-responsive">
-        <table class="table table-condensed table-striped">
-          <thead>
-          <tr>
-            <th>BTW%</th>
-            <th class="align-r">BTW&euro;</th>
-          </tr>
-          </thead>
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+        <tr>
+          <th>BTW%</th>
+          <th class="align-r">BTW&euro;</th>
+        </tr>
+      </thead>
 
-          <tbody>
-          {% for percentage,value in btwtotals.items() %}
-            <tr>
-              <td>{{ percentage }}%</td>
-              <td class="align-r">{{ -value|format_currency }}</td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      <tbody>
+        {% for percentage,value in btwtotals.items() %}
+        <tr>
+          <td>{{ percentage }}%</td>
+          <td class="align-r">&euro;{{ -value|format_currency }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-  
-  <strong>Totaal: </strong> {{ total | format_currency }}<br>
-  <a class="btn btn-primary" href="{{ url_for(".edittransaction", transaction_id=id) }}">Edit</a>
-  <a class="btn btn-primary" href="{{ url_for(".resend", transaction_id=id) }}">Resend</a>
-  <a class="btn btn-primary" href="{{ url_for(".showinvoice", transaction_id=id) }}">View Invoice</a>
-  <a class="btn btn-primary" href="{{ url_for(".showinvoicepdf", transaction_id=id) }}">Download Invoice PDF</a>
+</div>
+
+<div class="col-12 col-lg-12">
+  <h2>Total</h2>
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <tbody>
+        <tr>
+          <td class="align-r">&euro;{{ total | format_currency }}</td>
+          <td class="align-r">
+            <a class="btn btn-sm btn-primary" href="{{ url_for('.edittransaction', transaction_id=id) }}">Edit</a>
+            <a class="btn btn-sm btn-primary" href="{{ url_for('.resend', transaction_id=id) }}">Resend</a>
+            <a class="btn btn-sm btn-primary" href="{{ url_for('.showinvoice', transaction_id=id) }}">View Invoice</a>
+            <a class="btn btn-sm btn-primary" href="{{ url_for('.showinvoicepdf', transaction_id=id) }}">Download
+              Invoice PDF</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block styles %}
-  {{ super() }}
-  <style type="text/css">
-    @-moz-document url-prefix() {
-      fieldset {
-        display: table-cell;
-      }
+{{ super() }}
+<style type="text/css">
+  @-moz-document url-prefix() {
+    fieldset {
+      display: table-cell;
     }
-  </style>
+  }
+</style>
 {% endblock %}
-

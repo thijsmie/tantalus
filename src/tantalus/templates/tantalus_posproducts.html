@@ -2,42 +2,266 @@
 {% from 'tantalus_paginator.html' import paginator_buttons with context %}
 
 {% block container %}
-  <div>
-    <h1>Point of Sale Products</h1>
-  </div>
+<div>
+  <h1>Point of Sale</h1>
+</div>
 
-  <div class="table-responsive">
-    <table class="table table-condensed table-striped">
-      <thead>
-      <tr>
-        <th>Coupled</th>
-        <th>Name</th>
-        <th>Price</th>
-        <th>Scan Id</th>
-        <th>Keycode</th>
-      </tr>
-      </thead>
-
-      <tbody>
-      {% for posproduct in pagination.items %}
-        <tr>
-          <td>{% if posproduct.product is not none %}
-            <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>{% endif %}</td>
-          <td><a href="{{ url_for('.editposproduct', posproduct_id=posproduct.id) }}">{{ posproduct.name }}</a></td>
-          <td align="right">{{ posproduct.price | format_currency }}</td>
-          <td>{{ posproduct.scan_id }}</td>
-          <td>{{ posproduct.keycode }}</td>
-        </tr>
-      {% else %}
-        <tr>
-          <td colspan="5" style="text-align: center"><h2>&empty;</h2></td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
+<div class="col-12 col-lg-6">
+  <div class="well bs-component">
+    <form class="form-horizontal">
+      <fieldset>
+        <legend>New POS-Service</legend>
+        <p>
+          Some POS items cannot be bound directly to a product, such as a toasty. POS-Services will bind to services on
+          transactions.
+        </p>
+        <div class="form-group">
+          <label for="name" class="col-lg-3 control-label">Name</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="name" name="name" placeholder="Name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="service" class="col-lg-3 control-label">Service</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="service" name="service" placeholder="Service">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="price" class="col-lg-3 control-label">Price</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="price" name="price" placeholder="Price">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="btw" class="col-lg-3 control-label">BTW</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="btw" name="btw" placeholder="BTW%">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="name" class="col-lg-3 control-label">Scan ID</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="scan_id" name="scan_id" placeholder="Scan ID">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="name" class="col-lg-3 control-label">Keycode</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="keycode" name="keycode" placeholder="Keycode">
+          </div>
+        </div>
+        <div>
+          <button type="button" class="btn btn-block btn-primary" onclick="submit_pos_service();">Create</button>
+        </div>
+      </fieldset>
+    </form>
   </div>
-  <a href="{{ url_for('.addposproduct') }}" class="btn btn-default">Add Pos-Product</a>
-  <a href="{{ url_for('.sales') }}" class="btn btn-default">Go To Sales</a>
-  {{ paginator_buttons(pagination) }}
+</div>
+
+<div class="col-12 col-lg-6">
+  <div class="well bs-component">
+    <form class="form-horizontal">
+      <fieldset>
+        <legend>New POS-Product</legend>
+        <p>
+          Bind a POS-Product against a real product. It will be sold for the set price of that product.
+        </p>
+        <div class="form-group">
+          <label for="name" class="col-lg-3 control-label">Name</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="p-name" name="name" placeholder="Name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="product" class="col-lg-3 control-label">Product</label>
+          <div class="col-lg-9">
+            <select class="form-control" id="p-product">
+              <option></option>
+              {% for product in products %}
+              <option value="{{ product.id }}">{{ product.contenttype }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="scan_id" class="col-lg-3 control-label">Scan ID</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="p-scan_id" name="scan_id" placeholder="Scan ID">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="keycode" class="col-lg-3 control-label">Keycode</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="p-keycode" name="keycode" placeholder="Keycode">
+          </div>
+        </div>
+        <div>
+          <button type="button" class="btn btn-block btn-primary" onclick="submit_pos_product();">Create</button>
+        </div>
+      </fieldset>
+    </form>
+  </div>
+</div>
+
+<div class="col-12 col-lg-6">
+  <div class="well bs-component">
+      <fieldset>
+        <legend>POS-Endpoints</legend>
+        <div class="col-lg-12 table-responsive">
+          <table class="table table-condensed table-striped">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Relation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for endpoint in posendpoints %}
+              <tr>
+                <td><a href="{{ url_for('.endpoint', endpoint_id=endpoint.id) }}">{{ endpoint.name }}</a></td>
+                <td>{{ endpoint.relation.name }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </fieldset>
+  </div>
+</div>
+
+<div class="col-12 col-lg-6">
+  <div class="well bs-component">
+    <form class="form-horizontal">
+      <fieldset>
+        <legend>New POS-Endpoint</legend>
+        <div class="form-group">
+          <label for="name" class="col-lg-3 control-label">Name</label>
+          <div class="col-lg-9">
+            <input type="text" class="form-control" id="e-name" name="name" placeholder="Name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="relation" class="col-lg-3 control-label">Relation</label>
+          <div class="col-lg-9">
+            <select class="form-control" id="e-relation">
+              <option></option>
+              {% for relation in relations %}
+              <option value="{{ relation.id }}">{{ relation.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div>
+          <button type="button" class="btn btn-block btn-primary" onclick="submit_endpoint();">Create</button>
+        </div>
+      </fieldset>
+    </form>
+  </div>
+</div>
+
+<div class="col-12 col-lg-12">
+  <div class="well bs-component">
+      <fieldset>
+        <legend>POS-Services</legend>
+        <div class="col-lg-12 table-responsive">
+          <table class="table table-condensed table-striped">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Service</th>
+                <th class="align-r">Price</th>
+                <th class="align-r">BTW%</th>
+                <th class="align-r">Scan ID</th>
+                <th class="align-r">Keycode</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in posproducts if product.is_service %}
+              <tr>
+                <td><a href="{{ url_for('.view', pos_product_id=product.id) }}">{{ product.name }}</a></td>
+                <td>{{ product.service }}</td>
+                <td class="align-r">&euro;{{ product.service_price | format_currency }}</td>
+                <td class="align-r">{{ product.service_btw.percentage }}%</td>
+                <td class="align-r">{{ product.scan_id }}</td>
+                <td class="align-r">{{ product.keycode }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </fieldset>
+  </div>
+</div>
+
+<div class="col-12 col-lg-12">
+  <div class="well bs-component">
+      <fieldset>
+        <legend>POS-Products</legend>
+        <div class="col-lg-12 table-responsive">
+          <table class="table table-condensed table-striped">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Product</th>
+                <th class="align-r">Scan ID</th>
+                <th class="align-r">Keycode</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in posproducts if not product.is_service %}
+              <tr>
+                <td><a href="{{ url_for('.view', pos_product_id=product.id) }}">{{ product.name }}</a></td>
+                <td>{{ product.product.contenttype }}</td>
+                <td class="align-r">{{ product.scan_id }}</td>
+                <td class="align-r">{{ product.keycode }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </fieldset>
+  </div>
+</div>
 {% endblock %}
 
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript">
+  function submit_pos_product() {
+    tosubmit = {};
+    tosubmit.name = $('#p-name').val();
+    tosubmit.product = $('#p-product').val();
+    tosubmit.scan_id = $('#p-scan_id').val();
+    tosubmit.keycode = $('#p-keycode').val();
+
+    post_object(tosubmit, "{{ url_for('.add_product') }}", "{{ url_for('.index') }}");
+
+    return true;
+  }
+
+  function submit_pos_service() {
+    tosubmit = {};
+    tosubmit.name = $('#name').val();
+    tosubmit.service = $('#service').val();
+    tosubmit.price = parseMoney($('#price').val());
+    tosubmit.btw = parseInt($('#btw').val());
+    tosubmit.scan_id = $('#scan_id').val();
+    tosubmit.keycode = $('#keycode').val();
+
+    post_object(tosubmit, "{{ url_for('.add_service') }}", "{{ url_for('.index') }}");
+
+    return true;
+  }
+
+  function submit_endpoint() {
+    tosubmit = {};
+    tosubmit.name = $('#e-name').val();
+    tosubmit.relation = $('#e-relation').val();
+
+    post_object(tosubmit, "{{ url_for('.add_endpoint') }}", "{{ url_for('.index') }}");
+
+    return true;
+  }
+</script>
+{% endblock %}

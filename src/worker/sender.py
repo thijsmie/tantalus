@@ -1,12 +1,11 @@
 import os
 from smtplib import SMTP
 import ssl
-from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 
-from context import get_config
+from config import config
 
 
 mydir = os.path.abspath(os.path.dirname(__file__))
@@ -15,27 +14,16 @@ with open(os.path.join(mydir, "resources/email.txt")) as f:
 
 
 def send_invoice(relation, transaction, pdf_stringio):
-    config = get_config()
     context = ssl.create_default_context()
 
-    if config.get('smtp'):
-        smtp_host = config.smtp.get('host', 'localhost')
-        smtp_port = config.smtp.get('port', 465)
-        smtp_sender = config.smtp.get('sender', 'test@example.com')
-    else:
-        return
-
-    with SMTP(host=smtp_host, port=smtp_port) as smtp:
-        if config.smtp.get('secure', True):
-            smtp.starttls(context=context)
-
-        if config.smtp.get('login'):
-            smtp.login(config.smtp.login.username, config.smtp.login.password)
+    with SMTP(host=config.smtp_host, port=config.smtp_port) as smtp:
+        smtp.starttls(context=context)
+        smtp.login(config.smtp_user, config.smtp_pass)
 
         msg = MIMEMultipart()
         
         msg['Subject'] = f"Tantalusfactuur {relation.name}_{transaction.informal_reference:03}"
-        msg['From'] = smtp_sender
+        msg['From'] = config.smtp_sender
         msg['To'] = relation.email
         
         msg.attach(MIMEText(email.format(

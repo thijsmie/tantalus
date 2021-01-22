@@ -119,6 +119,8 @@ function field_validate_money_or_none(field) {
 }
 
 function parseMoney(val) {
+    val = val.replace(',', '.');
+    
     if (valid_float(val)) {
         var val = parseFloat(val) * 100.0;
 

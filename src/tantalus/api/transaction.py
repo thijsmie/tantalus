@@ -13,10 +13,8 @@ from tantalus.appfactory.auth import ensure_user_admin, ensure_user_transactions
 from tantalus.api.routers import bp_transaction as router
 from tantalus.api.actions.transaction import new_transaction, edit_transaction, transaction_record
 
-from context import get_config
+from config import config
 from worker.worker import run_invoicing
-
-from datetime import datetime
 
 
 @router.route('/', defaults=dict(page=0))
@@ -30,20 +28,6 @@ def index(page):
     pagination = Paginator(
         Transaction.query.order_by(Transaction.deliverydate.desc(), Transaction.time_updated.desc()), page, 20)
     return render_template('tantalus_transactions.html', pagination=pagination)
-
-
-@router.route('.json')
-@login_required
-@ensure_user_transactions
-def indexjson():
-    return jsonify(Transaction.query.all())
-
-
-@router.route('.cjson')
-@login_required
-@ensure_user_transactions
-def indexconvinientjson():
-    return jsonify([transaction_record(t) for t in Transaction.query.all()])
 
 
 @router.route('/fromrelation/<int:relation_id>', defaults=dict(page=0))
@@ -88,7 +72,7 @@ def addtransaction():
         return jsonify(transaction)
 
     return render_template('tantalus_transaction.html',
-                           products=Product.query.filter(Product.hidden == False).all(),
+                           products=Product.query.filter(Product.discontinued == False).all(),
                            relations=Relation.query.all())
 
 
@@ -114,7 +98,7 @@ def edittransaction(transaction_id):
         return jsonify(transaction)
 
     return render_template('tantalus_transaction.html', transaction=transaction,
-                           products=Product.query.filter(Product.hidden == False).all(),
+                           products=Product.query.filter(Product.discontinued == False).all(),
                            relations=Relation.query.all())
 
 
@@ -136,7 +120,7 @@ def showinvoice(transaction_id):
     transaction = get_or_none(transaction_id, Transaction)
     relation = transaction.relation
     record = transaction_record(transaction)
-    yearcode = get_config().yearcode
+    yearcode = config.yearcode
 
     def get_budget():
         after = Transaction.query.filter(
@@ -158,7 +142,7 @@ def showinvoicepdf(transaction_id):
     transaction = get_or_none(transaction_id, Transaction)
     relation = transaction.relation
     record = transaction_record(transaction)
-    yearcode = get_config().yearcode
+    yearcode = config.yearcode
 
     def get_budget():
         after = Transaction.query.filter(
@@ -187,40 +171,3 @@ def resend(transaction_id):
 
     return redirect(url_for(".showtransaction", transaction_id=transaction_id))
     
-    
-@router.route('/history.json', methods=["POST"])
-@login_required
-@ensure_user_admin
-def history():
-    try:
-        startdate = datetime.strptime(request.json["startdate"], "%Y-%m-%d").date()
-        enddate = datetime.strptime(request.json["enddate"], "%Y-%m-%d").date()
-    except:
-        return abort(400)
-        
-    products = {}    
-    transactions = Transaction.query.filter(Transaction.deliverydate >= startdate).order_by(Transaction.deliverydate).all()
-    for t in transactions:
-        if (t.deliverydate > enddate):
-            break
-        for r in t.one_to_two:
-            key = r.product.id
-            if key not in products:
-                products[key] = {
-                    "name": r.product.contenttype,
-                    "buy": [],
-                    "sell": []
-                }
-            products[key]["sell"] += [[r.amount, r.prevalue]]
-        for r in t.two_to_one:
-            key = r.product.id
-            if key not in products:
-                products[key] = {
-                    "name": r.product.contenttype,
-                    "buy": [],
-                    "sell": []
-                }
-            products[key]["buy"] += [[r.amount, r.prevalue]]
-    return jsonify(products)
-    
- 

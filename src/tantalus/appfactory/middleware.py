@@ -151,12 +151,12 @@ def csrf_protect():
                 abort(403)
 
 
-# On first request check if any users exist. If not, make sure there is a default admin user
 @current_app.before_first_request
 def ensure_there_is_a_user():
+    from tantalus_db.base import db
+    db.create_all()
     if len(User.query.all()) == 0:
-        from tantalus_db.base import db
-        user = new_user("admin", "AdminAdmin", True, None, True, True, True)
+        user = new_user("admin", "AdminAdmin", True, None, True, True, True, True)
         db.session.add(user)
         db.session.commit()
 current_app.jinja_env.globals['csrf_token'] = generate_csrf_token

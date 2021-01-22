@@ -21,7 +21,7 @@ def index():
 def login():
     form = request.form
     if 'username' in form:
-        if do_login(form['username'], form['password'], 'remember-me' in form):
+        if do_login(form['username'], form['password'], 'rememberme' in form):
             db.session.commit()
             flash.success("Logged in successfully.")
         else:

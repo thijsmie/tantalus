@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
-{% from 'tantalus_general_helpers.html' import format_currency %}
 
 {% block container %}
-
   <form id="newuserform" class="form-horizontal" method="POST">
     <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
     <div class="col-lg-12">

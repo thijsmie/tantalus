@@ -3,10 +3,10 @@ from collections import defaultdict
 from .conscribo_api import Conscribo
 from .conscribo_mapper import TransactionXML, TransactionXMLRow, ResultException
 
-from tantalus_db.conscribo import ConscriboConfig, ConscriboTransactionLink
+from tantalus_db.conscribo import ConscriboConfig
 from tantalus_db.utility import transactional
 
-from context import get_config
+from config import config
 
 from tantalus.api.actions.transaction import transaction_record
 import traceback
@@ -14,7 +14,6 @@ import traceback
 
 @transactional
 def sync_transactions(transactions):
-    config = get_config()
     conscribo = Conscribo(config.conscribo.api_url, config.conscribo.api_key, config.conscribo.api_secret)
 
     for t in transactions:
@@ -36,18 +35,17 @@ def sync_transactions(transactions):
 
 def transaction_to_transactionXML(transaction, conscribo_link):
     """"Convert a Tantalus Transaction to a Conscribo XML Transaction"""
-    mconfig = get_config()
 
     txml = TransactionXML(conscribo_link.conscribo_reference,
-                          reference="{}-{} {} {}".format(mconfig.yearcode, str(transaction.reference), transaction.relation.name,
+                          reference="{}-{} {} {}".format(config.yearcode, str(transaction.reference), transaction.relation.name,
                                                            transaction.informal_reference),
                           description="{} ({} {})".format(transaction.description, transaction.relation.name,
                                                           transaction.informal_reference))
     txml.date = conscribo_link.bookdate or transaction.deliverydate
 
-    config = ConscriboConfig.get_config()
-    todo_account = config.get("todo", 999)
-    rel_link = config.get("relations", {}).get(transaction.relation.name)
+    cconfig = ConscriboConfig.get_config()
+    todo_account = cconfig.get("todo", 999)
+    rel_link = cconfig.get("relations", {}).get(transaction.relation.name)
 
     if rel_link is None:
         total_account = todo_account
@@ -59,10 +57,10 @@ def transaction_to_transactionXML(transaction, conscribo_link):
     absolute_total = 0
 
     for group, btwvalues in rows_groups_btws_totals(record["sell"]).items():
-        inventory = config.get("groups", {}).get(group).get("inventory") or todo_account
+        inventory = cconfig.get("groups", {}).get(group).get("inventory") or todo_account
 
         for btwt, values in btwvalues.iteritems():
-            vatcode = config.get("vatcodes", {})[btwt]  # error if btwtype is not vatcoded: intentional!
+            vatcode = cconfig.get("vatcodes", {})[btwt]  # error if btwtype is not vatcoded: intentional!
 
             txml.rows.append(
                 TransactionXMLRow(account=inventory, amount=values[0], credit=True, vatcode=vatcode, vat=values[1]))
@@ -72,11 +70,11 @@ def transaction_to_transactionXML(transaction, conscribo_link):
             txml.description += "\nSell Group total {}, btw{} with value {:.2f}.".format(group, btwt, values[2] / 100.0)
 
     for group, btwvalues in rows_groups_btws_totals(record["buy"], record["two_to_one_has_btw"]).items():
-        inventory = config.get("groups", {}).get(group, {}).get("inventory") or todo_account
-        profit = config.get("groups", {}).get(group, {}).get("profit") or todo_account
+        inventory = cconfig.get("groups", {}).get(group, {}).get("inventory") or todo_account
+        profit = cconfig.get("groups", {}).get(group, {}).get("profit") or todo_account
 
         for btwt, values in btwvalues.items():
-            vatcode = config.get("vatcodes", {})[btwt]  # error if btwtype is not vatcoded: intentional!
+            vatcode = cconfig.get("vatcodes", {})[btwt]  # error if btwtype is not vatcoded: intentional!
             print(values[0], values[1], values[2], values[3])
 
             if values[1] == 0:
@@ -99,7 +97,7 @@ def transaction_to_transactionXML(transaction, conscribo_link):
             txml.description += "\nBuy Group total {}, btw{} with value {:.2f}.".format(group, btwt, values[2] / 100.0)
 
     for service in record["service"]:
-        vatcode = config.get("vatcodes", {})[str(service["btw"])]
+        vatcode = cconfig.get("vatcodes", {})[str(service["btw"])]
         txml.rows.append(TransactionXMLRow(account=total_account, amount=abs(service["value"]),
                                            credit=service["value"] < 0))
         txml.rows.append(
