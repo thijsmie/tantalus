@@ -11,7 +11,7 @@ import tantalus_db.models
 import tantalus_db.conscribo
 import tantalus_db.snapshot
 
-from tantalus.api.routers import blueprints, activate_routes
+from tantalus.web.routers import blueprints, activate_routes
 from worker.worker import worker
 
 from .auth import auth

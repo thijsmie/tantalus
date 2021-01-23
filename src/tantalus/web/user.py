@@ -9,7 +9,7 @@ from tantalus_db.models import User, Relation
 from tantalus_db.paginator import Paginator
 from tantalus_db.utility import get_or_none
 
-from tantalus.api.routers import bp_user as router
+from tantalus.web.routers import bp_user as router
 
 
 @router.route('/', defaults=dict(page=0))

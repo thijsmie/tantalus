@@ -233,7 +233,7 @@ class Transaction(Base):
     two_to_one_has_btw = Column(Boolean, nullable=False, default=False)
     two_to_one_btw_per_row = Column(Boolean, nullable=False, default=False)
 
-    conscribo_transaction = relationship("ConscriboTransactionLink", back_populates="transaction", uselist=False)
+    conscribo_transaction = relationship("ConscriboTransactionLink", cascade="all, delete-orphan", back_populates="transaction", uselist=False)
 
     def dict(self):
         return {

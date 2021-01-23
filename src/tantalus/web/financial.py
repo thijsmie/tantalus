@@ -2,9 +2,9 @@ from flask import render_template
 from flask_login import login_required
 
 from tantalus.appfactory.auth import ensure_user_admin
-from tantalus.api.actions.group import group_values, group_excl_values
-from tantalus.api.actions.service import service_values, service_excl_values
-from tantalus.api.routers import bp_financial as router
+from tantalus.logic.group import group_values, group_excl_values
+from tantalus.logic.service import service_values, service_excl_values
+from tantalus.web.routers import bp_financial as router
 from tantalus_db.models import Relation
 
 

@@ -7,9 +7,9 @@ from tantalus_db.paginator import Paginator
 from tantalus_db.utility import get_or_none
 
 from tantalus.appfactory.auth import ensure_user_admin, ensure_user_stock
-from tantalus.api.actions.group import group_values
-from tantalus.api.actions.product import new_product, edit_product
-from tantalus.api.routers import bp_product as router
+from tantalus.logic.group import group_values
+from tantalus.logic.product import new_product, edit_product
+from tantalus.web.routers import bp_product as router
 
 
 @router.route('/', defaults=dict(page=0))

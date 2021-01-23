@@ -6,9 +6,9 @@ from tantalus_db.base import db
 from tantalus_db.models import Transaction, PosSale, Product, ServiceLine, TransactionLine, Referencing
 from tantalus_db.utility import transactional
 
-from tantalus.api.actions.btwtype import get_btwtype
+from tantalus.logic.btwtype import get_btwtype
 
-from datetime import datetime, timezone
+from datetime import datetime
 from collections import defaultdict
 
 
@@ -21,7 +21,7 @@ def make_pos_transaction(endpoint, begin_date, end_date):
     sales = PosSale.query.filter(
         PosSale.time_created >= time_begin,     
         PosSale.time_created <= time_end,
-        PosSale.endpoint == endpoint,
+        PosSale.posendpoint == endpoint,
         PosSale.processed == False
     ).all()
 
@@ -81,9 +81,9 @@ def make_pos_transaction(endpoint, begin_date, end_date):
         reference = reference,
         informal_reference = informal_reference,
         deliverydate = end_date,
-        processeddate = datetime.now(timezone("Europe/Amsterdam")).date(),
+        processeddate = datetime.now().date(),
         description = "POS sales between {} and {} for endpoint {}.".format(
-            begin_date.strftine("%Y-%m-%d"), end_date.strftine("%Y-%m-%d"), endpoint.name
+            begin_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"), endpoint.name
         ),
         relation= relation,
         one_to_two= sell_lines,

@@ -1,13 +1,17 @@
+from datetime import datetime
 from flask import render_template, request, redirect, url_for
 from flask.json import jsonify
 from flask_login import login_required
 
+from worker.worker import pos_transaction
+
 from tantalus_db.base import db
 
 from tantalus.appfactory.auth import ensure_user_admin
-from tantalus.api.routers import bp_pos as router
+from tantalus.web.routers import bp_pos as router
 
-from tantalus.api.actions.pos import new_pos_product, new_pos_service, \
+import tantalus.appfactory.flash as flash
+from tantalus.logic.pos import new_pos_product, new_pos_service, \
     edit_pos_product, edit_pos_service, discontinue_pos_product, \
     add_pos_endpoint
 
@@ -158,10 +162,35 @@ def add_endpoint():
 @ensure_user_admin
 def endpoint(endpoint_id, page):
     endpoint = PosEndpoint.query.get_or_404(endpoint_id)
-    sales_paginator = Paginator(PosSale.query.filter(PosSale.posendpoint == endpoint, PosSale.processed == False).order_by(
+    sales_paginator = Paginator(PosSale.query.filter(PosSale.posendpoint == endpoint).order_by(
         PosSale.time_created.desc()), page=page, per_page=40, endpoint_id=endpoint_id)
     return render_template(
         'tantalus_posendpoint.html',
         endpoint=endpoint,
         sales_paginator=sales_paginator
     )
+
+
+@router.route('/endpoint/<int:endpoint_id>/process', methods=["POST"])
+@login_required
+@ensure_user_admin
+def endpoint_gen(endpoint_id):
+    endpoint = PosEndpoint.query.get_or_404(endpoint_id)
+    form = request.form or request.json
+
+    try:
+        date_start = datetime.strptime(form["start"], "%Y-%m-%d").date()
+        date_end = datetime.strptime(form["end"], "%Y-%m-%d").date()
+
+        pos_transaction(
+            endpoint.id, 
+            date_start.strftime("%Y-%m-%d"),
+            date_end.strftime("%Y-%m-%d")
+        )
+    except:
+        flash.danger("Invalid data entered")
+        return redirect(url_for('.endpoint', endpoint_id=endpoint_id, page=0)), 400
+    flash.success("Data submitted. It might take a few seconds for the transaction to process.")
+    return redirect(url_for('.endpoint', endpoint_id=endpoint_id, page=0))
+        
+    

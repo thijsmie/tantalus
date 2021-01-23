@@ -106,27 +106,27 @@
 
 <div class="col-12 col-lg-6">
   <div class="well bs-component">
-      <fieldset>
-        <legend>POS-Endpoints</legend>
-        <div class="col-lg-12 table-responsive">
-          <table class="table table-condensed table-striped">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Relation</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for endpoint in posendpoints %}
-              <tr>
-                <td><a href="{{ url_for('.endpoint', endpoint_id=endpoint.id) }}">{{ endpoint.name }}</a></td>
-                <td>{{ endpoint.relation.name }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </fieldset>
+    <fieldset>
+      <legend>POS-Endpoints</legend>
+      <div class="col-lg-12 table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Relation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for endpoint in posendpoints %}
+            <tr>
+              <td><a href="{{ url_for('.endpoint', endpoint_id=endpoint.id) }}">{{ endpoint.name }}</a></td>
+              <td>{{ endpoint.relation.name }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
   </div>
 </div>
 
@@ -162,65 +162,65 @@
 
 <div class="col-12 col-lg-12">
   <div class="well bs-component">
-      <fieldset>
-        <legend>POS-Services</legend>
-        <div class="col-lg-12 table-responsive">
-          <table class="table table-condensed table-striped">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Service</th>
-                <th class="align-r">Price</th>
-                <th class="align-r">BTW%</th>
-                <th class="align-r">Scan ID</th>
-                <th class="align-r">Keycode</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for product in posproducts if product.is_service %}
-              <tr>
-                <td><a href="{{ url_for('.view', pos_product_id=product.id) }}">{{ product.name }}</a></td>
-                <td>{{ product.service }}</td>
-                <td class="align-r">&euro;{{ product.service_price | format_currency }}</td>
-                <td class="align-r">{{ product.service_btw.percentage }}%</td>
-                <td class="align-r">{{ product.scan_id }}</td>
-                <td class="align-r">{{ product.keycode }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </fieldset>
+    <fieldset>
+      <legend>POS-Services</legend>
+      <div class="col-lg-12 table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Service</th>
+              <th class="align-r">Price</th>
+              <th class="align-r">BTW%</th>
+              <th class="align-r">Scan ID</th>
+              <th class="align-r">Keycode</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in posproducts if product.is_service %}
+            <tr>
+              <td><a href="{{ url_for('.view', pos_product_id=product.id) }}">{{ product.name }}</a></td>
+              <td>{{ product.service }}</td>
+              <td class="align-r">&euro;{{ product.service_price | format_currency }}</td>
+              <td class="align-r">{{ product.service_btw.percentage }}%</td>
+              <td class="align-r">{{ product.scan_id }}</td>
+              <td class="align-r">{{ product.keycode }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
   </div>
 </div>
 
 <div class="col-12 col-lg-12">
   <div class="well bs-component">
-      <fieldset>
-        <legend>POS-Products</legend>
-        <div class="col-lg-12 table-responsive">
-          <table class="table table-condensed table-striped">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Product</th>
-                <th class="align-r">Scan ID</th>
-                <th class="align-r">Keycode</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for product in posproducts if not product.is_service %}
-              <tr>
-                <td><a href="{{ url_for('.view', pos_product_id=product.id) }}">{{ product.name }}</a></td>
-                <td>{{ product.product.contenttype }}</td>
-                <td class="align-r">{{ product.scan_id }}</td>
-                <td class="align-r">{{ product.keycode }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </fieldset>
+    <fieldset>
+      <legend>POS-Products</legend>
+      <div class="col-lg-12 table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Product</th>
+              <th class="align-r">Scan ID</th>
+              <th class="align-r">Keycode</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in posproducts if not product.is_service %}
+            <tr>
+              <td><a href="{{ url_for('.view', pos_product_id=product.id) }}">{{ product.name }}</a></td>
+              <td>{{ product.product.contenttype }}</td>
+              <td class="align-r">{{ product.scan_id }}</td>
+              <td class="align-r">{{ product.keycode }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
   </div>
 </div>
 {% endblock %}

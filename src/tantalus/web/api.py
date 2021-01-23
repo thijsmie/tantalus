@@ -4,7 +4,7 @@ from flask.json import jsonify
 from tantalus_db.models import PosEndpoint, PosProduct, PosSale, Product, Group, BtwType, Relation, Transaction, User
 
 from tantalus.appfactory.auth import ensure_user_api
-from tantalus.api.routers import bp_api as router
+from tantalus.web.routers import bp_api as router
 from config import config
 
 import re

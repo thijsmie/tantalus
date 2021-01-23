@@ -8,7 +8,7 @@ from tantalus_db.config import Setting
 from tantalus_db.models import PosSale
 
 from tantalus.appfactory.auth import ensure_user_admin
-from tantalus.api.routers import bp_administration as router
+from tantalus.web.routers import bp_administration as router
 from tantalus.appfactory import flash
 
 from worker.worker import advance_bookyear
@@ -47,7 +47,7 @@ def advance():
     if not form or not 'yearcode' in form or not re.match(r'\d{4}', form['yearcode']):
         flash.danger('No proper yearcode was posted')
         return redirect(url_for('.index'))
-    advance_bookyear.apply_async(countdown=10, args=[form['yearcode']])
+    advance_bookyear(form['yearcode'])
     flash.warning("Advance bookyear has been scheduled. Time to close this tab (and all other tantalus tabs) and wait for it to complete.")
     return redirect(url_for('tantalus.index'))
     

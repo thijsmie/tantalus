@@ -8,7 +8,7 @@ from tantalus_db.utility import transactional
 
 from config import config
 
-from tantalus.api.actions.transaction import transaction_record
+from tantalus.logic.transaction import transaction_record
 import traceback
 
 

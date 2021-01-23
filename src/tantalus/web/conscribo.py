@@ -11,7 +11,7 @@ from tantalus_db.models import Transaction
 from tantalus_db.conscribo import ConscriboConfig, ConscriboTransactionLink
 from tantalus_db.utility import get_or_none
 
-from tantalus.api.routers import bp_conscribo as router
+from tantalus.web.routers import bp_conscribo as router
 from worker.worker import conscribo_sync
 
 

@@ -18,6 +18,7 @@
           <li>Empty the Session table to remove all logged in sessions.</li>
           <li>Make a snapshot named "End of year"</li>
           <li>Delete all Transactions</li>
+          <li>Delete all processed POS Sales</li>
           <li>Delete all discontinued Products, POS-Products and POS-Services</li>
           <li>Update the yearcode and set the reference counter to 0</li>
           <li>Make a snapshot named "Begin of year"</li>
@@ -30,7 +31,7 @@
       <form action="{{ url_for('.advance') }}" method="post" class="form-horizontal">
         <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
         <div class="form-group">
-          <label for="name" class="col-lg-3 control-label">Yearcode</label>
+          <label for="name" class="col-lg-3 control-label">New Yearcode</label>
           <div class="col-lg-9">
             <input type="text" class="form-control" id="yearcode" name="yearcode">
           </div>

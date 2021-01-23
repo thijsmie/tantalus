@@ -1,3 +1,4 @@
+from datetime import date
 import requests
 from getpass import getpass
 from haikunator import Haikunator
@@ -35,6 +36,10 @@ services = [h.haikunate(token_length=0) for i in range(20)]
 btwtypes = [random.randint(0, 21) for i in range(4)]
 products = []
 relations = []
+
+posendpoints = []
+posproducts = []
+
 
 # Send products
 for p in range(100):
@@ -86,3 +91,50 @@ for rel in range(300):
         } for i in range(random.randint(4, 50))]
     })
     check(r, "Failed to send transaction")
+
+
+# Send posproducts (products)
+for p in range(20):
+    r = s.post(base + "/pos/add/product", json={
+        "name": h.haikunate(token_length=0),
+        "product": random.choice(products)
+    })
+    check(r, "Failed to send pos product")
+    posproducts.append(r.json()['id'])
+
+# Send posproducts (services)
+for p in range(20):
+    r = s.post(base + "/pos/add/service", json={
+        "name": h.haikunate(token_length=0),
+        "service": random.choice(services),
+        "btw": random.choice(btwtypes),
+        "price": random.randint(10, 200)
+    })
+    check(r, "Failed to send pos service")
+    posproducts.append(r.json()['id'])
+
+# Send posendpoints
+for p in range(4):
+    r = s.post(base + "/pos/add/endpoint", json={
+        "name": h.haikunate(token_length=0),
+        "relation": random.choice(relations)
+    })
+    check(r, "Failed to send pos endpoint")
+    posendpoints.append(r.json()['id'])
+
+# Send sales (20 per break, 5 days a week, 40 weeks per year)
+for p in range(20 * 5 * 40):
+    r = s.post(base + "/poscl/sell", json={
+        'endpoint': random.choice(posendpoints),
+        'product': random.choice(posproducts),
+        'amount': random.randint(1, 4)
+    })
+    check(r, "Failed to send pos sale")
+
+# process sales
+for e in posendpoints:
+    r = s.post(base + f"/pos/endpoint/{e}/process", json={
+        'start': date.today().strftime('%Y-%m-%d'),
+        'end': date.today().strftime('%Y-%m-%d'),
+    })
+    check(r, "Failed to send pos process")

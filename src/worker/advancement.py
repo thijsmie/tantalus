@@ -2,7 +2,7 @@
 Utilities for advancing bookyear
 """
 from tantalus_db.base import db
-from tantalus_db.models import Session, Transaction, Referencing, Product, PosProduct
+from tantalus_db.models import PosSale, Session, Transaction, Referencing, Product, PosProduct
 from tantalus_db.config import Setting
 from tantalus_db.utility import transactional
 
@@ -31,6 +31,8 @@ def do_advance(yearcode):
 
     # We have to actually load the objects to get cascading deletes
     for t in Transaction.query.all():
+        db.session.delete(t)
+    for t in PosSale.query.filter(PosSale.processed == True).all():
         db.session.delete(t)
 
     # No need for cascades with posproduct and product

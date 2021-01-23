@@ -3,7 +3,7 @@ from tantalus_db.base import db
 from tantalus_db.models import PosProduct, PosEndpoint, PosSale
 from tantalus_db.utility import transactional
 
-from tantalus.api.actions.btwtype import get_btwtype
+from tantalus.logic.btwtype import get_btwtype
 
 
 @transactional

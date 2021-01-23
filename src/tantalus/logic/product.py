@@ -2,8 +2,8 @@ from tantalus_db.base import db
 from tantalus_db.models import Product, Group, BtwType
 from tantalus_db.utility import transactional
 
-from tantalus.api.actions.group import get_group
-from tantalus.api.actions.btwtype import get_btwtype
+from tantalus.logic.group import get_group
+from tantalus.logic.btwtype import get_btwtype
 
 import logging
 

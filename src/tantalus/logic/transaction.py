@@ -2,7 +2,7 @@ from tantalus_db.base import db
 from tantalus_db.models import Referencing, Transaction, TransactionLine, ServiceLine, Relation, Product, BtwType
 from tantalus_db.utility import get_or_none, transactional
 
-from tantalus.api.actions.rows import transform_collection
+from tantalus.logic.rows import transform_collection
 
 from collections import defaultdict
 from datetime import datetime

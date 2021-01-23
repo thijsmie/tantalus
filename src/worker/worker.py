@@ -1,15 +1,16 @@
 import datetime
 
 from tantalus.snapshot.create import create_snapshot
-from tantalus.api.actions.transaction import transaction_record
+from tantalus.logic.transaction import transaction_record
 
 from tantalus_db.base import db
 from tantalus_db.utility import get_or_none
-from tantalus_db.models import Transaction, Session
+from tantalus_db.models import Transaction, Session, PosEndpoint
 
 from worker.invoice import make_invoice
 from worker.sender import send_invoice
 from worker.advancement import disable_logins, enable_logins, do_advance
+from worker.pointofsale import make_pos_transaction
 
 from config import config
 
@@ -126,3 +127,12 @@ def advance_bookyear(yearcode):
         do_advance(yearcode)
     finally:
         enable_logins()
+
+
+@worker.task
+def pos_transaction(endpoint_id, start_date, end_date):
+    endpoint = PosEndpoint.query.get(endpoint_id)
+    date_start = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+    date_end = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+
+    make_pos_transaction(endpoint, date_start, date_end)

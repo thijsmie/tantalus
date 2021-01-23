@@ -9,8 +9,8 @@ from tantalus_db.models import Relation
 from tantalus_db.paginator import Paginator
 from tantalus_db.utility import get_or_none
 
-from tantalus.api.routers import bp_relation as router
-from tantalus.api.actions.relation import new_relation, edit_relation
+from tantalus.web.routers import bp_relation as router
+from tantalus.logic.relation import new_relation, edit_relation
 
 
 @router.route('/', defaults=dict(page=0))

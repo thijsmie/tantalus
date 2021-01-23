@@ -3,9 +3,9 @@ from flask.json import jsonify
 from flask_login import login_required
 
 from tantalus.appfactory.auth import ensure_user_pos
-from tantalus.api.routers import bp_pos_client as router
+from tantalus.web.routers import bp_pos_client as router
 
-from tantalus.api.actions.pos import new_pos_sale
+from tantalus.logic.pos import new_pos_sale
 from tantalus.appfactory.auth import do_login, do_logout, current_user
 
 from tantalus_db.models import PosEndpoint, PosProduct

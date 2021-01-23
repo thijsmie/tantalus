@@ -1,16 +1,16 @@
 from flask import render_template, request, redirect, url_for
 from flask_login import login_required
 from flask_weasyprint import HTML, render_pdf
-from tantalus.api.actions.transaction import transaction_record
+from tantalus.logic.transaction import transaction_record
 
 from tantalus_db.snapshot import Snapshot, TransactionSnapshot
 from tantalus_db.paginator import Paginator
 
 from tantalus.appfactory.auth import ensure_user_admin
-from tantalus.api.routers import bp_snapshot as router
+from tantalus.web.routers import bp_snapshot as router
 from tantalus.appfactory import flash
 
-from tantalus.api.actions.snapshot import snapshot_group_excl_values, snapshot_group_values, \
+from tantalus.logic.snapshot import snapshot_group_excl_values, snapshot_group_values, \
     snapshot_service_excl_values, snapshot_service_values
 from worker.worker import run_create_snapshot
 

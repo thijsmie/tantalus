@@ -10,8 +10,8 @@ from tantalus_db.utility import get_or_none
 
 from tantalus.appfactory import flash
 from tantalus.appfactory.auth import ensure_user_admin, ensure_user_transactions, ensure_user_relation, ensure_user_transaction
-from tantalus.api.routers import bp_transaction as router
-from tantalus.api.actions.transaction import new_transaction, edit_transaction, transaction_record
+from tantalus.web.routers import bp_transaction as router
+from tantalus.logic.transaction import new_transaction, edit_transaction, transaction_record
 
 from config import config
 from worker.worker import run_invoicing

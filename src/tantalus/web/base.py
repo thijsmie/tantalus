@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, request
 from flask_login import current_user
 
-from tantalus.api.routers import bp_base as router
+from tantalus.web.routers import bp_base as router
 from tantalus.appfactory import flash
 from tantalus.appfactory.auth import do_login, do_logout
 
