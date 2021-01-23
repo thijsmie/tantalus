@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+
+{% block container %}
+<div>
+  <h1>POS-Endpoint {{ endpoint.name }}</h1>
+</div>
+
+<div class="col-12 col-lg-12">
+  <form class="form col-lg-12" action="{{ url_for('.endpoint_gen', endpoint_id=endpoint.id) }}" method="POST">
+    <input id="_csrf_token" name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+    <div class="well bs-component">
+      <fieldset>
+        <legend>Process sales into transaction.</legend>
+        <div class="form-group row">
+          <label for="start" class="col-lg-2 control-label">Starting date</label>
+          <div class="col-lg-3">
+            <input name="start" type="date" class="form-control" placeholder="Starting date"/>
+          </div>
+          <label for="end" class="col-lg-2 control-label">Ending date (inclusive)</label>
+          <div class="col-lg-3">
+            <input name="end" type="date" class="form-control" placeholder="Ending date (inclusive)"/>
+          </div>
+          <div class="col-lg-2">
+            <button type="submit" class="btn btn-block btn-sm btn-primary">Submit</button>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+  </form>
+</div>
+
+<div class="col-12 col-lg-12">
+  <div class="well bs-component">
+    <fieldset>
+      <div class="col-lg-12 table-responsive">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <tr>
+              <th>Processed</th>
+              <th>Time</th>
+              <th>User</th>
+              <th>Product</th>
+              <th class="align-r">Unit price</th>
+              <th class="align-r">Amount</th>
+              <th class="align-r">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sale in sales_paginator.items %}
+            <tr>
+              <td>{% if sale.processed %}✓{% endif %}</td>
+              <td>{{ sale.time_created | format_datetime }}</td>
+              <td>{{ sale.user.username }}</td>
+              <td>{{ sale.posproduct.name }}</td>
+              <td class="align-r">&euro;{{ sale.unit_price | format_currency }}</td>
+              <td class="align-r">{{ sale.amount }}</td>
+              <td class="align-r">&euro;{{ (sale.unit_price * sale.amount) | format_currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+    {{ paginator_buttons(sales_paginator) }}
+  </div>
+</div>
+{% endblock %}

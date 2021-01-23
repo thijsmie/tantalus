@@ -1,3 +1,0 @@
-{% macro format_currency(input) -%}
-  {{ "{:.2f}".format(input / 100.0).replace('.', ',') }}
-{%- endmacro %}

@@ -26,7 +26,7 @@ support for simple ingredient-to-product processes.
 │
 ├─ templates/        # Jinja2 templates
 │
-├─ ndbextensions     # All data models, for use in the Google Appengine NDB
+├─ tantalus_db     # All data models, for use in the Google Appengine NDB
 │
 ├─ pdfworker/        # Invoice creation and sending
 │
@@ -51,3 +51,22 @@ items on offer the price is reduced for all items you have, instead of it being 
 
 In madmin transactions were basically immutable. This caused many problems, since mistakes happen ([pebcak](https://en.wiktionary.org/wiki/PEBCAK)). Therefore IMP moves to the other end of the spectrum. A transaction is editable
 in an easy way, invoices get resent and changes are pushed to Conscribo with the press of a button.
+
+## Docker-Compose deployment procedure
+
+Start all containers with:
+
+```bash
+    docker-compose up --build -d
+```
+
+Note that all DB tables will be created upon the first http request to the application.
+
+## Testing (re-)deployment
+
+```bash
+    docker-compose down && \
+    sudo rm -rf path/to/cache/* && \
+    docker-compose up --build -d && \
+    python scripts/populate_with_testdata.py admin AdminAdmin
+```

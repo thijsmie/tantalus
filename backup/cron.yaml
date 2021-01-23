@@ -1,5 +1,0 @@
-cron:
-- description: "Daily Cloud Datastore Export"
-  url: /cloud-datastore-export?output_url_prefix=gs://backup_tantalus_new
-  target: cloud-datastore-admin
-  schedule: every 24 hours

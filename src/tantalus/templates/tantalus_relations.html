@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% from 'tantalus_paginator.html' import paginator_buttons with context %}
+
+{% block container %}
+  <div>
+    <h1>Relations</h1>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-condensed table-striped">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Current budget</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      {% for relation in pagination.items %}
+        <tr>
+          <td><a href="{{ url_for(".editrelation", relation_id=relation.id) }}">{{ relation.name }}</a></td>
+          <td>{{ relation.email }}</td>
+          {%- if relation.has_budget %}
+            <td align="right">{{ relation.budget | format_currency }}</td>
+          {% else %}
+            <td></td>
+          {% endif %}
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="3" style="text-align: center"><h2>&empty;</h2></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <a href="{{ url_for('.addrelation') }}" class="btn btn-default">Add relation</a>
+  {{ paginator_buttons(pagination) }}
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <style type="text/css">
+    @-moz-document url-prefix() {
+      fieldset {
+        display: table-cell;
+      }
+    }
+  </style>
+{% endblock %}

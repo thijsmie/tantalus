@@ -1,0 +1,14 @@
+Invoice information:
+Intended for: {receiver}
+Internal reference: {reference}
+Informal reference: {informal_reference}
+---
+This is an automatically generated email from a no reply address. 
+If you have any questions or notes about this invoice, please send
+an email to demeter.olympus@science.ru.nl or 
+penningmeester.voorraad@science.ru.nl.
+---
+Deze email is automatisch gegenereerd en verzonden vanaf een noreply-adres. 
+Mochten er vragen of opmerkingen zijn over deze factuur, dan kunnen die 
+gemaild worden naar demeter.olympus@science.ru.nl of 
+penningmeester.voorraad@science.ru.nl.

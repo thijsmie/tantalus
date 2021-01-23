@@ -1,0 +1,87 @@
+{% extends 'bootstrap/base.html' %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% import "bootstrap/utils.html" as util %}
+
+{% block title %}Tantalus{%- block append_title %}{% endblock %}{% endblock %}
+
+{% block styles %}
+  <meta charset="utf-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  {{ super() }}
+  <link rel="shortcut icon" href="/static/favicon.ico?"/>
+  <link rel="stylesheet" href="/static/css/custombootstrap.min.css">
+  <link href="/static/css/sticky-footer-navbar.css" rel="stylesheet">
+  <style type="text/css">
+    @-moz-document url-prefix() {
+      fieldset {
+        display: table-cell;
+      }
+    }
+
+    .pagination {
+      margin: 3px !important;
+    }
+  </style>
+{% endblock %}
+
+{% block navbar %}
+  {% include 'base_navbar.html' with context %}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="/static/js/imp.js"></script>
+  <script src="/static/js/prediction.js"></script>
+  <script type="text/javascript">$("[data-toggle=popover]").popover();</script>
+  <script type="text/javascript">$("[data-toggle=tooltip]").tooltip();</script>
+{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  {{ fixes.ie8() }}
+{% endblock %}
+
+{% block content %}
+  {% with messages = messages or get_flashed_messages(with_categories=True) -%}
+    {%- set transform={
+  'critical': 'danger',
+  'error': 'danger',
+  'info': 'info',
+  'warning': 'warning',
+  'debug': 'info',
+  'notset': 'info',
+  'message': 'info',
+} -%}
+    <!-- begin message block -->
+    <div class="container flashed-messages">
+      <div class="row">
+        <div id="messages" class="col-md-12">
+          {% for cat, msg in messages %}
+            <div class="alert alert-{{ transform.get(cat.lower(), default_category or cat) }}
+            {%- if dismissible %} alert-dismissible{% endif %}"
+                 role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span>
+              </button>
+              {{ msg }}
+            </div>
+          {%- endfor -%}
+        </div>
+      </div>
+    </div>
+    <!-- end message block -->
+  {% endwith %}
+
+  <div class="container">
+    {% block container %}
+    {% endblock %}
+  </div>
+  <footer class="footer">
+    <div class="container">
+      <p class="text-muted">Made by Thijs Miedema, view on <a class="btn btn-default btn-xs"
+                                                              href="https://github.com/thijsmie/tantalus">GitHub</a></p>
+      {% block footer %}{% endblock %}
+    </div>
+  </footer>
+
+{% endblock %}

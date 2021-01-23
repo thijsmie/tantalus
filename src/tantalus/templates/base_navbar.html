@@ -1,0 +1,36 @@
+{% from 'base_flash.html' import modal_alert, well_alert_navbar, well_alert %}
+
+<div class="navbar navbar-default navbar-static-top" role="navigation">
+  <div class="container">
+
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/">Tantalus&nbsp;<img alt="Brand" src="/static/logo.svg" height="20px"
+                                                          style="float:right;"></a>
+    </div>
+
+    <div class="collapse navbar-collapse">
+      <ul class="nav navbar-nav">
+        <li><a href="/">Home</a></li>
+        <li><a href="{{ url_for('tantalus.product.index') }}">Products</a></li>
+        <li><a href="{{ url_for('tantalus.relation.index') }}">Relations</a></li>
+        <li><a href="{{ url_for('tantalus.transaction.index') }}">Transactions</a></li>
+        <li><a href="{{ url_for('tantalus.user.index') }}">Users</a></li>
+        <li><a href="{{ url_for('tantalus.pos.index') }}">POS</a></li>
+        <li><a href="{{ url_for('tantalus.conscribo.index') }}">Conscribo</a></li>
+        <li><a href="{{ url_for('tantalus.financial.index') }}">Financial</a></li>
+        <li><a href="{{ url_for('tantalus.snapshot.index') }}">Snapshot</a></li>
+        <li><a href="{{ url_for('tantalus.administration.index') }}">Administration</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li style="display:inline-block; color: white;">{% include 'base_login.html' %}</li>
+      </ul>
+    </div>
+
+  </div>
+</div>

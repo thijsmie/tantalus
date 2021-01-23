@@ -1,0 +1,52 @@
+version: '3.1'
+
+services:
+  database:
+    container_name: database
+    image: postgres
+    env_file:
+      - variables.env
+    expose:
+      - "5433"
+    volumes:
+      - /home/tmiedema/dccache/postgres-data:/var/lib/postgresql/data  
+    restart: unless-stopped
+  
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    env_file:
+      - variables.env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    volumes:
+       - /home/tmiedema/dccache/pgadmin:/root/.pgadmin
+    ports:
+      - "5000:80"
+    restart: unless-stopped
+  
+  application:
+    image: tantalus-python
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: application
+    command: [gunicorn, -w 2, -b 0.0.0.0:80, --capture-output, --log-level=INFO, flask_entrypoint:app]
+    env_file:
+      - variables.env
+    depends_on:
+      - database
+    ports:
+      - 8000:80
+
+  worker:
+    image: tantalus-python
+    command: [python, "worker_entrypoint.py"]
+    container_name: worker
+    env_file:
+      - variables.env
+    depends_on:
+      - database
+      - application
+

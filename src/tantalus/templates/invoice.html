@@ -1,0 +1,291 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Invoice</title>
+    <meta name="description" content="Invoice">
+    <meta name="author" content="Tantalus">
+
+    <style>
+        @charset "UTF-8";
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@1,300&display=swap');
+
+        @page {
+            margin: 1cm;
+
+            @bottom-left {
+                color: #e3c449;
+                font-family: Roboto;
+                content: 'Tantalus Invoice';
+            }
+
+            @bottom-right {
+                color: rgb(93, 93, 88);
+                content: 'Stichting Tartarus';
+                font-family: Roboto;
+                font-size: 9pt;
+            }
+        }
+
+        @media print {
+            .pagebreak { break-inside: avoid; }
+        }
+
+        html {
+            color: #14213d;
+            font-family: Roboto;
+            font-size: 11pt;
+            line-height: 1.6;
+        }
+
+        html body {
+            margin: 0;
+        }
+
+        .head {
+            color: #e3c449;
+            font-family: Roboto;
+            font-size: 40pt;
+            margin: 0;
+        }
+
+        html aside {
+            display: flex;
+            margin: 2em 0 4em;
+        }
+
+        html aside address {
+            font-style: normal;
+            white-space: pre-line;
+        }
+
+        html aside address#from {
+            color: #a9a;
+            flex: 1;
+        }
+
+        html aside address#to {
+            text-align: right;
+        }
+
+        html dl {
+            text-align: right;
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+
+        html dl dt,
+        html dl dd {
+            display: inline;
+            margin: 0;
+        }
+
+        html dl dt {
+            color: #a9a;
+        }
+
+        html dl dt::before {
+            content: '';
+            display: block;
+        }
+
+        html dl dt::after {
+            content: ':';
+        }
+
+        html table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 5mm;
+        }
+
+        html table th {
+            border-bottom: .2mm solid #a9a;
+            color: #a9a;
+            font-size: 10pt;
+            font-weight: 400;
+            padding-bottom: .25cm;
+            text-transform: uppercase;
+        }
+
+        html table td {
+            padding-top: 2mm;
+        }
+
+        html table td:nth-last-of-type(2) {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        html table th,
+        html table td {
+            text-align: right;
+        }
+
+        html table th:first-of-type,
+        html table td:first-of-type {
+            text-align: left;
+        }
+
+
+        html table#total {
+            background: #f6f6f6;
+            border-color: #f6f6f6;
+            border-style: solid;
+            font-size: 12pt;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="head"> 
+        Tantalus Invoice
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 76.977 76.977'%3E%3Cg fill='%23e3c449'%3E%3Cpath d='M38.489 76.977c-15.54 0-28.183-12.643-28.183-28.182 0-14.53 23.185-44.307 25.828-47.654C36.703.421 37.571 0 38.488 0s1.785.42 2.354 1.141C43.486 4.489 66.67 34.265 66.67 48.795c.001 15.539-12.641 28.182-28.181 28.182zm0-69.06c-7.847 10.409-22.183 31.389-22.183 40.878 0 12.231 9.951 22.182 22.183 22.182s22.183-9.95 22.183-22.182c-.001-9.489-14.337-30.469-22.183-40.878z'/%3E%3Cpath d='M38.489 64.981c-1.657 0-3-1.343-3-3s1.343-3 3-3c5.616 0 10.186-4.567 10.186-10.183 0-1.657 1.343-3 3-3 1.656 0 3 1.343 3 3-.001 8.923-7.262 16.183-16.186 16.183z'/%3E%3C/g%3E%3C/svg%3E">
+    </div>
+
+    <aside>
+        <address id="from">
+            Stichting Tartarus
+            Heyendaalseweg 135
+            6525 AJ Nijmegen
+            tartarus@science.ru.nl
+            BTW: NL 858068199 B 01, KvK: 69928622
+        </address>
+
+        <address id="to">
+            {{ relation.address }}
+        </address>
+    </aside>
+
+    <dl id="informations">
+        <dt>Informele naam</dt>
+        <dd>{{ record.name }}.{{ record.revision }}</dd>
+        <dt>Referentie</dt>
+        <dd>{{ yearcode }}-{{ record.reference }}</dd>
+        <dt>Datum</dt>
+        <dd>{{ record.deliverydate }}</dd>
+    </dl>
+
+{% if record.sell|length > 0 %}
+    <h2>Geleverd</h2>
+    <table>
+        <thead>
+            <th>Product</th>
+            <th>Aantal</th>
+            <th>Stukprijs (Incl. BTW)</th>
+            <th>Totaal</th>
+            <th>BTW%</th>
+        </thead>
+        <tbody>
+{% for row in record.sell -%}
+            <tr>
+                <td>{{ row.contenttype }}</td>
+                <td>{{ row.amount }}</td>
+                <td>{{ (row.prevalue / row.amount) | format_currency }}</td>
+                <td>{{ row.prevalue | format_currency }}</td> 
+                <td>{{ row.btw }}%</td>
+            </tr>
+{% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% if record.buy|length > 0 %}
+    <h2>Retour</h2>
+    <table>
+        <thead>
+            <th>Product</th>
+            <th>Aantal</th>
+            <th>Stukprijs</th>
+            <th>Totaal {% if record.two_to_one_has_btw %}(Incl. BTW){% else %}(Excl. BTW){% endif %}</th>
+            <th>BTW%</th>
+            {% if record.two_to_one_btw_per_row %}<th>&euro;BTW</th>{% endif %}
+        </thead>
+        <tbody>
+{% for row in record.buy -%}
+            <tr>
+                <td>{{ row.contenttype }}</td>
+                <td>{{ row.amount }}</td>
+                <td>{{ (row.prevalue / row.amount) | format_currency }}</td>
+                <td>{{ row.prevalue | format_currency }}</td> 
+                <td>{{ row.btw }}%</td>
+                {% if record.two_to_one_btw_per_row %}<td>{{ row.btwvalue | format_currency }}</td>{% endif %}
+            </tr>
+{% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% if record.service|length > 0 %}
+    <h2>Services</h2>
+    <table>
+        <thead>
+            <th>Product</th>
+            <th>Aantal</th>
+            <th>Stukprijs (Incl. BTW)</th>
+            <th>Totaal</th>
+            <th>BTW%</th>
+        </thead>
+        <tbody>
+{% for row in record.service -%}
+            <tr>
+                <td>{{ row.contenttype }}</td>
+                <td>{{ row.amount }}</td>
+                <td>{{ (row.prevalue / row.amount) | format_currency }}</td>
+                <td>{{ row.prevalue | format_currency }}</td> 
+                <td>{{ row.btw }}%</td>
+            </tr>
+{% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+    <table id="total" class="pagebreak">
+        <thead>
+            <th>Omschrijving</th>
+            <th>Bedrag</th>
+        </thead>
+        <tbody>
+{% if record.sell|length > 0 %}
+            <tr>
+                <td>Geleverd totaal</td>
+                <td>&euro;{{ record.selltotal | format_currency }}</td>
+            </tr>
+{% endif %}
+{% if record.buy|length > 0 %}
+            <tr>
+                <td>Retour totaal</td>
+                <td>&euro;{{ record.buytotal | format_currency }}</td>
+            </tr>
+{% endif %}
+{% if record.service|length > 0 %}
+            <tr>
+                <td>Service totaal</td>
+                <td>&euro;{{ record.servicetotal | format_currency }}</td>
+            </tr>
+{% endif %}          
+            <tr>
+                <td>Exclusief BTW</td>
+                <td>&euro;{{ (record.total + record.btwtotal) | format_currency }}</td>
+            </tr>
+            <tr>
+                <td>BTW</td>
+                <td>&euro;{{ (-record.btwtotal) | format_currency }}</td>
+            </tr>
+            <tr>
+                <td>Eindtotaal</td>
+                <td>&euro;{{ record.total | format_currency }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {% if budget %}
+    Het factuurtotaal is afgeschreven van uw borrelsaldo, wat na deze factuur nog &euro;{{ budget | format_currency}} bedraagt. Extra borrelsaldo kan overgemaakt worden naar rekeningnummer NL02 ABNA 0800 2042 55 t.n.v. Stichting Tartarus te Nijmegen.
+    {% else %}
+    Wij verzoeken u vriendelijk om het verschuldigde bedrag binnen 30 dagen over te maken onder vermelding van de referentie naar rekeningnummer NL02 ABNA 0800 2042 55 t.n.v. Stichting Tartarus te Nijmegen.
+    {% endif %}
+</body>
+
+</html>
