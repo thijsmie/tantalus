@@ -110,5 +110,11 @@
     return true;
   }
 
+{% if product %}
+  function discontinue_product() {
+    post_object(tosubmit, "{{ url_for('.discontinue', product_id=product.id) }}", "{{ url_for('.index') }}");
+    return true;
+  }
+{% endif %}
 </script>
 {% endblock %}

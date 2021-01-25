@@ -8,7 +8,7 @@ from tantalus_db.utility import get_or_none
 
 from tantalus.appfactory.auth import ensure_user_admin, ensure_user_stock
 from tantalus.logic.group import group_values
-from tantalus.logic.product import new_product, edit_product
+from tantalus.logic.product import new_product, edit_product, discontinue_product
 from tantalus.web.routers import bp_product as router
 
 
@@ -38,7 +38,7 @@ def showgroup(group_id, page):
         return abort(404)
 
     pagination = Paginator(
-        Product.query.filter(Product.discontinued == False and Product.group == group).order_by(Product.contenttype),
+        Product.query.filter(Product.discontinued == False, Product.group == group).order_by(Product.contenttype),
         page, 20, group_id=group_id
     )
     return render_template('tantalus_products.html', group=group.name, showgroup=False, pagination=pagination)
@@ -78,3 +78,16 @@ def editproduct(product_id):
         return jsonify(product)
 
     return render_template('tantalus_product.html', product=product)
+
+
+@router.route('/discontinue/<string:product_id>', methods=["POST"])
+@login_required
+@ensure_user_admin
+def discontinue(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    try:
+        discontinue_product(product)
+    except:
+        return jsonify({"messages": ["Invalid data"]}, 400)
+    return jsonify({})

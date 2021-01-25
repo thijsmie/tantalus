@@ -26,6 +26,7 @@ def new_product(data):
     
     return product
 
+
 @transactional
 def edit_product(product, data):
     group = get_group(data['group']) if 'group' in data else product.group
@@ -40,4 +41,9 @@ def edit_product(product, data):
     product.value = int(data.get('value', product.value))
 
     return product
+
+
+@transactional
+def discontinue_product(product):
+    product.discontinued = True
 
