@@ -20,14 +20,14 @@ class ConscriboConfig(Base):
         return json.loads(config.config)
 
     @classmethod
-    def set_config(cls, config):
+    def set_config(cls, config_data):
         config = cls.query.one_or_none()
         if not config:
             config = cls()
             config.config = "{}"
             db.session.add(config)
 
-        config.config = json.dumps(config)
+        config.config = json.dumps(config_data)
         db.session.commit()
 
 
