@@ -1,4 +1,4 @@
-""" Copy certain models to take a read-only snapshot of the database """    
+""" Copy certain models to take a read-only snapshot of the database """
 from .base import db, Base
 
 from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, Date, Text
@@ -11,10 +11,10 @@ class Snapshot(Base):
     name = Column(String(200), nullable=False, default="")
     yearcode = Column(Integer, nullable=False)
 
-    relations = relationship('RelationSnapshot', order_by="RelationSnapshot.name")
-    btwtypes = relationship('BtwTypeSnapshot')
-    products = relationship('ProductSnapshot', order_by="ProductSnapshot.contenttype")
-    transactions = relationship('TransactionSnapshot', order_by="TransactionSnapshot.reference")
+    relations = relationship('RelationSnapshot', order_by="RelationSnapshot.name", back_populates="snapshot")
+    btwtypes = relationship('BtwTypeSnapshot', back_populates="snapshot")
+    products = relationship('ProductSnapshot', order_by="ProductSnapshot.contenttype", back_populates="snapshot")
+    transactions = relationship('TransactionSnapshot', order_by="TransactionSnapshot.reference", back_populates="snapshot")
 
 
 class SnapshotBase(Base):
@@ -23,7 +23,7 @@ class SnapshotBase(Base):
     @declared_attr
     def snapshot_id(cls):
         return Column(Integer, ForeignKey('snapshot.id'), index=True, nullable=False)
-    
+
     @declared_attr
     def snapshot(cls):
         return relationship('Snapshot')
