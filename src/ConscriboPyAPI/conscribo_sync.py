@@ -14,15 +14,15 @@ import traceback
 
 @transactional
 def sync_transactions(transactions):
-    conscribo = Conscribo(config.conscribo.api_url, config.conscribo.api_key, config.conscribo.api_secret)
+    conscribo = Conscribo(config.conscribo_api_url, config.conscribo_api_key, config.conscribo_api_secret)
 
     for t in transactions:
         link = t.conscribo_transaction
         if link is None:
             continue
-        xml = transaction_to_transactionXML(t, link)
 
         try:
+            xml = transaction_to_transactionXML(t, link)
             conscribo.add_change_transaction(xml)
 
             link.pushed_revision = t.revision
@@ -57,9 +57,9 @@ def transaction_to_transactionXML(transaction, conscribo_link):
     absolute_total = 0
 
     for group, btwvalues in rows_groups_btws_totals(record["sell"]).items():
-        inventory = cconfig.get("groups", {}).get(group).get("inventory") or todo_account
+        inventory = cconfig.get("groups", {}).get(group, {}).get("inventory", None) or todo_account
 
-        for btwt, values in btwvalues.iteritems():
+        for btwt, values in btwvalues.items():
             vatcode = cconfig.get("vatcodes", {})[btwt]  # error if btwtype is not vatcoded: intentional!
 
             txml.rows.append(
@@ -119,8 +119,8 @@ def rows_groups_btws_totals(rowset, includes_btw=True):
         group_valuebtw[row["group"]][str(row["btw"])][3] += row.get("value_excl", row["value"]) / (1.0 + row["btw"] / 100.0)
         
 
-    for group, values in group_valuebtw.iteritems():
-        for btwt, valuebtw in values.iteritems():
+    for group, values in group_valuebtw.items():
+        for btwt, valuebtw in values.items():
             group_valuebtw[group][btwt][0] = int(round(valuebtw[0]))
             group_valuebtw[group][btwt][1] = int(round(valuebtw[1]))
             group_valuebtw[group][btwt][2] = int(round(valuebtw[2]))

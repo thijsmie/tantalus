@@ -58,8 +58,8 @@ def sync():
     except (ValueError, KeyError, Exception):
         return jsonify({"message": "Bad data"}, 400)
     return redirect(url_for(".index"))
-    
-    
+
+
 @router.route("/generate")
 @login_required
 @ensure_user_admin
@@ -70,7 +70,7 @@ def generate():
         next_id = links[-1].conscribo_reference + 1
     else:
         next_id = 1
-        
+
     for t in transactions:
         if not t.conscribo_transaction:
             t.conscribo_transaction = ConscriboTransactionLink(
@@ -82,6 +82,6 @@ def generate():
             next_id += 1
             db.session.add(t.conscribo_transaction)
     db.session.commit()
-    return jsonify({})
+    return redirect(url_for(".index"))
 
 

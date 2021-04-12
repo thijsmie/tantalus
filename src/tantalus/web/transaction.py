@@ -64,11 +64,8 @@ def addtransaction():
     form = request.json
 
     if request.method == "POST":
-        relation = Relation.query.get_or_404(int(form['relation']))
         transaction = new_transaction(form)
-        relation.budget -= transaction.total
         run_invoicing(transaction.id)
-        db.session.commit()
         return jsonify(transaction)
 
     return render_template('tantalus_transaction.html',
@@ -88,11 +85,8 @@ def edittransaction(transaction_id):
 
     if request.method == "POST":
         try:
-            old_total = transaction.total
             transaction = edit_transaction(transaction, form)
-            transaction.relation.budget += old_total - transaction.total
             run_invoicing(transaction.id)
-            db.session.commit()
         except:
             return jsonify({"messages": ["Invalid data"]}, 400)
         return jsonify(transaction)

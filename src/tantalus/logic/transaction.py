@@ -85,6 +85,7 @@ def new_transaction(data):
     rec = transaction_record(t)
     t.total = rec["total"]
     db.session.add(t)
+    relation.budget -= rec["total"]
 
     return t
 
@@ -92,7 +93,7 @@ def new_transaction(data):
 @transactional
 def edit_transaction(t, data):
     # Easy stuff first
-    # Note, this does not take care of money in budgets, do outside! Something with transactional limitations...
+    old_total = t.total
     t.revision += 1
     
     t.two_to_one_has_btw = data.get("two_to_one_has_btw", t.two_to_one_has_btw)
@@ -161,6 +162,7 @@ def edit_transaction(t, data):
     record = transaction_record(t)
     t.total = record["total"]
     db.session.add(t)
+    t.relation.budget += old_total - t.total
     return t
 
 
