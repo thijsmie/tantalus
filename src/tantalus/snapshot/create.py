@@ -118,7 +118,7 @@ def create_snapshot(name):
         )
 
         if transaction.conscribo_transaction:
-            sn_transaction.conscribo_reference = transaction.conscribo_transaction.reference
+            sn_transaction.conscribo_reference = transaction.conscribo_transaction.conscribo_reference
 
         if transaction.relation.has_budget:
             after = Transaction.query.filter(

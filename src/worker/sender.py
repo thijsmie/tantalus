@@ -1,6 +1,6 @@
 import logging
 import os
-from smtplib import SMTP
+from smtplib import SMTP, SMTPConnectError, SMTPAuthenticationError
 import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
@@ -15,27 +15,39 @@ with open(os.path.join(mydir, "resources/email.txt")) as f:
 
 
 def send_invoice(relation, transaction, pdf_stringio):
-    context = ssl.create_default_context()
+    msg = MIMEMultipart()
 
-    with SMTP(host=config.smtp_host, port=config.smtp_port) as smtp:
-        smtp.starttls(context=context)
-        smtp.login(config.smtp_user, config.smtp_pass)
+    msg['Subject'] = f"Tantalusfactuur {relation.name}_{transaction.informal_reference:03}"
+    msg['From'] = config.smtp_sender
+    msg['To'] = relation.email
 
-        msg = MIMEMultipart()
-        
-        msg['Subject'] = f"Tantalusfactuur {relation.name}_{transaction.informal_reference:03}"
-        msg['From'] = config.smtp_sender
-        msg['To'] = relation.email
-        
-        msg.attach(MIMEText(email.format(
-            receiver=relation.name, 
-            reference=f"{config.yearcode}-{transaction.reference:04}",
-            informal_reference=f"{relation.name}-{transaction.informal_reference:03}")
-        , 'plain'))
+    msg.attach(MIMEText(email.format(
+        receiver=relation.name,
+        reference=f"{config.yearcode}-{transaction.reference:04}",
+        informal_reference=f"{relation.name}-{transaction.informal_reference:03}")
+    , 'plain'))
 
-        attachment = MIMEApplication(pdf_stringio.getvalue(), _subtype='pdf')
-        attachment.add_header('Content-Disposition', 'attachment', filename=f"factuur_{relation.name}_{transaction.informal_reference:03}")
-        msg.attach(attachment)
+    attachment = MIMEApplication(pdf_stringio.getvalue(), _subtype='pdf')
+    attachment.add_header('Content-Disposition', 'attachment', filename=f"factuur_{relation.name}_{transaction.informal_reference:03}")
+    msg.attach(attachment)
 
-        smtp.send_message(msg)
-        logging.info('Message sent')
+    sent = False
+
+    for i in range(10):
+        context = ssl.create_default_context()
+        try:
+            with SMTP(host=config.smtp_host, port=config.smtp_port) as smtp:
+                smtp.starttls(context=context)
+                smtp.login(config.smtp_user, config.smtp_pass)
+
+                smtp.send_message(msg)
+                sent = True
+                logging.info('Message sent')
+        except (SMTPAuthenticationError, SMTPAuthenticationError):
+            pass
+
+        if sent:
+            break
+
+    if not sent:
+        raise Exception("After 10 tries still failed to sent invoice.")

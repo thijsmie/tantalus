@@ -47,7 +47,7 @@ def load_user(session_token):
 def do_login(username, password, rememberme):
     if config.nologin.lower() == 'true':
         return False
-        
+
     user = User.query.filter(User.username == username).first()
 
     if user is None:
