@@ -78,7 +78,7 @@
               tosubmit = {};
               tosubmit.name = $('#name').val();
               tosubmit.email = $('#email').val();
-              tosubmit.budget = parseInt(parseFloat($('#budget').val().replace(",", ".")) * 100);
+              tosubmit.budget = parseMoney($('#budget').val());
               tosubmit.has_budget = $("#has_budget").prop("checked");
               tosubmit.send_mail = $("#send_mail").prop("checked");
               tosubmit.address = $("#address").val();

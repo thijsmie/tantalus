@@ -103,7 +103,7 @@
         };
 
         transaction.parse_price = function (string) {
-            return parseInt(parseFloat(string.replace(',', '.')) * 100.0);
+            return parseMoney(string);
         };
 
         transaction.format_currency = function (int) {
@@ -276,7 +276,9 @@
                     }
                 }
                 else if (e.which === 65) {
-                    tr.input_price.val((parseFloat(tr.input_price.val()) * parseInt(tr.input_amount.val())).toFixed(2));
+                    var v = parseMoney(tr.input_price.val());
+                    v *= parseInt(tr.input_amount.val());
+                    tr.input_price.val(formatMoney(v));
                 }
             };
 
@@ -286,7 +288,7 @@
                 tr.input_price.val(money.substring(0, index) + "." + money.substring(index));
                 transaction.caret_position(tr.input_price, tr.input_price.val().length);
             };
-            
+
             tr.price_input_alt_keydown = function (e) {
                 if (e.which === 13 || e.which === 9) {
                     e.stopPropagation();
@@ -296,11 +298,13 @@
                         tr.input_amount.focus();
                         return;
                     }
-                    
+
                     tr.input_btw.focus();
                 }
                 else if (e.which === 65) {
-                    tr.input_price.val((parseFloat(tr.input_price.val()) * parseInt(tr.input_amount.val())).toFixed(2));
+                    var v = parseMoney(tr.input_price.val());
+                    v *= parseInt(tr.input_amount.val());
+                    tr.input_price.val(formatMoney(v));
                 }
             };
             

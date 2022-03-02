@@ -100,16 +100,14 @@ function field_validate_float_or_none(field) {
 }
 
 function field_validate_money(field) {
-    if (valid_float($(field).val().replace(',', '.'))) {
-        var val = parseFloat($(field).val().replace(',', '.')) * 100.0;
-
-        // There's no trusting float comparison.
-        if (Math.floor(val) == val && Math.ceil(val) == val) {
-            return true;
-        }
+    const re = /^(\d+)((?:[\.,]\d{0,2})?)$/u;
+    let data = $(field).val();
+    let m = re.exec(data);
+    if (m === null) {
+        display_error(field.capitalize() + ": '" + data + "' is not a valid amount of money.");
+        return false;
     }
-    display_error(field.capitalize() + ": '" + $(field).val() + "' is not a valid amount of money.");
-    return false;
+    return true;
 }
 
 function field_validate_money_or_none(field) {
@@ -119,15 +117,22 @@ function field_validate_money_or_none(field) {
 }
 
 function parseMoney(val) {
-    val = val.replace(',', '.');
-    
-    if (valid_float(val)) {
-        var val = parseFloat(val) * 100.0;
-
-        // There's no trusting float comparison.
-        if (Math.floor(val) == val && Math.ceil(val) == val) {
-            return Math.floor(val);
-        }
+    const re = /^(\d+)((?:[\.,]\d{0,2})?)$/u;
+    let m = re.exec(val);
+    if (m === null) {
+        display_error(val + "' is not a valid amount of money.");
+        return 0;
     }
-    return 0;
+    let euros = parseInt(m[1]);
+    var cents = 0;
+    if (m[2] !== "")
+      if (m[2].length === 2)
+        cents = parseInt(m[2].substring(1)) * 10;
+      else
+        cents = parseInt(m[2].substring(1));
+    return euros * 100 + cents;
+}
+
+function formatMoney(val) {
+    return "" + (val / 100.0).toFixed(2).replace('.', ',');
 }
