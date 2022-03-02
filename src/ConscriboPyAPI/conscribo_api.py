@@ -10,7 +10,7 @@ class Conscribo:
         self.status = 0
         self.ep = api_endpoint
         self.key = ""
-        self.headers = {"X-Conscribo-API-Version": "0.20120201"}
+        self.headers = {"X-Conscribo-API-Version": "0.20161212"}
         self.authenticate(api_key, api_passphrase)
         self._accounts = None
         self._transactions = None
