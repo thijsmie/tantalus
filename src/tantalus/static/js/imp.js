@@ -100,7 +100,7 @@ function field_validate_float_or_none(field) {
 }
 
 function field_validate_money(field) {
-    const re = /^(\d+)((?:[\.,]\d{0,2})?)$/u;
+    const re = /^(-?\d+)((?:[\.,]\d{0,2})?)$/u;
     let data = $(field).val();
     let m = re.exec(data);
     if (m === null) {
@@ -117,7 +117,7 @@ function field_validate_money_or_none(field) {
 }
 
 function parseMoney(val) {
-    const re = /^(\d+)((?:[\.,]\d{0,2})?)$/u;
+    const re = /^(-?\d+)((?:[\.,]\d{0,2})?)$/u;
     let m = re.exec(val);
     if (m === null) {
         display_error(val + "' is not a valid amount of money.");

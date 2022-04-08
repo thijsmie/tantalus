@@ -206,7 +206,7 @@
 
                 if (tr.type !== 'sell')
                     tr.input_price.val(transaction.format_currency(data['price']).replace(',', '.'));
-                    
+
                 if (tr.type === 'service')
                     tr.input_btw.val(data['btw'])
             };
@@ -307,13 +307,13 @@
                     tr.input_price.val(formatMoney(v));
                 }
             };
-            
+
             tr.btw_input_keydown = function (e) {
                 if (e.which === 13) { // Enter
 
                     e.stopPropagation();
                     e.preventDefault();
-                    
+
                     if (e.shiftKey) {
                         tr.input_btw.focus();
                         return;
@@ -349,9 +349,7 @@
                     tr.input_price.keydown(tr.price_input_keydown);
                 tr.input_price.keyup(tr.price_input_keyup);
             }
-            
-           
-            
+
             return tr;
         };
         return transaction;
