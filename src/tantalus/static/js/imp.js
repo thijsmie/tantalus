@@ -117,20 +117,20 @@ function field_validate_money_or_none(field) {
 }
 
 function parseMoney(val) {
-    const re = /^(-?\d+)((?:[\.,]\d{0,2})?)$/u;
+    const re = /^(-?)(\d*)((?:[\.,]\d{0,2})?)$/u;
     let m = re.exec(val);
     if (m === null) {
         display_error(val + "' is not a valid amount of money.");
         return 0;
     }
-    let euros = parseInt(m[1]);
+    let euros = (m[2] === "" ? 0 : parseInt(m[2]));
     var cents = 0;
-    if (m[2] !== "")
-      if (m[2].length === 2)
-        cents = parseInt(m[2].substring(1)) * 10;
+    if (m[3] !== "" && m[3] !== "." && m[3] !== ",")
+      if (m[3].length === 2)
+        cents = parseInt(m[3].substring(1)) * 10;
       else
-        cents = parseInt(m[2].substring(1));
-    return euros * 100 + cents;
+        cents = parseInt(m[3].substring(1));
+    return (euros * 100 + cents) * (m[1] === "-" ? -1 : 1);
 }
 
 function formatMoney(val) {
