@@ -18,18 +18,19 @@ def transactional(func):
         # Nested transactionals become part of the bigger transactional
         if transaction.in_transaction:
             return func(*args, **kwargs)
-            
+
         with db.session.no_autoflush:
+            nested = db.session.begin_nested()
             transaction.in_transaction = True
             try:
                 ret = func(*args, **kwargs)
-                db.session.commit()
+                nested.commit()
                 return ret
             except Exception as e:
-                db.session.rollback()
+                nested.rollback()
                 raise e
             finally:
                 transaction.in_transaction = False
-    
+
     transaction.in_transaction = False
     return transaction
