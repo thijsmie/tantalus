@@ -272,7 +272,7 @@
                         tr.data_to_html(row);
                         tr.input_product.val("").focus();
                         tr.input_amount.val("");
-                        tr.input_price.val("0.00");
+                        tr.input_price.val("");
                     }
                 }
                 else if (e.which === 65) {
@@ -325,7 +325,7 @@
                         tr.data_to_html(row);
                         tr.input_product.val("").focus();
                         tr.input_amount.val("");
-                        tr.input_price.val("0.00");
+                        tr.input_price.val("");
                         tr.input_btw.val("");
                     }
                 }
