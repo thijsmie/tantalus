@@ -56,7 +56,7 @@ class AuthenticateRequest(Request):
 class AuthenticateResult(Result):
     @property
     def sessionId(self):
-        return self.root.xpath("sessionId")[0].text
+        return self.root.findall("sessionId")[0].text
 
 
 class TransactionRequest(Request):
@@ -122,15 +122,36 @@ class TransactionXML:
         return other.identifier == self.identifier
 
 
+def int_to_money(x):
+    s = str(x)
+    if len(s) > 2:
+        return f"{s[:-2]},{s[-2:]}"
+    elif len(s) == 2:
+        return f"0,{s}"
+    elif len(s) == 1:
+        return f"0,0{s}"
+
+
+def money_to_int(s):
+    if ',' not in s:
+        return int(s) * 100
+    if s[-1] == ',':
+        return int(s[:-1])
+    if s[-2] == ',':
+        return int(f"{s[:-2]}{s[-1]}") * 10
+    if s[-3] == ',':
+        return int(f"{s[:-3]}{s[-2]}{s[-1]}")
+
+
 class TransactionXMLRow:
     def __init__(self, node=None, amount=0, account=999, credit=True, vatcode="", vat=0):
         if node is not None:
-            self.amount = int(100 * float(node.xpath("amount")[0].text.replace(',', '.')))
             self.credit = node.xpath("side")[0].text == "credit"
             self.account = int(node.xpath("accountNr")[0].text)
             self.reference = node.xpath("reference")[0].text
             self.vatCode = node.xpath("vatCode")[0].text
-            self.vatAmount = int(node.xpath("vatAmount")[0].text)
+            self.vatAmount = money_to_int(node.xpath("vatAmount")[0].text)
+            self.amount = money_to_int(node.xpath("amount")[0].text) - self.vatAmount
         else:
             self.amount = amount
             self.credit = credit
@@ -141,13 +162,13 @@ class TransactionXMLRow:
 
     def toxml(self, reference, addto):
         node = etree.SubElement(addto, "transactionRow")
-        etree.SubElement(node, "amount").text = "{:.2f}".format(float(self.amount) / 100).replace('.', ',')
+        etree.SubElement(node, "amount").text = int_to_money(self.amount + self.vatAmount)
         etree.SubElement(node, "side").text = "credit" if self.credit else "debet"
         etree.SubElement(node, "accountNr").text = str(self.account)
         etree.SubElement(node, "reference").text = reference
         if self.vatCode != "":
             etree.SubElement(node, "vatCode").text = self.vatCode
-            etree.SubElement(node, "vatAmount").text = "{:.2f}".format(float(self.vatAmount) / 100).replace('.', ',')
+            etree.SubElement(node, "vatAmount").text = int_to_money(self.vatAmount)
 
     def __repr__(self):
         return "{} to {} {}".format(self.amount, self.account, "Credit" if self.credit else "Debet")
