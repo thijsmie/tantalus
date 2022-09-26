@@ -1,12 +1,14 @@
 import re
+import logging
 from datetime import datetime
 from xml.etree import ElementTree as etree
 
 
 class Result(object):
     def __init__(self, xml):
+        logging.info(xml)
         tree = etree.fromstring(bytes(xml))
-        self.root = tree.getroot()
+        self.root = tree
 
     @property
     def success(self):
@@ -37,8 +39,13 @@ class Request(object):
                 etree.SubElement(self.request, k).text = v
 
     def get(self):
+        e = self._get()
+        logging.info(e)
+        return e
+
+    def _get(self):
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' \
-               + etree.tostring(self.request, encoding='unicode', xml_declaration=False).decode()
+               + etree.tostring(self.request, encoding='unicode')
 
 
 class AuthenticateRequest(Request):
