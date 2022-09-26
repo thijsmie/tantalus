@@ -1,8 +1,9 @@
 import re
 from datetime import datetime
 
-from lxml import etree
+#from lxml import etree
 
+from xml.etree import ElementTree as etree
 
 def parse_result(xml):
     return etree.XML(xml)
@@ -14,8 +15,10 @@ def pretty_print(res):
 
 class Result(object):
     def __init__(self, xml):
+        import sys
+        print(xml, file=sys.stderr)
         tree = etree.fromstring(bytes(xml))
-        self.root = tree
+        self.root = tree.getroot()
 
     @property
     def success(self):

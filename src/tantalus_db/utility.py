@@ -20,7 +20,7 @@ def transactional(func):
             return func(*args, **kwargs)
 
         with db.session.no_autoflush:
-            nested = db.session.begin_nested()
+            nested = db.session #.begin_nested()
             transaction.in_transaction = True
             try:
                 ret = func(*args, **kwargs)
