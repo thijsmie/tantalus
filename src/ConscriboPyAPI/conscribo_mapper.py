@@ -1,22 +1,10 @@
 import re
 from datetime import datetime
-
-#from lxml import etree
-
 from xml.etree import ElementTree as etree
-
-def parse_result(xml):
-    return etree.XML(xml)
-
-
-def pretty_print(res):
-    print(etree.tostring(res, pretty_print=True, encoding='unicode'))
 
 
 class Result(object):
     def __init__(self, xml):
-        import sys
-        print(xml, file=sys.stderr)
         tree = etree.fromstring(bytes(xml))
         self.root = tree.getroot()
 
@@ -50,7 +38,7 @@ class Request(object):
 
     def get(self):
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' \
-               + etree.tostring(etree.ElementTree(self.request)).decode()
+               + etree.tostring(self.request, encoding='unicode', xml_declaration=False).decode()
 
 
 class AuthenticateRequest(Request):
