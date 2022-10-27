@@ -2,6 +2,7 @@ import re
 import logging
 from datetime import datetime
 from xml.etree import ElementTree as etree
+from unidecode import unidecode
 
 
 class Result(object):
@@ -12,11 +13,11 @@ class Result(object):
 
     @property
     def success(self):
-        return self.root.xpath("success")[0].text == "1"
+        return self.root.findall("success")[0].text == "1"
 
     @property
     def notifications(self):
-        return [child.text for child in self.root.xpath("notifications/notification")]
+        return [child.text for child in self.root.findall("notifications/notification")]
 
     def raise_for_status(self):
         if not self.success:
@@ -75,13 +76,13 @@ class TransactionRequest(Request):
 class TransactionResult(Result):
     @property
     def transactions(self):
-        return [TransactionXML(transaction) for transaction in self.root.xpath("transactions/transaction")
+        return [TransactionXML(transaction) for transaction in self.root.findall("transactions/transaction")
                 if self.is_interesting_transaction(transaction)]
 
     @staticmethod
     def is_interesting_transaction(transaction):
         regexp = r"T\#\[\d*\]"
-        return re.search(regexp, transaction.xpath("description")[0].text) is not None
+        return re.search(regexp, transaction.findall("description")[0].text) is not None
 
 
 class TransactionXML:
@@ -96,12 +97,12 @@ class TransactionXML:
         else:
             self.node = node_or_id
             regexp = r"Tantalus ID\:\s*T\#\[(\d*)\]"
-            self.description = re.sub(regexp, "", self.node.xpath("description")[0].text)
-            self.identifier = int(re.search(regexp, self.node.xpath("description")[0].text).group(1))
-            self.date = datetime.strptime(self.node.xpath("date")[0].text, "%Y-%m-%d").date()
-            self.rows = [TransactionXMLRow(row) for row in self.node.xpath("transactionRows")[0]]
+            self.description = re.sub(regexp, "", self.node.findall("description")[0].text)
+            self.identifier = int(re.search(regexp, self.node.findall("description")[0].text).group(1))
+            self.date = datetime.strptime(self.node.findall("date")[0].text, "%Y-%m-%d").date()
+            self.rows = [TransactionXMLRow(row) for row in self.node.findall("transactionRows")[0]]
             self.reference = self.rows[0].reference
-            self.transactionid = int(self.node.xpath("transactionId")[0].text)
+            self.transactionid = int(self.node.findall("transactionId")[0].text)
 
     def toxml(self):
         transaction = etree.Element("transaction")
@@ -109,7 +110,7 @@ class TransactionXML:
         if self.transactionid is not None:
             etree.SubElement(transaction, "transactionId").text = str(self.transactionid)
 
-        etree.SubElement(transaction, "description").text = "{}\nTantalus ID: T#[{}]".format(self.description, self.identifier)
+        etree.SubElement(transaction, "description").text = "{}\nTantalus ID: T#[{}]".format(unidecode(self.description), self.identifier)
         etree.SubElement(transaction, "date").text = self.date.strftime("%Y-%m-%d")
 
         xmlrows = etree.SubElement(transaction, "transactionRows")
@@ -123,7 +124,7 @@ class TransactionXML:
 
 
 def int_to_money(x):
-    s = str(x)
+    s = str(int(x))
     if len(s) > 2:
         return f"{s[:-2]},{s[-2:]}"
     elif len(s) == 2:
@@ -146,12 +147,12 @@ def money_to_int(s):
 class TransactionXMLRow:
     def __init__(self, node=None, amount=0, account=999, credit=True, vatcode="", vat=0):
         if node is not None:
-            self.credit = node.xpath("side")[0].text == "credit"
-            self.account = int(node.xpath("accountNr")[0].text)
-            self.reference = node.xpath("reference")[0].text
-            self.vatCode = node.xpath("vatCode")[0].text
-            self.vatAmount = money_to_int(node.xpath("vatAmount")[0].text)
-            self.amount = money_to_int(node.xpath("amount")[0].text) - self.vatAmount
+            self.credit = node.findall("side")[0].text == "credit"
+            self.account = int(node.findall("accountNr")[0].text)
+            self.reference = node.findall("reference")[0].text
+            self.vatCode = node.findall("vatCode")[0].text
+            self.vatAmount = money_to_int(node.findall("vatAmount")[0].text)
+            self.amount = money_to_int(node.findall("amount")[0].text) - self.vatAmount
         else:
             self.amount = amount
             self.credit = credit
@@ -188,14 +189,14 @@ class ListAccountsRequest(Request):
 class ListAccountsResult(Result):
     @property
     def accounts(self):
-        return [AccountXML(account) for account in self.root.xpath("accounts/account")]
+        return [AccountXML(account) for account in self.root.findall("accounts/account")]
 
 
 class AccountXML:
     def __init__(self, node):
-        self.account = int(node.xpath("accountNr")[0].text)
-        self.name = node.xpath("accountName")[0].text
-        self.result = node.xpath("type")[0].text == "result"
+        self.account = int(node.findall("accountNr")[0].text)
+        self.name = node.findall("accountName")[0].text
+        self.result = node.findall("type")[0].text == "result"
 
     def __repr__(self):
         return "{} {}[{}]".format("Result" if self.result else "Balance", self.name, self.account)
@@ -217,7 +218,7 @@ class TransactionPutResult(Result):
     def __init__(self, data, transaction):
         super(TransactionPutResult, self).__init__(data)
         if self.success:
-            transaction.transactionid = int(self.root.xpath("transactionId")[0].text)
+            transaction.transactionid = int(self.root.findall("transactionId")[0].text)
 
 
 class ListVatCodesRequest(Request):
