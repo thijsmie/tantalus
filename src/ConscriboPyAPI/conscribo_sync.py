@@ -101,8 +101,8 @@ def transaction_to_transactionXML(transaction, conscribo_link):
         txml.rows.append(TransactionXMLRow(account=total_account, amount=abs(service["value"]),
                                            credit=service["value"] < 0))
         txml.rows.append(
-            TransactionXMLRow(account=todo_account, amount=abs(service["value"] - service["btwvalue"]),
-                              credit=service["value"] > 0, vatcode=vatcode, vat=service["btwvalue"]))
+            TransactionXMLRow(account=todo_account, amount=abs(int(round(service["value"])) - int(round(service["btwvalue"]))),
+                              credit=service["value"] > 0, vatcode=vatcode, vat=int(round(service["btwvalue"]))))
         txml.description += "\nService {} with value {:.2f}.".format(service["contenttype"], service["value"] / 100.0)
     txml.rows.append(
         TransactionXMLRow(account=total_account, amount=abs(absolute_total), credit=absolute_total < 0))

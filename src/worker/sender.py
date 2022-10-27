@@ -37,8 +37,9 @@ def send_invoice(relation, transaction, pdf_stringio):
         context = ssl.create_default_context()
         try:
             with SMTP(host=config.smtp_host, port=config.smtp_port) as smtp:
-                smtp.starttls(context=context)
-                smtp.login(config.smtp_user, config.smtp_pass)
+                #smtp.ehlo()
+                #smtp.starttls(context=context)
+                #smtp.login(config.smtp_user, config.smtp_pass)
 
                 smtp.send_message(msg)
                 sent = True
