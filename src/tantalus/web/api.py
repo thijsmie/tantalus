@@ -1,6 +1,8 @@
 from flask_login import login_required
 from flask.json import jsonify
+from flask import request
 
+from tantalus.logic.transaction import new_transaction
 from tantalus_db.models import PosEndpoint, PosProduct, PosSale, Product, Group, BtwType, Relation, Transaction, User
 
 from tantalus.appfactory.auth import ensure_user_api
@@ -23,8 +25,8 @@ datatypes = {
     'possale': PosSale
 }
 
-@router.route('/<string:datatype>', defaults={"filters": ""})
-@router.route('/<string:datatype>/<string:filters>')
+@router.route('/<string:datatype>', defaults={"filters": ""}, methods=["GET"])
+@router.route('/<string:datatype>/<string:filters>', methods=["GET"])
 @login_required
 @ensure_user_api
 def query(datatype, filters):
@@ -53,3 +55,16 @@ def query(datatype, filters):
                 query = query.filter(cls.filters()[field] < value)
     
     return jsonify({"data": [e.dict() for e in query.all()]})
+
+
+@router.route('/transaction', methods=["POST"])
+@login_required
+@ensure_user_api
+def add_transaction():
+    data = request.json
+    try:
+        transaction = new_transaction(data)
+    except Exception as e:
+        return jsonify(error=str(e)), 400
+
+    return jsonify(transaction=transaction.dict())
