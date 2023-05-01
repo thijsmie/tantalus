@@ -11,7 +11,7 @@ click-repl==0.1.6
 cssselect2==0.4.1
 defusedxml==0.7.1
 dominate==2.6.0
-Flask==1.1.2
+Flask==2.3.2
 Flask-Bootstrap==3.3.7.1
 Flask-Login==0.5.0
 Flask-SQLAlchemy==2.5.1
